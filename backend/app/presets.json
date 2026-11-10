@@ -1,0 +1,62 @@
+[
+  {
+    "id": "barnard",
+    "name": "Barnard's Star",
+    "classification": "High proper-motion red dwarf",
+    "phenomenon": "Motion",
+    "ra": 269.45207696,
+    "dec": 4.69336497,
+    "description": "A nearby red dwarf with rapid apparent motion across the sky.",
+    "source": "https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=Barnard%27s+star",
+    "epoch": "J2000",
+    "verified": true
+  },
+  {
+    "id": "epsilon",
+    "name": "Epsilon Indi B",
+    "classification": "Brown dwarf binary",
+    "phenomenon": "Motion",
+    "ra": 331.04414659,
+    "dec": -56.7828442,
+    "description": "A cool brown dwarf pair, ideal for introducing infrared sources and motion.",
+    "source": "https://simbad.u-strasbg.fr/simbad/sim-id?Ident=%2A+eps+Ind+B",
+    "epoch": "J2000",
+    "verified": true
+  },
+  {
+    "id": "wise",
+    "name": "WISE 0855",
+    "classification": "Cold brown dwarf",
+    "phenomenon": "Motion",
+    "ra": 133.79512917,
+    "dec": -7.24514722,
+    "description": "An exceptionally cold substellar object: a window into the infrared sky.",
+    "source": "Coordinates supplied in the project brief; epoch unspecified",
+    "epoch": "Unspecified",
+    "verified": false
+  },
+  {
+    "id": "rw-aur",
+    "name": "RW Aurigae",
+    "classification": "T Tauri variable",
+    "phenomenon": "Variability",
+    "ra": 76.95652603,
+    "dec": 30.40143817,
+    "description": "A young stellar system that introduces changes in brightness.",
+    "source": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=RW+Aur",
+    "epoch": "J2000",
+    "verified": true
+  },
+  {
+    "id": "r-dra",
+    "name": "R Draconis",
+    "classification": "Mira variable",
+    "phenomenon": "Variability",
+    "ra": 248.16761083,
+    "dec": 66.75497942,
+    "description": "A pulsating variable star whose brightness changes over time.",
+    "source": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=%40376084&Name=V%2A+R+Dra&submit=submit",
+    "epoch": "J2000",
+    "verified": true
+  }
+]
