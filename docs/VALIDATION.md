@@ -1,20 +1,26 @@
 # Validation record
 
-Validated 2026-11-10 in the authoring environment.
+V2 checked 2026-11-10 in the authoring environment.
 
 | Check | Actual result |
 | --- | --- |
 | Python API and numerical tests | **26 passed** |
-| Frontend coordinate/URL unit tests | **4 passed** |
+| Frontend coordinate/URL/source-policy unit tests | **8 passed** |
 | TypeScript strict checking | Passed; `next typegen` runs before `tsc` so a clean checkout does not require a prior build |
 | Next.js production build | Passed; `/`, `/explore`, `/about`, and favicon generated |
 | Built page asset references | All referenced local compiled assets present for the three application routes |
 | API proxy routing | Compiled manifest maps `/api/*` and `/health` to the configured Python service |
 | Combined dev launcher | JavaScript syntax check passed |
-| Playwright suite discovery | Nine cases discovered across desktop, tablet, and mobile projects |
+| Playwright suite discovery | 20 cases discovered across 1920px, 1440px, 768px and 390px projects; demo/default cases select the appropriate mode |
 | Playwright interactions/screenshots | **Not executed**: managed preview relay unavailable |
 | Browser console, visual layout, touch, actual scroll choreography | **Not verified in a browser** for the same infrastructure reason |
 | Production deployment | Not created; the required FastAPI/NumPy backend needs Python-capable hosting |
+
+## Preservation and visual status
+
+All nine backend source/config/test files in the pre-redesign SHA-256 snapshot are byte-for-byte unchanged. All 26 backend tests were rerun successfully after the redesign. This verifies the preserved numerical/API behavior; it does not substitute for browser interaction checks.
+
+The reference site was inspected in a browser. The two local NASA/Webb images were inspected separately. No screenshots of the implemented v2 app could be captured because the managed preview relay is unavailable. CSS breakpoints, reduced-motion branches and GSAP cleanup were reviewed in source, but their final appearance, performance and reversible scroll choreography remain unverified. Visual acceptance is pending.
 
 ## Backend tests exercised
 
@@ -24,11 +30,11 @@ Two dependency deprecation warnings appeared (the installed AnyIO pytest integra
 
 ## Frontend tests exercised
 
-Inclusive coordinate/FOV boundaries, invalid coordinates, invalid FOV/detectors, and a lossless share-URL round trip. Production compilation includes strict TypeScript checking of UI components and the supplied browser suite.
+Inclusive coordinate/FOV boundaries, invalid coordinates, invalid FOV/detectors, a lossless share-URL round trip, default synthetic blocking, explicit opt-in, disabled-provider handling, and unknown-source rejection. Production compilation includes strict TypeScript checking of UI components and the supplied browser suite.
 
 ## Browser coverage supplied for local execution
 
-`frontend/e2e/observatory.spec.ts` covers landing and target navigation, eight-frame rendering, previous/next and play/pause, zoom/fit, all comparison modes, PNG loading, URL restoration, blocking invalid coordinates before requests, detector/FOV changes, reduced-motion controls, overflow, and screenshot capture. The Playwright config provides desktop 1440×1000, tablet 820×1180 and mobile iPhone-sized viewports.
+`frontend/e2e/observatory.spec.ts` covers landing and target navigation, eight-frame rendering, previous/next and play/pause, zoom/fit, all comparison modes, PNG loading, URL restoration, blocking invalid coordinates before requests, detector/FOV changes, reduced-motion controls, overflow, and screenshot capture. `frontend/e2e/empty-state.spec.ts` adds unpopulated initial state, zero synthetic requests, disabled data-dependent controls, field settings without data, target selection, forward/backward navigation and overflow checks. The config provides 1920×1080, 1440×1000, 768×1024 and iPhone 13 (390px) viewports. `npm run test:e2e` selects default-state checks; `npm run test:e2e:demo` selects the preserved synthetic workflow.
 
 The automated browser suite is **not counted as passing**. The authoring environment returned `preview relay unavailable: No such file or directory` from both preview start and status. No browser server workaround or fabricated screenshots were used. Run the documented browser tests and review screenshots on a functioning local machine before presenting the app as visually acceptance-tested.
 

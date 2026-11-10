@@ -1,0 +1,22 @@
+[
+  {
+    "file": "earth-horizon.webp",
+    "credit": "NASA",
+    "source_page": "https://www.nasa.gov/international-space-station/desktop-and-mobile-wallpapers/",
+    "source_url": "https://www.nasa.gov/wp-content/uploads/2026/03/sunset-silhouettes-\u2013-desktop-\u2013-image-only.png",
+    "width": 1920,
+    "height": 1080,
+    "role": "Editorial background; not SPHEREx observations",
+    "processing": "WebP encoding; display crops and dark overlays in CSS only"
+  },
+  {
+    "file": "carina.webp",
+    "credit": "NASA, ESA, CSA, STScI",
+    "source_page": "https://science.nasa.gov/asset/webb/cosmic-cliffs-in-the-carina-nebula-nircam-and-miri-composite-image/",
+    "source_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/missions/webb/science/2022/07/STScI-01G8GYD8B1H306SSPR4MY6NGN0.png?w=2000&h=693&fit=clip",
+    "width": 2000,
+    "height": 692,
+    "role": "Editorial background; not SPHEREx observations",
+    "processing": "WebP encoding; display crops and dark overlays in CSS only"
+  }
+]

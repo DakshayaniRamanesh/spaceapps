@@ -17,6 +17,13 @@ import SkyViewer from "./SkyViewer";
 import Timeline from "./Timeline";
 import MetadataPanel from "./MetadataPanel";
 import ComparisonModes from "./ComparisonModes";
+import EmptyObservatory from "./EmptyObservatory";
+import {
+  developmentDemoEnabled,
+  mayRequestObservations,
+  mayDisplaySource,
+  ProviderHealth,
+} from "@/lib/source-policy";
 export default function Explorer() {
   const [field, setField] = useState<Field>(DEFAULT_FIELD),
     [data, setData] = useState<ObservationSet | null>(null),
@@ -48,7 +55,20 @@ export default function Explorer() {
     setError("");
     setPlaying(false);
     setField(f);
+    setData(null);
+    if (writeUrl)
+      window.history.replaceState(null, "", `/explore?${fieldQuery(f)}`);
     try {
+      const healthResponse = await fetch("/health", {
+        signal: c.signal,
+        cache: "no-store",
+      });
+      if (!healthResponse.ok)
+        throw new Error(
+          "The observation service is unavailable. Your field is saved; reconnect the service and retry.",
+        );
+      const health: ProviderHealth = await healthResponse.json();
+      if (!mayRequestObservations(health, developmentDemoEnabled)) return;
       const q = new URLSearchParams({
         ra: String(f.ra),
         dec: String(f.dec),
@@ -59,11 +79,13 @@ export default function Explorer() {
       if (!res.ok)
         throw new Error(
           res.status === 503
-            ? "The selected data provider is unavailable. Set OBSERVATION_SOURCE=synthetic on the API."
+            ? "The selected observation provider is unavailable. Connect a validated provider and retry."
             : `Observation request failed (${res.status}). Check the Python API and try again.`,
         );
       const result: ObservationSet = await res.json();
       if (c.signal.aborted) return;
+      if (!mayDisplaySource(result.source_type, developmentDemoEnabled)) return;
+      if (!result.frames.length) return;
       setData(result);
       setField(result.request);
       setIndex(0);
@@ -169,8 +191,9 @@ export default function Explorer() {
     return () => window.removeEventListener("keydown", key);
   }, [data, index, chooseIndex, mode]);
   async function share() {
-    if (!data) return;
-    const url = `${window.location.origin}/explore?${fieldQuery(data.request)}`;
+    const selectedField = data?.request || field;
+    if (validateField(selectedField)) return;
+    const url = `${window.location.origin}/explore?${fieldQuery(selectedField)}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -180,13 +203,11 @@ export default function Explorer() {
       setShareFallback(url);
     }
   }
-  const target = data
-    ? presets.find(
-        (p) =>
-          Math.abs(p.ra - data.request.ra) < 0.00001 &&
-          Math.abs(p.dec - data.request.dec) < 0.00001,
-      )
-    : null;
+  const target = presets.find(
+    (p) =>
+      Math.abs(p.ra - field.ra) < 0.00001 &&
+      Math.abs(p.dec - field.dec) < 0.00001,
+  );
   return (
     <main id="main" className="explorer">
       <div className="explorer-title">
@@ -197,7 +218,11 @@ export default function Explorer() {
             <span>{target?.name || "Custom field"}</span>
           </h1>
         </div>
-        <button className="button secondary" disabled={!data} onClick={share}>
+        <button
+          className="button secondary"
+          disabled={!!validateField(field)}
+          onClick={share}
+        >
           <Copy size={15} />
           {copied ? "Link copied" : "Share field"}
         </button>
@@ -224,7 +249,12 @@ export default function Explorer() {
         </div>
       )}
       <div className="observatory">
-        <ObservationControls field={field} onLoad={load} loading={loading} />
+        <ObservationControls
+          field={field}
+          onLoad={load}
+          loading={loading}
+          demoEnabled={developmentDemoEnabled}
+        />
         <div className="observatory-center">
           {data ? (
             <>
@@ -278,22 +308,10 @@ export default function Explorer() {
               />
             </>
           ) : (
-            <div className="viewer-skeleton panel" role="status">
-              <div className="skeleton-orbit" />
-              <h2>
-                {loading
-                  ? "Bringing the sky into focus."
-                  : "Ready when you are."}
-              </h2>
-              <p>
-                {loading
-                  ? "Generating eight aligned synthetic epochs…"
-                  : "Enter valid coordinates and load observations."}
-              </p>
-            </div>
+            <EmptyObservatory loading={loading} />
           )}
         </div>
-        {data && (
+        {data ? (
           <MetadataPanel
             data={data}
             index={
@@ -307,15 +325,34 @@ export default function Explorer() {
             }
             mode={mode}
           />
+        ) : (
+          <aside className="intelligence empty-inspector">
+            <h2>Observation details</h2>
+            <p>Details appear when an observation is connected.</p>
+            <div>
+              <h3>Image properties</h3>
+              <p>No image loaded</p>
+            </div>
+            <div>
+              <h3>Data quality</h3>
+              <p>Awaiting source metadata</p>
+            </div>
+            <div>
+              <h3>Comparison information</h3>
+              <p>Connect two or more epochs to compare.</p>
+            </div>
+          </aside>
         )}
       </div>
       <div className="explorer-foot">
         <span>
-          <i /> SYNTHETIC PROVIDER · {data?.frames.length || 0} EPOCHS · NO LIVE
-          NASA DATA
+          <i />{" "}
+          {data
+            ? `Synthetic development data · ${data.frames.length} epochs`
+            : "No observation data connected"}
         </span>
         <Link href="/about#methodology">
-          Understand the simulation <ArrowUpRight size={13} />
+          Data & methodology <ArrowUpRight size={13} />
         </Link>
       </div>
     </main>

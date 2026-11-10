@@ -2,57 +2,72 @@ import Link from "next/link";
 import { ArrowUpRight, ArrowDown } from "lucide-react";
 export default function Hero() {
   return (
-    <section className="hero">
-      <div className="hero-art" />
-      <div className="hero-grid" aria-hidden="true" />
-      <div className="hero-topline">
-        <span>AN OBSERVATORY FOR THE CURIOUS</span>
-        <span>SPHEREx INSPIRED / 01</span>
-      </div>
-      <div className="hero-copy">
-        <p className="eyebrow hero-reveal">
-          <span className="small-line" /> A DIFFERENT WAY TO SEE
-        </p>
-        <h1>
-          <span className="hero-reveal">THE SKY IS</span>
-          <span className="hero-reveal">
-            NEVER <em>STILL.</em>
-          </span>
-        </h1>
-        <div className="hero-bottom-copy hero-reveal">
-          <p>
-            Travel through time using infrared observations.
-            <br />
-            Follow celestial motion. Find what changes.
-          </p>
-          <Link className="button primary" href="/explore">
-            Launch Sky Explorer <ArrowUpRight size={18} />
-          </Link>
-          <Link className="text-link" href="/about">
-            Discover the mission <span>↗</span>
-          </Link>
-        </div>
-      </div>
-      <div className="hero-reticle" aria-hidden="true">
-        <div className="reticle-circle" />
-        <span className="reticle-point" />
-        <span className="reticle-label">
-          THE UNIVERSE IS
-          <br />A WORK IN MOTION.
+    <section className="hero-journey" aria-label="From Earth to the stars">
+      <div className="hero-panel">
+        <img
+          className="hero-art"
+          src="/images/earth-horizon.webp"
+          alt="Sunset over the horizon of Earth, photographed from the International Space Station"
+          fetchPriority="high"
+        />
+        <div className="hero-shade" />
+        <img
+          className="hero-deep"
+          src="/images/carina.webp"
+          alt="The Cosmic Cliffs in the Carina Nebula, a James Webb Space Telescope infrared composite"
+        />
+        <div className="hero-deep-shade" />
+        <span className="hero-edge" aria-hidden="true">
+          IN CONSTANT MOTION
         </span>
-        <div className="reticle-coordinate">
-          α 17h 57m 48s
-          <br />δ +04° 41′ 36″
-          <br />
-          <small>REFERENCE FIELD · J2000</small>
+        <div className="hero-copy">
+          <p className="hero-kicker">A new perspective on the universe</p>
+          <h1>
+            <span className="heading-mask">
+              <span>THE SKY IS</span>
+            </span>
+            <span className="heading-mask">
+              <span>NEVER STILL.</span>
+            </span>
+          </h1>
+          <div className="hero-support">
+            <p>
+              Explore the changing
+              <br />
+              infrared universe.
+            </p>
+            <Link className="button primary" href="/explore">
+              ENTER THE EXPLORER <ArrowUpRight />
+            </Link>
+          </div>
         </div>
-      </div>
-      <div className="hero-footer">
-        <a href="#story" className="scroll-indicator">
-          <ArrowDown size={17} /> SCROLL TO DISCOVER
-        </a>
-        <span className="motion-headline">SEE THE SKY IN MOTION.</span>
-        <span className="art-label">ORIGINAL PROCEDURAL ARTWORK</span>
+        <Link
+          href="#story"
+          className="hero-orbit-link"
+          aria-label="Discover the changing universe"
+        >
+          <span>
+            Look again.
+            <br />
+            See what changes.
+          </span>
+          <ArrowUpRight size={30} />
+        </Link>
+        <div className="journey-title" aria-hidden="true">
+          <span>BEYOND</span>
+          <span>THE HORIZON.</span>
+        </div>
+        <div className="hero-footer">
+          <a href="#story">
+            <ArrowDown size={18} /> Scroll to explore
+          </a>
+          <span className="hero-credit">
+            Earth: NASA · Nebula: NASA, ESA, CSA, STScI
+            <br />
+            Editorial imagery / not SPHEREx data
+          </span>
+          <span>01 / 04</span>
+        </div>
       </div>
     </section>
   );

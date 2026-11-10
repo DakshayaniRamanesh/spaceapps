@@ -13,79 +13,115 @@ export default function MetadataPanel({
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if (window.matchMedia("(max-width: 620px)").matches && disclosure.current)
+    if (window.matchMedia("(max-width: 680px)").matches && disclosure.current)
       disclosure.current.open = false;
   }, []);
   const f = data.frames[index];
+  const time = new Date(f.timestamp).toLocaleTimeString("en-GB", {
+    timeZone: "UTC",
+    hour12: false,
+  });
   return (
-    <aside className="intelligence panel">
+    <aside className="intelligence">
       <details open ref={disclosure}>
         <summary>
-          <Activity size={16} /> Observation intelligence
+          <Activity size={19} />
+          Observation details
         </summary>
-        <div className="metadata-body">
-          <span className="eyebrow">CURRENT EPOCH</span>
-          <h3>{dateLabel(f.timestamp)}</h3>
-          <span className="mono muted">03:24:00 UTC · simulated</span>
-          <dl>
-            <dt>Data source</dt>
-            <dd className="amber">Synthetic demo</dd>
-            <dt>Detector</dt>
-            <dd>{data.request.detector}</dd>
-            <dt>Array range</dt>
-            <dd>{data.wavelength_range_um.join("–")} µm</dd>
-            <dt>Field of view</dt>
-            <dd>
-              {data.request.fov_arcmin}′ × {data.request.fov_arcmin}′
-            </dd>
-            <dt>Image size</dt>
-            <dd>
-              {data.width} × {data.height} px
-            </dd>
-            <dt>Center RA</dt>
-            <dd>{data.request.ra.toFixed(6)}°</dd>
-            <dt>Center Dec</dt>
-            <dd>{data.request.dec.toFixed(6)}°</dd>
-            <dt>Mode</dt>
-            <dd>
-              {
+        <div className="metadata-body" key={`${index}-${mode}`}>
+          <header>
+            <p className="eyebrow">Current epoch</p>
+            <h3>{dateLabel(f.timestamp)}</h3>
+            <span className="mono muted">{time} UTC</span>
+          </header>
+          <section className="metadata-group">
+            <h4>Observation details</h4>
+            <dl>
+              <dt>Data source</dt>
+              <dd className="amber">Synthetic development data</dd>
+              <dt>Detector</dt>
+              <dd>{data.request.detector}</dd>
+              <dt>Array range</dt>
+              <dd className="numeric">
+                {data.wavelength_range_um.join("–")} µm
+              </dd>
+              <dt>Center RA</dt>
+              <dd className="numeric">{data.request.ra.toFixed(6)}°</dd>
+              <dt>Center Dec</dt>
+              <dd className="numeric">{data.request.dec.toFixed(6)}°</dd>
+            </dl>
+          </section>
+          <section className="metadata-group">
+            <h4>Image properties</h4>
+            <dl>
+              <dt>Field of view</dt>
+              <dd className="numeric">
+                {data.request.fov_arcmin}′ × {data.request.fov_arcmin}′
+              </dd>
+              <dt>Image size</dt>
+              <dd className="numeric">
+                {data.width} × {data.height} px
+              </dd>
+              <dt>Display stretch</dt>
+              <dd>Fixed across epochs</dd>
+            </dl>
+          </section>
+          <section className="metadata-group quality">
+            <h4>Data quality</h4>
+            <p>
+              <i />
+              Common registered grid
+            </p>
+            <p>
+              <i />
+              Gaussian PSF + seeded noise
+            </p>
+            <dl>
+              <dt>Noise σ</dt>
+              <dd className="numeric">{f.quality.noise_sigma} a.u.</dd>
+              <dt>Masked fraction</dt>
+              <dd className="numeric">
+                {(f.quality.masked_fraction * 100).toFixed(1)}%
+              </dd>
+              <dt>Calibration</dt>
+              <dd>
+                {f.quality.calibrated
+                  ? "Calibrated"
+                  : "Not photometrically calibrated"}
+              </dd>
+            </dl>
+          </section>
+          <section className="metadata-group">
+            <h4>Comparison information</h4>
+            <dl>
+              <dt>Display mode</dt>
+              <dd>
                 {
-                  single: "Single frame",
-                  blink: "Blink comparison",
-                  split: "Side by side",
-                  difference: "Difference B − A",
-                }[mode]
-              }
-            </dd>
-          </dl>
-          <div className="quality">
-            <span className="eyebrow">SIMULATION QUALITY</span>
-            <p>
-              <i /> Common registered grid
-            </p>
-            <p>
-              <i /> Gaussian PSF + seeded noise
-            </p>
-            <p>
-              <i /> Fixed display stretch
-            </p>
-            <p className="muted">
-              Noise σ: {f.quality.noise_sigma} a.u.
-              <br />
-              Not photometrically calibrated.
-            </p>
-          </div>
+                  {
+                    single: "Single frame",
+                    blink: "Blink comparison",
+                    split: "Side by side",
+                    difference: "Difference B − A",
+                  }[mode]
+                }
+              </dd>
+              <dt>Available epochs</dt>
+              <dd className="numeric">{data.frames.length}</dd>
+            </dl>
+          </section>
           <div className="viewer-help">
-            <Info size={17} />
+            <Info size={19} />
             <h4>Look for the change.</h4>
             <p>
               {mode === "difference"
                 ? "Amber pixels gained intensity. Violet pixels lost intensity. A moving source leaves a positive and negative pair."
                 : mode === "blink"
-                  ? "Alternate the first and last epochs. Steady stars stay fixed; the moving source appears to jump."
+                  ? "Alternate two epochs. Steady stars stay fixed; the moving source appears to jump."
                   : "Two bright sources near the center demonstrate motion and variability. Zoom in, then compare epochs."}
             </p>
-            <span>Motion is exaggerated for clarity.</span>
+            <span>
+              Illustrative motion is exaggerated. No measured target data.
+            </span>
           </div>
         </div>
       </details>

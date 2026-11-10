@@ -1,0 +1,28 @@
+:root {
+  --bg: #080610;
+  --secondary: #10091e;
+  --surface: #160c2b;
+  --surface-soft: #1c1429;
+  --brand: #4b0ab8;
+  --interactive: #6518ce;
+  --accent: #7429df;
+  --violet: #9b72f2;
+  --text: #f7f4ff;
+  --secondary-text: #bfb6d0;
+  --muted: #978bae;
+  --border: #302541;
+  --amber: #f5c77d;
+  --green: #73c9a5;
+  --red: #f08089;
+  --heading: "Archivo", sans-serif;
+  --body: "DM Sans", sans-serif;
+  --mono: "IBM Plex Mono", monospace;
+  --display: clamp(5.5rem, 10.2vw, 10rem);
+  --section-title: clamp(3.8rem, 6.4vw, 6.25rem);
+  --body-size: 1.0625rem;
+  --label-size: 0.9375rem;
+  --value-size: 0.875rem;
+  --page-gutter: clamp(24px, 5vw, 96px);
+  --ui-duration: 180ms;
+  --ui-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}

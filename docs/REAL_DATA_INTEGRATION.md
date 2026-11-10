@@ -4,6 +4,10 @@
 
 `OBSERVATION_SOURCE=synthetic` is the default and the only working provider. `OBSERVATION_SOURCE=irsa` selects an intentionally disabled adapter; observation requests return HTTP 503 with an explanatory error. No endpoint silently substitutes synthetic data for real data. `/health` identifies the source and reports `real_data_enabled: false`.
 
+The v2 frontend now checks `/health` before any observation request. The default UI shows its ready state when `real_data_enabled` is false. Only `NEXT_PUBLIC_ENABLE_SYNTHETIC_DEMO=true` opts into the existing synthetic backend. A second source check prevents an unexpected synthetic response from appearing in the default UI. Shared coordinates remain usable without observations.
+
+The frontend source-policy allowlist recognizes the intended future `spherex-irsa` name, but this does **not** implement that provider or extend the current response contract. Complete the contract and source-aware metadata work below before setting `real_data_enabled: true`.
+
 ## Stable frontend boundary
 
 The frontend requests a field and consumes an `ObservationSet`: source type, dataset ID, requested coordinates/FOV/detector, wavelength information, dimensions, notice, and time-ordered frames. A frame has an opaque ID, UTC timestamp, display-image endpoint, source, detector, and quality metadata. The frontend does not decode frame IDs or generate scientific images.

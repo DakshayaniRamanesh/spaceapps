@@ -81,7 +81,8 @@ export default function SkyViewer({
         </span>
       </div>
       <div
-        className={`image-stage ${mode === "split" ? "split" : ""}`}
+        key={mode}
+        className={`image-stage mode-enter ${mode === "split" ? "split" : ""}`}
         tabIndex={0}
         aria-label="Image viewport. Use zoom buttons, then drag to pan."
         onKeyDown={(e) => {
@@ -151,7 +152,8 @@ export default function SkyViewer({
             }}
           >
             <img
-              className="observation-image"
+              key={img.src}
+              className={`observation-image ${mode === "single" && !loading ? "frame-enter" : ""}`}
               draggable={false}
               src={
                 retry

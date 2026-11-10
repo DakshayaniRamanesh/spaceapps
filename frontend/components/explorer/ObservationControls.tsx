@@ -13,14 +13,16 @@ export default function ObservationControls({
   field,
   onLoad,
   loading,
+  demoEnabled = false,
 }: {
   field: Field;
   onLoad: (f: Field) => void;
   loading: boolean;
+  demoEnabled?: boolean;
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
-    if (window.matchMedia("(max-width: 620px)").matches && disclosure.current)
+    if (window.matchMedia("(max-width: 680px)").matches && disclosure.current)
       disclosure.current.open = false;
   }, []);
   const [ra, setRa] = useState(String(field.ra)),
@@ -57,7 +59,7 @@ export default function ObservationControls({
           <Crosshair size={16} /> Observation controls
         </summary>
         <div className="controls-body">
-          <label htmlFor="target">TARGET PRESET</label>
+          <label htmlFor="target">Target preset</label>
           <select
             id="target"
             value={selected?.id || ""}
@@ -99,7 +101,7 @@ export default function ObservationControls({
             }}
           >
             <div className="field-heading">
-              POINT YOUR OBSERVATORY<span>01</span>
+              Point your observatory<span>01</span>
             </div>
             <label
               htmlFor="ra"
@@ -161,7 +163,7 @@ export default function ObservationControls({
                 ))}
             </select>
             <div className="field-heading">
-              DETECTOR ARRAY<span>02</span>
+              Detector array<span>02</span>
             </div>
             <div className="detector-grid">
               {detectors.map((d) => (
@@ -177,9 +179,9 @@ export default function ObservationControls({
               ))}
             </div>
             <p className="hint">
-              Simulated array responses.
-              <br />
-              Assigned colors are not visible light.
+              {demoEnabled
+                ? "Simulated array responses. Assigned colors are not visible light."
+                : "Select the array for your observation request."}
             </p>
             {error && (
               <p className="error" id="field-error" role="alert">
@@ -191,7 +193,11 @@ export default function ObservationControls({
               type="submit"
               disabled={loading}
             >
-              {loading ? "Generating field…" : "Load observations"}
+              {loading
+                ? "Checking observations…"
+                : demoEnabled
+                  ? "Load observations"
+                  : "Check for observations"}
               <ArrowRight size={16} />
             </button>
             <button
@@ -208,8 +214,9 @@ export default function ObservationControls({
           <div className="simulation-note">
             <span className="eyebrow">A NOTE ON THE DATA</span>
             <p>
-              Every starfield is generated on the server. These are
-              demonstrations, not observations of the selected target.
+              {demoEnabled
+                ? "Development mode uses generated starfields, not observations of the selected target."
+                : "Real SPHEREx data is not connected in this release. Your field settings are ready for a validated provider."}
             </p>
           </div>
         </div>

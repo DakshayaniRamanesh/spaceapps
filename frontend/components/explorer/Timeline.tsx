@@ -20,13 +20,14 @@ export default function Timeline({
   onSpeed: (n: number) => void;
   disabled?: boolean;
 }) {
+  const unavailable = disabled || frames.length === 0;
   return (
     <section className="timeline panel" aria-label="Observation timeline">
       <div className="timeline-top">
         <div className="playback">
           <button
             aria-label="Previous frame"
-            disabled={disabled}
+            disabled={unavailable}
             onClick={() => onIndex((index + frames.length - 1) % frames.length)}
           >
             <SkipBack size={17} />
@@ -34,20 +35,21 @@ export default function Timeline({
           <button
             className="play-button"
             aria-label={playing ? "Pause playback" : "Play observations"}
-            disabled={disabled}
+            disabled={unavailable}
             onClick={onPlay}
           >
             {playing ? <Pause size={18} /> : <Play size={18} />}
           </button>
           <button
             aria-label="Next frame"
-            disabled={disabled}
+            disabled={unavailable}
             onClick={() => onIndex((index + 1) % frames.length)}
           >
             <SkipForward size={17} />
           </button>
           <select
             aria-label="Playback speed"
+            disabled={unavailable}
             value={speed}
             onChange={(e) => onSpeed(Number(e.target.value))}
           >
@@ -59,7 +61,7 @@ export default function Timeline({
           </select>
         </div>
         <span className="eyebrow">
-          {String(index + 1).padStart(2, "0")} /{" "}
+          {String(frames.length ? index + 1 : 0).padStart(2, "0")} /{" "}
           {String(frames.length).padStart(2, "0")} OBSERVATIONS
         </span>
         <span className="keyboard-hint">← → Frame · Space Play</span>
@@ -69,7 +71,8 @@ export default function Timeline({
         aria-label="Observation frame"
         type="range"
         min="0"
-        max={frames.length - 1}
+        max={Math.max(0, frames.length - 1)}
+        disabled={unavailable}
         step="1"
         value={index}
         onChange={(e) => onIndex(Number(e.target.value))}
@@ -95,8 +98,16 @@ export default function Timeline({
         ))}
       </div>
       <div className="timeline-footer">
-        <span>ILLUSTRATIVE EPOCHS · UTC</span>
-        <span>Aligned grid / fixed intensity stretch</span>
+        <span>
+          {frames.length
+            ? "Illustrative epochs · UTC"
+            : "Awaiting observations"}
+        </span>
+        <span>
+          {frames.length
+            ? "Aligned grid / fixed intensity stretch"
+            : "Timeline available when data is connected"}
+        </span>
       </div>
     </section>
   );

@@ -9,17 +9,19 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
-    "format": "prettier --write app components lib e2e tests *.ts *.json"
+    "format": "prettier --write app components lib e2e tests *.ts *.json",
+    "test:e2e:demo": "SKYTRACE_TEST_DEMO=1 playwright test"
   },
   "dependencies": {
+    "@fontsource/archivo": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.2.0",
-    "@fontsource/inter": "^5.2.0",
-    "@fontsource/space-grotesk": "^5.2.0",
     "gsap": "^3.13.0",
     "lucide-react": "^0.468.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "skytrace": "file:.."
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

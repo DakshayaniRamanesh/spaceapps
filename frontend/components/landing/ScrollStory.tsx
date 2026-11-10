@@ -4,19 +4,16 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 const chapters = [
   {
-    number: "01",
-    title: "One sky.\nMany moments.",
-    body: "A single image is a moment. A sequence tells a story. Return to the same field and see what time reveals.",
+    title: "One sky. Many moments.",
+    body: "Time adds another dimension to an image. A familiar field becomes a story when you look again.",
   },
   {
-    number: "02",
-    title: "A subtle shift can\nreveal a new world.",
-    body: "Against a steady background, a moving source leaves a trace. Watch the marked point change position across eight simulated epochs.",
+    title: "A small shift. A different story.",
+    body: "Against a steady background, one source changes position. Follow the highlighted point across this educational sequence.",
   },
   {
-    number: "03",
-    title: "Compare the past.\nDiscover the unseen.",
-    body: "Blink between observations or subtract one image from another. Motion and changing brightness become easier to see.",
+    title: "The change is the discovery.",
+    body: "Compare two moments. Motion and changing brightness become easier to see when the background stays aligned.",
   },
 ];
 export default function ScrollStory() {
@@ -27,7 +24,7 @@ export default function ScrollStory() {
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
     mm.add(
-      "(min-width: 900px) and (prefers-reduced-motion: no-preference)",
+      "(min-width: 1024px) and (prefers-reduced-motion: no-preference)",
       () => {
         const ctx = gsap.context(() => {
           ScrollTrigger.create({
@@ -39,6 +36,17 @@ export default function ScrollStory() {
               setStage(Math.min(2, Math.floor(self.progress * 3)));
             },
           });
+          gsap.to(".motion-field", {
+            scale: 1.08,
+            xPercent: -3,
+            ease: "none",
+            scrollTrigger: {
+              trigger: root.current,
+              start: "top top",
+              end: "bottom bottom",
+              scrub: true,
+            },
+          });
         }, root);
         return () => ctx.revert();
       },
@@ -48,104 +56,90 @@ export default function ScrollStory() {
   const mx = (0.5 + (-0.48 + frame * 0.14) / 6) * 100,
     my = (0.5 + (0.3 - frame * 0.075) / 6) * 100;
   return (
-    <section id="story" className="scroll-story" ref={root}>
-      <div className="story-sticky">
-        <div className="story-copy">
-          <p className="eyebrow">01 / A UNIVERSE THAT MOVES</p>
-          <div className="chapter-number">
-            {chapters[stage].number}
-            <span> / 03</span>
-          </div>
-          <h2 key={stage}>
-            {chapters[stage].title.split("\n").map((s, i) => (
-              <span key={i}>
-                {s}
-                <br />
-              </span>
-            ))}
+    <section
+      id="story"
+      ref={root}
+      className="motion-story"
+      aria-label="The moving universe"
+    >
+      <div className="motion-sticky">
+        <div className="motion-heading">
+          <p className="eyebrow">01 — The moving universe</p>
+          <h2>
+            NOTHING
+            <small>IN THE UNIVERSE</small>
+            STANDS
+            <br />
+            <span>STILL.</span>
           </h2>
-          <p>{chapters[stage].body}</p>
-          <div className="chapter-tabs" aria-label="Story chapters">
-            {chapters.map((c, i) => (
-              <button
-                key={c.number}
-                aria-label={`Chapter ${c.number}: ${c.title}`}
-                aria-pressed={stage === i}
-                className={stage === i ? "selected" : ""}
-                onClick={() => {
-                  setStage(i);
-                  setFrame(i === 0 ? 0 : i === 1 ? 4 : 7);
-                }}
-              >
-                {c.number}
-              </button>
-            ))}
-          </div>
+          <p className="motion-subtitle">
+            Nothing in the universe stands still.
+          </p>
         </div>
-        <div className="story-visual reveal-image">
-          <div className="visual-topline">
-            <span>TIME DOMAIN / FIELD 001</span>
-            <span className="demo-badge">
-              <i /> SIMULATION
-            </span>
-          </div>
-          <div className="story-frame">
+        <div className="motion-field">
+          <div className="motion-frame">
             {Array.from({ length: 8 }, (_, i) => (
               <img
+                key={i}
                 src={`/demo/frame-${i}.png`}
                 alt={
                   i === frame
-                    ? "Backend-generated starfield with a moving and variable source"
+                    ? "Educational starfield illustration showing a moving source"
                     : ""
                 }
                 aria-hidden={i !== frame}
-                key={i}
-                style={{ opacity: frame === i ? 1 : 0 }}
+                style={{ opacity: i === frame ? 1 : 0 }}
               />
             ))}
             <svg viewBox="0 0 100 100" aria-hidden="true">
               <path
-                d={`M 42 55 L ${mx} ${my}`}
-                fill="none"
-                stroke="#7ddde8"
-                strokeWidth=".18"
-                strokeDasharray=".6 .6"
+                d={`M42 55 L${mx} ${my}`}
+                stroke="#f7f4ff"
+                strokeWidth=".2"
+                strokeDasharray=".7 .8"
               />
               <circle
                 cx={mx}
                 cy={my}
-                r="3.5"
+                r="4"
                 fill="none"
-                stroke="#7ddde8"
-                strokeWidth=".18"
+                stroke="#bfa1ff"
+                strokeWidth=".25"
               />
             </svg>
             <span
-              className="tracking-label"
-              style={{ left: `${mx + 5}%`, top: `${my - 1}%` }}
+              className="moving-label"
+              style={{ left: `${mx + 6}%`, top: `${my}%` }}
             >
-              MOVING SOURCE
+              Moving source
               <br />
-              <b>TRACK {String(frame + 1).padStart(2, "0")}</b>
+              <b>Moment {String(frame + 1).padStart(2, "0")}</b>
             </span>
-            <span className="image-corner tl" />
-            <span className="image-corner br" />
           </div>
-          <div className="story-timeline">
+          <div className="motion-epochs" aria-label="Illustration epochs">
             {Array.from({ length: 8 }, (_, i) => (
               <button
-                onClick={() => setFrame(i)}
-                className={i === frame ? "selected" : ""}
                 key={i}
                 aria-label={`Story epoch ${i + 1}`}
+                aria-pressed={frame === i}
+                className={frame === i ? "selected" : ""}
+                onClick={() => {
+                  setFrame(i);
+                  setStage(Math.min(2, Math.floor(i / 3)));
+                }}
               >
-                0{i + 1}
+                {String(i + 1).padStart(2, "0")}
               </button>
             ))}
           </div>
           <p className="caption">
-            8 simulated epochs · motion exaggerated for clarity
+            Educational illustration · synthetic frames · exaggerated motion
           </p>
+        </div>
+        <div className="motion-caption" key={stage}>
+          <span className="chapter-counter">0{stage + 1} / 03</span>
+          <h3>{chapters[stage].title}</h3>
+          <p>{chapters[stage].body}</p>
         </div>
       </div>
     </section>

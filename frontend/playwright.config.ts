@@ -7,10 +7,22 @@ export default defineConfig({
   webServer: {
     command: "node ../scripts/dev.mjs",
     url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
+    env: {
+      NEXT_PUBLIC_ENABLE_SYNTHETIC_DEMO: process.env.SKYTRACE_TEST_DEMO
+        ? "true"
+        : "false",
+    },
     timeout: 120000,
   },
   projects: [
+    {
+      name: "wide",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1920, height: 1080 },
+      },
+    },
     {
       name: "desktop",
       use: {
@@ -22,7 +34,7 @@ export default defineConfig({
       name: "tablet",
       use: {
         ...devices["Desktop Chrome"],
-        viewport: { width: 820, height: 1180 },
+        viewport: { width: 768, height: 1024 },
       },
     },
     {

@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 test("landing, target navigation and all comparison modes", async ({
   page,
 }) => {
+  test.skip(
+    !process.env.SKYTRACE_TEST_DEMO,
+    "Requires explicit development demo setting",
+  );
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -13,8 +17,7 @@ test("landing, target navigation and all comparison modes", async ({
     fullPage: true,
   });
   await page
-    .getByRole("link")
-    .filter({ has: page.getByRole("heading", { name: "Barnard's Star" }) })
+    .getByRole("link", { name: "Explore Barnard's Star", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Next frame", exact: true }),
@@ -63,6 +66,10 @@ test("landing, target navigation and all comparison modes", async ({
   expect(errors).toEqual([]);
 });
 test("URL state, invalid input, detector and FOV", async ({ page }) => {
+  test.skip(
+    !process.env.SKYTRACE_TEST_DEMO,
+    "Requires explicit development demo setting",
+  );
   await page.goto("/explore?ra=133.79512917&dec=-7.24514722&fov=6&detector=D6");
   await expect(
     page.getByRole("button", { name: "Next frame", exact: true }),
@@ -101,7 +108,7 @@ test("reduced motion and mobile story remain usable", async ({ page }) => {
   await page
     .getByRole("button", { name: "Story epoch 8", exact: true })
     .click();
-  await expect(page.locator(".tracking-label")).toContainText("TRACK 08");
+  await expect(page.locator(".moving-label")).toContainText("Moment 08");
   await page.getByRole("button", { name: "D6", exact: true }).click();
   await expect(page.locator(".wavelength-number")).toContainText("4.42–5.00");
 });

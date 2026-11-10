@@ -2,7 +2,7 @@
 
 **See the Sky in Motion.** A cinematic, interactive infrared-sky explorer with a Next.js frontend and a FastAPI scientific demonstration backend. Built as an independent NASA Space Apps Challenge 2026 concept inspired by SPHEREx.
 
-**Every observation in this release is synthetic.** No local SPHEREx FITS dataset is integrated. Reference target positions are real or supplied in the brief; simulated stars, dates, motion and brightness are not measurements of those targets. The IRSA adapter is explicitly disabled.
+**The default Explorer is empty and ready for real data.** Synthetic observations require the explicit development opt-in below. No local SPHEREx FITS dataset is integrated. Reference target positions are real or supplied in the brief; simulated stars, dates, motion and brightness are not measurements of those targets. The IRSA adapter is explicitly disabled.
 
 ## Quick start
 
@@ -37,10 +37,16 @@ npm run dev
 
 Next.js proxies `/api/*` and `/health` to the backend. If the API is elsewhere, copy `frontend/.env.example` to `frontend/.env.local`, change `API_INTERNAL_URL`, and restart Next.js. Backend `.env.example` documents environment variables; export them in your shell or deployment environment (the backend does not automatically load `.env`).
 
+## Development demonstration (optional)
+
+To exercise the preserved synthetic backend, put `NEXT_PUBLIC_ENABLE_SYNTHETIC_DEMO=true` in `frontend/.env.local` and restart Next.js. For production builds, set the variable before `npm run build`. Leave it unset or `false` for the default ready state. This setting is explicitly a development demonstration, not a real-data connection. Changing `OBSERVATION_SOURCE` alone does not enable synthetic images in the frontend.
+
+A real provider is not implemented in this release. See `docs/REAL_DATA_INTEGRATION.md` for the required FITS/WCS, calibration and contract work before activation.
+
 ## What is implemented
 
-- `/`: original procedural nebula artwork; GSAP hero choreography; desktop sticky story linked to eight epochs; manual story controls on small screens and reduced-motion devices; six detector demonstrations; illustrated workflow; five target links.
-- `/explore`: decimal-coordinate validation, target presets, FOV and detector controls, eight API-generated images, URL restoration and copy-to-share.
+- `/`: local NASA / Webb photography, oversized Archivo typography, deep-purple art direction, four distinct GSAP scroll sequences, manual story controls for mobile/reduced motion, six detector explanations, and an interactive five-target gallery.
+- `/explore`: readable instrument controls, an unpopulated “Observatory ready” workspace, decimal-coordinate validation, target presets, FOV and detector controls, URL restoration and copy-to-share. The eight-frame API workflow remains available in explicit development mode.
 - Single-frame, blink, side-by-side and **calculated B − A difference** modes. Pair selectors and adjustable blink interval. Changing modes pauses playback; use **Start blink** to alternate the selected pair.
 - Playback at 0.5×, 1×, 2× and 4×; previous/next; scrubber; frame thumbnails. Manual frame selection returns to single-frame mode.
 - Zoom from 100% to 800%, pointer/touch drag to pan, synchronized split views, fit/reset, crosshair toggle, image-loading/error/retry states.
@@ -69,11 +75,13 @@ Optional browser smoke tests (run in an environment with browser support):
 cd frontend
 npx playwright install chromium
 npm run test:e2e
+# Also check the explicitly enabled synthetic development workflow (POSIX shell):
+npm run test:e2e:demo
 ```
 
-The browser suite launches both servers and checks desktop (1440px), tablet (820px), and mobile layouts; navigation; URL restoration; validation; playback; zoom; comparison modes; reduced motion; horizontal overflow; and screenshots. Browser executables are not bundled.
+The browser suite launches both servers and checks wide desktop (1920px), desktop (1440px), tablet (768px), and mobile (390px) layouts; navigation; URL restoration; validation; playback; zoom; comparison modes; reduced motion; horizontal overflow; and screenshots. Browser executables are not bundled.
 
-See `docs/VALIDATION.md` for **actual checks executed and verification limits**. Browser tests are supplied but were not run in the authoring environment because its preview relay was unavailable.
+See `docs/REDESIGN_V2.md` for the design system, animation map, changed-file list and preservation audit. See `docs/VALIDATION.md` for **actual checks executed and verification limits**. Browser tests are supplied but were not run in the authoring environment because its preview relay was unavailable.
 
 ## Production
 
@@ -98,7 +106,7 @@ skytrace/
     components/explorer/    Controls, viewer, comparisons and timeline
     components/ui/          Shared navigation and footer
     lib/                    Typed API model, validation, target configuration
-    public/                 Local original artwork and demonstration frames
+    public/                 Credited NASA/Webb imagery and labeled demo frames
     tests/                  Node validation/URL tests
     e2e/                    Playwright interaction and responsive tests
   backend/
@@ -128,7 +136,7 @@ backend/.venv/bin/python scripts/generate_assets.py
 python3 scripts/make_presets.py
 ```
 
-The hero nebula is original procedural art. The narrative frames are precomputed by the same Python provider used by the explorer; the explorer itself always requests its scientific data from the running backend. No external photographs or official NASA logos are used.
+The asset script reproduces the retained v1 procedural nebula and educational frames, not the v2 NASA/Webb photographs. Source URLs and credits for those locally optimized images are in `frontend/public/images/credits.json` and `/about#credits`. The default Explorer checks `/health` and does not request synthetic observations. The development workflow requests images from the running backend. No official NASA logo is used.
 
 ## References
 
