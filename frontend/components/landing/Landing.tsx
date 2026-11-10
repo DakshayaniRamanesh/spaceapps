@@ -85,7 +85,7 @@ export default function Landing() {
             )
             .to(".hero-edge", { yPercent: -40, opacity: 0 }, 0);
           // C: an inset monochrome window expands; the display treatment crossfades,
-          // then the array explanation enters independently. No science data is altered.
+          // the heading completely fades off, and the spectral bands enter.
           const c = gsap.timeline({
             scrollTrigger: {
               trigger: ".infrared-section",
@@ -98,22 +98,22 @@ export default function Landing() {
           c.fromTo(
             ".infrared-image-wrap",
             { clipPath: "inset(18% 19% 12% 19%)", scale: 0.83 },
-            { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 0.65 },
+            { clipPath: "inset(0% 0% 0% 0%)", scale: 1.05, duration: 0.65 },
             0,
           )
-            .to(".infrared-monochrome", { opacity: 0, duration: 0.55 }, 0.15)
+            .to(".infrared-monochrome", { opacity: 0, duration: 0.5 }, 0.12)
             .to(
               ".infrared-heading",
-              { xPercent: -14, yPercent: -35, opacity: 0.12, duration: 0.5 },
-              0.15,
+              { yPercent: -40, opacity: 0, duration: 0.35, ease: "power2.in" },
+              0.1,
             )
             .fromTo(
               ".detector-overlay",
               { xPercent: 30, opacity: 0 },
-              { xPercent: 0, opacity: 1, duration: 0.5 },
-              0.43,
+              { xPercent: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
+              0.4,
             );
-          // D: a wide photographic scene becomes an unpopulated instrument preview.
+          // D: clean instrument preview enters smoothly alongside the copy.
           const d = gsap.timeline({
             scrollTrigger: {
               trigger: ".observatory-bridge",
@@ -125,22 +125,10 @@ export default function Landing() {
           });
           d.fromTo(
             ".preview-shell",
-            { scale: 1.75, xPercent: 32, yPercent: 4 },
-            { scale: 1, xPercent: 0, yPercent: 0, duration: 0.6 },
+            { scale: 0.92, y: 50, opacity: 0.3 },
+            { scale: 1, y: 0, opacity: 1, duration: 0.6 },
             0,
           )
-            .fromTo(
-              ".bridge-photo",
-              { opacity: 1 },
-              { opacity: 0, duration: 0.35 },
-              0.35,
-            )
-            .fromTo(
-              ".preview-ui",
-              { opacity: 0 },
-              { opacity: 1, duration: 0.35 },
-              0.4,
-            )
             .fromTo(
               ".bridge-orbits span",
               { scale: 1.45, rotation: -25, opacity: 0.7 },
@@ -157,13 +145,13 @@ export default function Landing() {
               ".bridge-copy",
               { y: 85, opacity: 0 },
               { y: 0, opacity: 1, duration: 0.45 },
-              0.5,
+              0.25,
             )
             .fromTo(
               ".preview-caption",
               { opacity: 0 },
               { opacity: 1, duration: 0.2 },
-              0.7,
+              0.5,
             );
         }, root);
         return () => ctx.revert();

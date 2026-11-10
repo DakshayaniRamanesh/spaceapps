@@ -13,8 +13,8 @@ export default function Hero() {
         <div className="hero-shade" />
         <img
           className="hero-deep"
-          src="/images/carina.webp"
-          alt="The Cosmic Cliffs in the Carina Nebula, a James Webb Space Telescope infrared composite"
+          src="/images/deep-space.jpg"
+          alt="Deep starry sky and Milky Way"
         />
         <div className="hero-deep-shade" />
         <span className="hero-edge" aria-hidden="true">
@@ -62,7 +62,7 @@ export default function Hero() {
             <ArrowDown size={18} /> Scroll to explore
           </a>
           <span className="hero-credit">
-            Earth: NASA · Nebula: NASA, ESA, CSA, STScI
+            Earth: NASA · Deep Space Starfield
             <br />
             Editorial imagery / not SPHEREx data
           </span>

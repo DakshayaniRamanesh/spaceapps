@@ -20,12 +20,12 @@ export default function SpectralSection() {
       <div className="infrared-sticky">
         <div className="infrared-image-wrap">
           <img
-            src="/images/carina.webp"
+            src="/images/deep-space.jpg"
             className="infrared-image"
-            alt="Webb infrared composite of the Cosmic Cliffs"
+            alt="Deep starry sky and Milky Way"
           />
           <img
-            src="/images/carina.webp"
+            src="/images/deep-space.jpg"
             className="infrared-monochrome"
             alt=""
             aria-hidden="true"
@@ -85,7 +85,7 @@ export default function SpectralSection() {
             processing.
           </p>
         </div>
-        <p className="infrared-credit">Cosmic Cliffs · NASA, ESA, CSA, STScI</p>
+        <p className="infrared-credit">Deep sky starfield</p>
       </div>
     </section>
   );

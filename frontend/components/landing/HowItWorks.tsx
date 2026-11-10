@@ -15,11 +15,6 @@ export default function HowItWorks() {
           <span />
         </div>
         <div className="preview-shell">
-          <img
-            className="bridge-photo"
-            src="/images/carina.webp"
-            alt="Cosmic Cliffs, used as editorial context for the observatory introduction"
-          />
           <div className="preview-ui">
             <div className="preview-nav">
               <strong>skytrace</strong>
