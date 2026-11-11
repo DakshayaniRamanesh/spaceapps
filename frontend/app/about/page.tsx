@@ -112,17 +112,8 @@ export default function AboutPage() {
       </section>
 
       {/* SECTION 3: BEHIND THE DATA — THE IMAGE IS ONLY THE BEGINNING */}
-      <section id="pipeline" className="about-pipeline section-pad" aria-labelledby="pipeline-title">
-        <div className="pipeline-header">
-          <p className="eyebrow">BEHIND THE DATA</p>
-          <h2 id="pipeline-title">THE IMAGE IS ONLY THE BEGINNING.</h2>
-          <p className="pipeline-lead">
-            Before observations from different moments can reveal meaningful changes,
-            they must be brought into the same scientific frame of reference.
-          </p>
-        </div>
-
-        {/* 4-Stage Interactive Visualization */}
+      <section id="pipeline" className="about-pipeline" aria-label="Scientific Data Processing Pipeline">
+        {/* Cinematic Scroll Storytelling Exhibition */}
         <PipelineVisualization />
       </section>
 
