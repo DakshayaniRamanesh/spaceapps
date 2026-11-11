@@ -21,10 +21,31 @@ export default function Navigation() {
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
   }, [open]);
+  const handleChangingSkyClick = (e: React.MouseEvent) => {
+    setOpen(false);
+    if (path === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleBrandClick = (e: React.MouseEvent) => {
+    setOpen(false);
+    if (path === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <>
       <header className={`navigation ${path === "/" ? "landing-nav" : ""}`}>
-        <Link className="brand" href="/" aria-label="SkyTrace home">
+        <Link
+          className="brand"
+          href="/"
+          aria-label="SkyTrace home"
+          onClick={handleBrandClick}
+        >
           <span className="brand-mark" aria-hidden="true" />
           skytrace
         </Link>
@@ -35,7 +56,13 @@ export default function Navigation() {
           <Link href="/about" className={path === "/about" ? "active" : ""}>
             Our mission
           </Link>
-          <Link href="/#targets">The changing sky</Link>
+          <Link
+            href="/"
+            onClick={handleChangingSkyClick}
+            className={path === "/" ? "active" : ""}
+          >
+            The changing sky
+          </Link>
         </nav>
         <div className="nav-end">
           <span
@@ -75,7 +102,7 @@ export default function Navigation() {
         >
           <Link href="/explore">Explorer ↗</Link>
           <Link href="/about">Our mission</Link>
-          <Link href="/#targets" onClick={() => setOpen(false)}>
+          <Link href="/" onClick={handleChangingSkyClick}>
             The changing sky
           </Link>
           <p>
