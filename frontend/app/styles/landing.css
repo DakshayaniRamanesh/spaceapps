@@ -23,6 +23,8 @@
   height: 100%;
   object-fit: cover;
   max-width: none;
+  image-rendering: auto;
+  will-change: transform;
 }
 .hero-art {
   object-position: 50% 53%;
@@ -170,6 +172,7 @@
   font: 800 clamp(80px, 10vw, 160px)/0.95 var(--heading);
   letter-spacing: -0.065em;
   opacity: 0;
+  pointer-events: none;
 }
 .journey-title span {
   display: block;
@@ -238,8 +241,11 @@
 }
 .motion-frame {
   position: relative;
-  width: min(70svh, 90%);
+  width: min(72svh, 92%);
   aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(155, 114, 242, 0.16);
 }
 .motion-frame > img {
   position: absolute;
@@ -247,9 +253,9 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: grayscale(1);
-  transition: opacity 0.22s;
+  transition: opacity 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
   background: #04030a;
+  image-rendering: auto;
 }
 .motion-frame > svg {
   position: absolute;
@@ -678,9 +684,13 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: grayscale(1);
-  opacity: 0.65;
-  transform: scale(1.5);
+  opacity: 0.92;
+  transform: scale(1.02);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.4s ease;
+  image-rendering: auto;
+}
+.target-feature:hover .target-scene > img {
+  transform: scale(1.06);
 }
 .target-orb {
   position: absolute;

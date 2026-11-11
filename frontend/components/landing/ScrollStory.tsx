@@ -91,21 +91,59 @@ export default function ScrollStory() {
                 style={{ opacity: i === frame ? 1 : 0 }}
               />
             ))}
-            <svg viewBox="0 0 100 100" aria-hidden="true">
+            <svg viewBox="0 0 100 100" aria-hidden="true" className="motion-reticle-svg">
+              <defs>
+                <linearGradient id="trackGrad" x1="42%" y1="55%" x2={`${mx}%`} y2={`${my}%`}>
+                  <stop offset="0%" stopColor="#9b72f2" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#f7f4ff" stopOpacity="0.9" />
+                </linearGradient>
+              </defs>
               <path
                 d={`M42 55 L${mx} ${my}`}
-                stroke="#f7f4ff"
-                strokeWidth=".2"
-                strokeDasharray=".7 .8"
+                stroke="url(#trackGrad)"
+                strokeWidth=".3"
+                strokeDasharray=".8 .8"
+              />
+              {/* Historical epoch tick marks */}
+              {Array.from({ length: frame + 1 }, (_, k) => {
+                const kx = (0.5 + (-0.48 + k * 0.14) / 6) * 100;
+                const ky = (0.5 + (0.3 - k * 0.075) / 6) * 100;
+                return (
+                  <circle
+                    key={k}
+                    cx={kx}
+                    cy={ky}
+                    r={k === frame ? "0.8" : "0.5"}
+                    fill={k === frame ? "#ffffff" : "#bfa1ff"}
+                    opacity={k === frame ? 1 : 0.6}
+                  />
+                );
+              })}
+              {/* Targeting reticle */}
+              <circle
+                cx={mx}
+                cy={my}
+                r="3.5"
+                fill="none"
+                stroke="#9b72f2"
+                strokeWidth=".28"
+                opacity="0.85"
               />
               <circle
                 cx={mx}
                 cy={my}
-                r="4"
+                r="5.5"
                 fill="none"
-                stroke="#bfa1ff"
-                strokeWidth=".25"
+                stroke="#d4b8ff"
+                strokeWidth=".18"
+                strokeDasharray="1.2 1.5"
+                opacity="0.65"
               />
+              {/* Crosshair marks */}
+              <line x1={mx - 6.5} y1={my} x2={mx - 4.2} y2={my} stroke="#f7f4ff" strokeWidth=".2" />
+              <line x1={mx + 4.2} y1={my} x2={mx + 6.5} y2={my} stroke="#f7f4ff" strokeWidth=".2" />
+              <line x1={mx} y1={my - 6.5} x2={mx} y2={my - 4.2} stroke="#f7f4ff" strokeWidth=".2" />
+              <line x1={mx} y1={my + 4.2} x2={mx} y2={my + 6.5} stroke="#f7f4ff" strokeWidth=".2" />
             </svg>
             <span
               className="moving-label"

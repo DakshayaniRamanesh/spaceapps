@@ -55,7 +55,7 @@
     "ra": 248.16761083,
     "dec": 66.75497942,
     "description": "A pulsating variable star whose brightness changes over time.",
-    "source": "https://simbad.cds.unistra.fr/simbad/sim-id?Ident=%40376084&Name=V%2A+R+Dra&submit=submit",
+    "source": "https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=R+Dra",
     "epoch": "J2000",
     "verified": true
   }

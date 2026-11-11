@@ -474,6 +474,23 @@ svg {
 .sources > .caption {
   margin-top: 28px;
 }
+.credits-section-block {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.credits-section-block h3 {
+  font-size: 26px;
+  margin: 0 0 16px;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+.credit-subtext {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--secondary-text);
+  margin-top: 18px;
+}
 .error {
   color: var(--red);
   font-size: 15px;

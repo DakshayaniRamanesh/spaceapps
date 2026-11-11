@@ -62,26 +62,37 @@ export default function Landing() {
               invalidateOnRefresh: true,
             },
           });
-          a.to(".hero-art", { scale: 1.28, yPercent: 10, ease: "none" }, 0)
-            .to(".hero-copy", { yPercent: -28, opacity: 0, duration: 0.45 }, 0)
+          a.to(".hero-art", { scale: 1.08, yPercent: 6, ease: "none" }, 0)
+            .to(".hero-copy", { yPercent: -32, opacity: 0, duration: 0.38, ease: "power2.in" }, 0)
             .to(
               ".hero-orbit-link",
-              { xPercent: 60, yPercent: 35, opacity: 0, duration: 0.4 },
+              { scale: 0.8, xPercent: 40, yPercent: 25, opacity: 0, duration: 0.35 },
               0,
             )
-            .to(".hero-shade", { opacity: 1, duration: 0.4 }, 0)
+            .to(".hero-shade", { opacity: 1, duration: 0.35 }, 0)
             .fromTo(
               ".hero-deep",
-              { clipPath: "inset(100% 0% 0% 0%)", scale: 1.12 },
-              { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 0.65 },
-              0.2,
+              { clipPath: "inset(100% 0% 0% 0%)", scale: 1.05 },
+              { clipPath: "inset(0% 0% 0% 0%)", scale: 1, duration: 0.55, ease: "power2.inOut" },
+              0.18,
             )
-            .to(".hero-deep-shade", { opacity: 1, duration: 0.5 }, 0.35)
+            .to(".hero-deep-shade", { opacity: 0.85, duration: 0.45 }, 0.32)
             .fromTo(
               ".journey-title",
-              { opacity: 0, y: 85 },
-              { opacity: 1, y: 0, duration: 0.4 },
-              0.55,
+              { opacity: 0 },
+              { opacity: 1, duration: 0.1 },
+              0.4,
+            )
+            .fromTo(
+              ".journey-title .heading-mask > span",
+              { yPercent: 110, opacity: 0 },
+              { yPercent: 0, opacity: 1, stagger: 0.12, duration: 0.45, ease: "power3.out" },
+              0.42,
+            )
+            .to(
+              ".journey-title",
+              { opacity: 0, yPercent: -20, duration: 0.25, ease: "power2.in" },
+              0.82,
             )
             .to(".hero-edge", { yPercent: -40, opacity: 0 }, 0);
           // C: an inset monochrome window expands; the display treatment crossfades,
@@ -97,21 +108,21 @@ export default function Landing() {
           });
           c.fromTo(
             ".infrared-image-wrap",
-            { clipPath: "inset(18% 19% 12% 19%)", scale: 0.83 },
-            { clipPath: "inset(0% 0% 0% 0%)", scale: 1.05, duration: 0.65 },
+            { clipPath: "inset(16% 17% 12% 17%)", scale: 0.88 },
+            { clipPath: "inset(0% 0% 0% 0%)", scale: 1.02, duration: 0.65, ease: "power2.inOut" },
             0,
           )
-            .to(".infrared-monochrome", { opacity: 0, duration: 0.5 }, 0.12)
+            .to(".infrared-monochrome", { opacity: 0, duration: 0.48 }, 0.12)
             .to(
               ".infrared-heading",
-              { yPercent: -40, opacity: 0, duration: 0.35, ease: "power2.in" },
-              0.1,
+              { yPercent: -35, opacity: 0, duration: 0.32, ease: "power2.in" },
+              0.08,
             )
             .fromTo(
               ".detector-overlay",
-              { xPercent: 30, opacity: 0 },
-              { xPercent: 0, opacity: 1, duration: 0.5, ease: "power2.out" },
-              0.4,
+              { xPercent: 20, opacity: 0, scale: 0.96 },
+              { xPercent: 0, opacity: 1, scale: 1, duration: 0.48, ease: "power2.out" },
+              0.38,
             );
           // D: clean instrument preview enters smoothly alongside the copy.
           const d = gsap.timeline({
@@ -125,17 +136,17 @@ export default function Landing() {
           });
           d.fromTo(
             ".preview-shell",
-            { scale: 0.92, y: 50, opacity: 0.3 },
-            { scale: 1, y: 0, opacity: 1, duration: 0.6 },
+            { scale: 0.94, y: 50, opacity: 0.35 },
+            { scale: 1, y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
             0,
           )
             .fromTo(
               ".bridge-orbits span",
-              { scale: 1.45, rotation: -25, opacity: 0.7 },
+              { scale: 1.3, rotation: -20, opacity: 0.6 },
               {
                 scale: 1,
-                rotation: 0,
-                opacity: 0.18,
+                rotation: 8,
+                opacity: 0.22,
                 stagger: 0.08,
                 duration: 0.7,
               },
@@ -143,14 +154,14 @@ export default function Landing() {
             )
             .fromTo(
               ".bridge-copy",
-              { y: 85, opacity: 0 },
-              { y: 0, opacity: 1, duration: 0.45 },
-              0.25,
+              { y: 60, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
+              0.22,
             )
             .fromTo(
               ".preview-caption",
               { opacity: 0 },
-              { opacity: 1, duration: 0.2 },
+              { opacity: 1, duration: 0.25 },
               0.5,
             );
         }, root);

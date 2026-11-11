@@ -54,8 +54,12 @@ export default function Hero() {
           <ArrowUpRight size={30} />
         </Link>
         <div className="journey-title" aria-hidden="true">
-          <span>BEYOND</span>
-          <span>THE HORIZON.</span>
+          <span className="heading-mask">
+            <span>BEYOND</span>
+          </span>
+          <span className="heading-mask">
+            <span>THE HORIZON.</span>
+          </span>
         </div>
         <div className="hero-footer">
           <a href="#story">

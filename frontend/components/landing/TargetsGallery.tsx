@@ -34,7 +34,10 @@ export default function TargetsGallery() {
                 aria-hidden="true"
                 style={{ opacity: selected === i ? 1 : 0 }}
               >
-                <img src={`/demo/frame-${i}.png`} alt="" />
+                <img
+                  src={`/demo/target-${i}.png`}
+                  alt={`${item.name} simulated stellar field`}
+                />
                 <span className="target-orb" />
                 <span className="target-orbit" />
               </div>
