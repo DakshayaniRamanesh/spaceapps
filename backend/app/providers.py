@@ -323,7 +323,7 @@ class SpherexIRSAProvider(ObservationProvider):
                 )
             except Exception as exc:
                 logger.warning("Upstream IRSA observation discovery failed: %s", exc)
-                records = []
+                raise RuntimeError("Upstream IRSA observation discovery failed") from exc
 
         d_idx = int(request.detector[1]) - 1
         wavelength_range = RANGES[d_idx]

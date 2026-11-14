@@ -48,11 +48,22 @@ class IrsaSpherexClient:
         self.max_retries = max_retries
         self.timeout = timeout
         self._sia_cache: dict[tuple[float, float, float], Any] = {}
+        from astroquery.ipac.irsa.core import IrsaClass
+
+        self._irsa = IrsaClass()
+        session = self._irsa._session
+        original_request = session.request
+
+        def request_with_timeout(method: str, url: str, **kwargs):
+            kwargs.setdefault("timeout", self.timeout)
+            return original_request(method, url, **kwargs)
+
+        # PyVO's SIA calls use requests without a timeout by default. Keep
+        # archive discovery bounded just like FITS cutout downloads.
+        session.request = request_with_timeout
 
     def query_sia_table(self, ra: float, dec: float, fov_arcmin: float):
         """Query and cache the raw SIA table for a spatial position across all collections."""
-        from astroquery.ipac.irsa import Irsa
-
         cache_key = (round(ra, 4), round(dec, 4), round(fov_arcmin, 2))
         if cache_key in self._sia_cache:
             return self._sia_cache[cache_key]
@@ -62,7 +73,7 @@ class IrsaSpherexClient:
 
         try:
             logger.info("Querying IRSA SIA for (%s, %s) radius=%s", ra, dec, search_radius)
-            table = Irsa.query_sia(
+            table = self._irsa.query_sia(
                 pos=(coord, search_radius),
                 collection=["spherex_dr1", "spherex_qr3"],
             )
@@ -70,7 +81,7 @@ class IrsaSpherexClient:
             return table
         except Exception as exc:
             logger.warning("IRSA SIA query failed: %s", exc)
-            return None
+            raise RuntimeError("IRSA SIA observation discovery failed") from exc
 
     def search_observations(
         self,

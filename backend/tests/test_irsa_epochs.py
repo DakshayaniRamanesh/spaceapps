@@ -4,7 +4,7 @@ import math
 
 import pytest
 from astropy.table import Table
-from astroquery.ipac.irsa import Irsa
+from astroquery.ipac.irsa.core import IrsaClass
 
 from app.archive.irsa_client import IrsaSpherexClient, mjd_to_utc_iso
 
@@ -28,12 +28,12 @@ def client(tmp_path, monkeypatch):
     result = make_sia_table()
     calls = 0
 
-    def query_sia(**_kwargs):
+    def query_sia(_self, **_kwargs):
         nonlocal calls
         calls += 1
         return result
 
-    monkeypatch.setattr(Irsa, "query_sia", query_sia)
+    monkeypatch.setattr(IrsaClass, "query_sia", query_sia)
     instance = IrsaSpherexClient(cache_dir=tmp_path)
     return instance, lambda: calls, result
 
@@ -115,6 +115,17 @@ def test_position_query_cache_is_shared_across_selection_changes(client):
         start_mjd=60100, end_mjd=60200,
     )
     assert call_count() == 1
+
+
+def test_sia_timeout_is_reported_as_a_failure_not_empty_coverage(tmp_path, monkeypatch):
+    instance = IrsaSpherexClient(cache_dir=tmp_path, timeout=0.01)
+
+    def fail_request(**_kwargs):
+        raise TimeoutError("IRSA did not respond")
+
+    monkeypatch.setattr(instance._irsa, "query_sia", fail_request)
+    with pytest.raises(RuntimeError, match="IRSA SIA observation discovery failed"):
+        instance.search_observations(10, 10, 12, "D1")
 
 
 def test_invalid_mjd_does_not_get_a_substitute_timestamp():
