@@ -10,6 +10,17 @@ class FieldRequest(BaseModel):
     fov_arcmin: float = Field(default=12, ge=2, le=60)
     detector: Detector = 'D1'
 
+class EpochSelection(BaseModel):
+    """How epochs were shortlisted from the archive (reproducibility metadata).
+
+    spread=True samples one exposure per ~30-day bin (team heuristic,
+    not a mission standard) so the time-lapse spans the survey.
+    """
+    limit: int = Field(default=12, ge=2, le=50)
+    spread: bool = False
+    start_mjd: float | None = None
+    end_mjd: float | None = None
+
 class Quality(BaseModel):
     registration: str = 'Common synthetic tangent-plane grid'
     noise_sigma: float = 2.5
@@ -41,4 +52,6 @@ class ObservationSet(BaseModel):
     wavelength_model: str = 'Illustrative array-dependent response; no per-pixel wavelength calibration'
     release: str | None = None
     frames: list[Frame]
+    total_candidates: int | None = None
+    epoch_selection: EpochSelection | None = None
     notice: str = 'Synthetic observations. Motion, variability, dates and noise are illustrative, not measurements of the named target.'

@@ -38,3 +38,47 @@ test("shared field query round-trips without losing precision", () => {
     field,
   );
 });
+
+test("field query round-trips epoch selection", () => {
+  const field = {
+    ra: 10,
+    dec: 20,
+    fov_arcmin: 12,
+    detector: "D1",
+    limit: 24,
+    spread: true,
+    start_date: "2025-06-01",
+    end_date: "2026-01-01",
+  };
+  const query = new URLSearchParams(fieldQuery(field));
+  assert.equal(query.get("limit"), "24");
+  assert.equal(query.get("spread"), "1");
+  assert.equal(query.get("start"), "2025-06-01");
+  assert.equal(query.get("end"), "2026-01-01");
+});
+
+test("default epoch selection keeps shared URLs clean", () => {
+  const query = new URLSearchParams(
+    fieldQuery({ ...DEFAULT_FIELD, limit: 12 }),
+  );
+  assert.equal(query.get("limit"), null);
+  assert.equal(query.get("spread"), null);
+});
+
+test("field validation rejects invalid epoch selections and dates", () => {
+  for (const limit of [1, 51, 2.5, NaN])
+    assert.ok(validateField({ ...DEFAULT_FIELD, limit }));
+  for (const start_date of ["2025-02-30", "2025-2-03", "not-a-date"])
+    assert.ok(validateField({ ...DEFAULT_FIELD, start_date }));
+  assert.ok(
+    validateField({
+      ...DEFAULT_FIELD,
+      start_date: "2026-01-01",
+      end_date: "2025-12-31",
+    }),
+  );
+  assert.equal(
+    validateField({ ...DEFAULT_FIELD, limit: 24, spread: true }),
+    undefined,
+  );
+});

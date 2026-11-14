@@ -101,6 +101,34 @@
   outline: none;
   background: #1c1130;
 }
+.controls label.checkbox-label {
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 8px 0 16px;
+  line-height: 1.45;
+}
+.controls label.checkbox-label input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+.epoch-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.epoch-dates > div {
+  min-width: 0;
+}
+.epoch-dates input[type="date"] {
+  min-width: 0;
+  padding-inline: 8px;
+  font-size: 13px;
+}
 .controls form > input,
 .controls form > select {
   margin-bottom: 20px;

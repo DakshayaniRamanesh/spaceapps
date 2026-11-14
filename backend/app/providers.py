@@ -16,7 +16,7 @@ import numpy as np
 from PIL import Image
 from astropy.coordinates import SkyCoord
 
-from .models import FieldRequest, Frame, ObservationSet, Quality
+from .models import FieldRequest, Frame, ObservationSet, Quality, EpochSelection
 from .archive.irsa_client import IrsaSpherexClient
 from .science.fits_loader import parse_spherex_mef
 from .science.registration import reproject_to_grid
@@ -148,7 +148,15 @@ def render_difference(diff: np.ndarray) -> bytes:
 
 class ObservationProvider(ABC):
     @abstractmethod
-    def observations(self, request: FieldRequest) -> ObservationSet: ...
+    def observations(
+        self,
+        request: FieldRequest,
+        *,
+        limit: int = 12,
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> ObservationSet: ...
     @abstractmethod
     def array(self, frame_id: str) -> np.ndarray: ...
     @abstractmethod
@@ -156,7 +164,16 @@ class ObservationProvider(ABC):
 
 
 class SyntheticObservationProvider(ObservationProvider):
-    def observations(self, request: FieldRequest) -> ObservationSet:
+    def observations(
+        self,
+        request: FieldRequest,
+        *,
+        limit: int = 12,
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> ObservationSet:
+        """Synthetic scenes always contain 8 epochs; selection params are ignored."""
         request = canonical(request)
         key = field_key(request)
         scene(key)
@@ -237,27 +254,76 @@ class SpherexIRSAProvider(ObservationProvider):
             },
         ]
 
-    def observations(self, request: FieldRequest) -> ObservationSet:
+    def observations(
+        self,
+        request: FieldRequest,
+        *,
+        limit: int = 12,
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> ObservationSet:
         request = canonical(request)
-        cache_k = f"spx:{request.ra:.6f}:{request.dec:.6f}:{request.fov_arcmin:.4f}:{request.detector}"
+        selection = EpochSelection(
+            limit=limit,
+            spread=spread,
+            start_mjd=start_mjd,
+            end_mjd=end_mjd,
+        )
+        cache_k = (
+            f"spx:{request.ra:.6f}:{request.dec:.6f}:{request.fov_arcmin:.4f}:{request.detector}"
+            f":n{limit}:s{int(spread)}:"
+            f"{start_mjd if start_mjd is not None else ''}:"
+            f"{end_mjd if end_mjd is not None else ''}"
+        )
         cached_manifest = MANIFEST_CACHE.get(cache_k)
         if cached_manifest is not None:
             return cached_manifest
 
-        records: list[dict] = []
+        total_candidates = 0
         if self.fixtures_mode:
-            records = self._get_offline_fixtures(request)
+            candidates = []
+            for record in self._get_offline_fixtures(request):
+                try:
+                    mjd = float(record["mjd"])
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    continue
+                if not np.isfinite(mjd) or mjd <= 0:
+                    continue
+                if start_mjd is not None and mjd < start_mjd:
+                    continue
+                if end_mjd is not None and mjd > end_mjd:
+                    continue
+                candidates.append((mjd, record))
+            candidates.sort(key=lambda item: item[0])
+            total_candidates = len(candidates)
+            if spread:
+                records = []
+                bins: set[int] = set()
+                last_mjd: float | None = None
+                for mjd, record in candidates:
+                    bin_id = int(mjd // 30)
+                    if bin_id in bins or (
+                        last_mjd is not None and mjd - last_mjd < 29
+                    ):
+                        continue
+                    bins.add(bin_id)
+                    last_mjd = mjd
+                    records.append(record)
+                    if len(records) >= limit:
+                        break
+            else:
+                records = [record for _, record in candidates[:limit]]
         else:
             try:
-                records = self.client.search_observations(
-                    ra=request.ra,
-                    dec=request.dec,
-                    fov_arcmin=request.fov_arcmin,
-                    detector=request.detector,
+                records, total_candidates = self.client.search_observations(
+                    ra=request.ra, dec=request.dec, fov_arcmin=request.fov_arcmin,
+                    detector=request.detector, max_epochs=limit,
+                    start_mjd=start_mjd, end_mjd=end_mjd, spread=spread,
                 )
             except Exception as exc:
                 logger.warning("Upstream IRSA observation discovery failed: %s", exc)
-                records = []
+                raise RuntimeError("Upstream IRSA observation discovery failed") from exc
 
         d_idx = int(request.detector[1]) - 1
         wavelength_range = RANGES[d_idx]
@@ -272,7 +338,9 @@ class SpherexIRSAProvider(ObservationProvider):
                 wavelength_range_um=wavelength_range,
                 release="DR1+QR3",
                 frames=[],
-                notice="No SPHEREx archival observations found covering these coordinates and detector in DR1+QR3.",
+                total_candidates=total_candidates,
+                epoch_selection=selection,
+                notice="No SPHEREx archival observations found covering these coordinates, detector and date window in DR1+QR3.",
             )
             MANIFEST_CACHE.set(cache_k, empty_set)
             return empty_set
@@ -310,6 +378,8 @@ class SpherexIRSAProvider(ObservationProvider):
             wavelength_range_um=wavelength_range,
             release="DR1+QR3",
             frames=frames,
+            total_candidates=total_candidates,
+            epoch_selection=selection,
             notice="Actual archived SPHEREx data (DR1+QR3); calibrated spectral image cutouts from NASA/IPAC IRSA.",
         )
         MANIFEST_CACHE.set(cache_k, manifest)

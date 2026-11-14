@@ -74,7 +74,11 @@ export default function Explorer() {
         dec: String(f.dec),
         fov_arcmin: String(f.fov_arcmin),
         detector: f.detector,
+        limit: String(f.limit ?? 12),
       });
+      if (f.spread) q.set("spread", "true");
+      if (f.start_date) q.set("start_date", f.start_date);
+      if (f.end_date) q.set("end_date", f.end_date);
       const res = await fetch(`/api/observations?${q}`, { signal: c.signal });
       if (!res.ok)
         throw new Error(
@@ -85,20 +89,27 @@ export default function Explorer() {
       const result: ObservationSet = await res.json();
       if (c.signal.aborted) return;
       if (!mayDisplaySource(result.source_type, developmentDemoEnabled)) return;
-      if (!result.frames.length) return;
+      const merged: Field = {
+        ...result.request,
+        limit: f.limit,
+        spread: f.spread,
+        start_date: f.start_date,
+        end_date: f.end_date,
+      };
+      if (!result.frames.length) {
+        setField(merged);
+        setError(result.notice || "No observations matched this selection.");
+        return;
+      }
       setData(result);
-      setField(result.request);
+      setField(merged);
       setIndex(0);
       setA(0);
       setB(result.frames.length - 1);
       setMode("single");
       setBlinkIndex(0);
       if (writeUrl)
-        window.history.replaceState(
-          null,
-          "",
-          `/explore?${fieldQuery(result.request)}`,
-        );
+        window.history.replaceState(null, "", `/explore?${fieldQuery(merged)}`);
     } catch (err) {
       if (!c.signal.aborted)
         setError(
@@ -120,6 +131,10 @@ export default function Explorer() {
         dec: num("dec", DEFAULT_FIELD.dec),
         fov_arcmin: num("fov", 12),
         detector: (q.get("detector") || "D1") as Detector,
+        limit: num("limit", 12),
+        spread: q.get("spread") === "1",
+        start_date: q.get("start") || undefined,
+        end_date: q.get("end") || undefined,
       };
       void load(f);
     }
@@ -305,6 +320,12 @@ export default function Explorer() {
                 speed={speed}
                 onSpeed={setSpeed}
                 disabled={mode !== "single" || loading}
+                totalCandidates={data.total_candidates}
+                epochLabel={
+                  data.source_type === "spherex-irsa"
+                    ? "Archived epochs · UTC"
+                    : "Illustrative epochs · UTC"
+                }
               />
             </>
           ) : (

@@ -70,6 +70,32 @@ def test_api_with_irsa_source(monkeypatch):
     assert data["source_type"] == "spherex-irsa"
     assert len(data["frames"]) == 2
 
+    selection_params = {
+        **params,
+        "limit": 24,
+        "spread": "true",
+        "start_date": "2025-04-29",
+        "end_date": "2025-07-28",
+    }
+    selection_response = client.get("/api/observations", params=selection_params)
+    assert selection_response.status_code == 200
+    selection_data = selection_response.json()
+    assert selection_data["epoch_selection"]["limit"] == 24
+    assert selection_data["epoch_selection"]["spread"] is True
+    assert selection_data["total_candidates"] == 2
+    assert len(selection_data["frames"]) == 2
+
+    base_url = "/api/observations"
+    for invalid_limit in (1, 51, "abc"):
+        assert client.get(base_url, params={**params, "limit": invalid_limit}).status_code == 422
+    assert client.get(base_url, params={**params, "limit": 24}).status_code == 200
+    for date_params in (
+        {"start_date": "2025-13-99"},
+        {"start_date": "2026-01-01", "end_date": "2025-01-01"},
+        {"start_date": "2025-04-29", "end_date": "2025-04-29"},
+    ):
+        assert client.get(base_url, params={**params, **date_params}).status_code == 422
+
     frame_0_id = data["frames"][0]["id"]
     frame_1_id = data["frames"][1]["id"]
 

@@ -1,9 +1,11 @@
 import json
+import math
 import os
 from pathlib import Path
 from functools import lru_cache
 from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
+from astropy.time import Time
 from .models import FieldRequest, Detector, ObservationSet
 from .providers import (
     SyntheticObservationProvider,
@@ -53,15 +55,41 @@ def presets():
     return json.loads((Path(__file__).parent / 'presets.json').read_text())
 
 
+def _parse_mjd(value: str | None, name: str) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(Time(value, format="iso", scale="utc").mjd)
+    except Exception:
+        raise HTTPException(422, f"{name} must be an ISO date, e.g. 2025-06-01")
+
+
 @app.get('/api/observations', response_model=ObservationSet)
 def observations(
     ra: float = Query(ge=0, lt=360, allow_inf_nan=False),
     dec: float = Query(ge=-90, le=90, allow_inf_nan=False),
     fov_arcmin: float = Query(12, ge=2, le=60, allow_inf_nan=False),
     detector: Detector = 'D1',
+    limit: int = Query(12, ge=2, le=50, description="Max epochs to shortlist (2–50)"),
+    start_date: str | None = Query(None, pattern=r'^\d{4}-\d{2}-\d{2}$',
+                                   description="Inclusive observation-window start (ISO date, UTC)"),
+    end_date: str | None = Query(None, pattern=r'^\d{4}-\d{2}-\d{2}$',
+                                 description="Inclusive observation-window end (ISO date, UTC)"),
+    spread: bool = Query(False, description="Sample ~one epoch per 30-day bin across the survey"),
 ):
+    start_mjd = _parse_mjd(start_date, "start_date")
+    end_mjd = _parse_mjd(end_date, "end_date")
+    if start_date is not None and end_date is not None and start_date >= end_date:
+        raise HTTPException(422, "start_date must be before end_date")
+    if end_mjd is not None:
+        # Include every observation on end_date, through the final representable
+        # MJD before midnight on the following UTC date.
+        end_mjd = math.nextafter(end_mjd + 1.0, -math.inf)
     try:
-        return provider.observations(FieldRequest(ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector))
+        return provider.observations(
+            FieldRequest(ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector),
+            limit=limit, start_mjd=start_mjd, end_mjd=end_mjd, spread=spread,
+        )
     except NotImplementedError as exc:
         raise HTTPException(503, str(exc))
     except Exception as exc:
