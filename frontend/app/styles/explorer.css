@@ -256,6 +256,7 @@
   border-radius: 6px;
   border: 1px solid rgba(155, 114, 242, 0.16);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  isolation: isolate;
 }
 .viewer-heading {
   display: flex;
@@ -270,6 +271,8 @@
   color: var(--text);
   background: #10091d;
   border-bottom: 1px solid rgba(155, 114, 242, 0.12);
+  position: relative;
+  z-index: 30;
 }
 .viewer-heading .mono {
   font-size: 13px;
@@ -292,6 +295,9 @@
   max-height: 840px;
   background: #020106;
   overflow: hidden;
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .image-port {
   position: relative;
@@ -301,6 +307,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .observation-image {
   width: 100%;
@@ -308,7 +316,11 @@
   object-fit: contain;
   max-width: none;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
   image-rendering: auto;
+  position: relative;
+  z-index: 1;
 }
 .split .image-port + .image-port {
   border-left: 1px solid rgba(155, 114, 242, 0.2);
@@ -327,7 +339,9 @@
   border: 1px solid rgba(155, 114, 242, 0.2);
   border-radius: 4px;
   color: var(--text);
-  z-index: 5;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
 }
 .crosshair {
   position: absolute;
@@ -338,6 +352,8 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
   opacity: 0.7;
+  z-index: 5;
+  user-select: none;
 }
 .crosshair:before,
 .crosshair:after {
@@ -366,6 +382,8 @@
   color: #e5d9f6;
   text-shadow: 0 1px 6px black;
   z-index: 5;
+  pointer-events: none;
+  user-select: none;
 }
 .coordinate-overlay {
   position: absolute;
@@ -380,7 +398,8 @@
   padding: 5px 10px;
   pointer-events: none;
   color: var(--secondary-text);
-  z-index: 5;
+  z-index: 10;
+  user-select: none;
 }
 .synthetic-watermark {
   position: absolute;
@@ -393,7 +412,9 @@
   color: rgba(219, 203, 245, 0.65);
   background: rgba(8, 6, 16, 0.7);
   padding: 3px 0;
-  z-index: 5;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
 }
 .archive-watermark {
   position: absolute;
@@ -407,7 +428,9 @@
   color: #f5c77d;
   background: rgba(8, 6, 16, 0.75);
   padding: 3px 0;
-  z-index: 5;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
 }
 .viewer-toolbar {
   display: flex;
@@ -418,6 +441,8 @@
   background: #10091d;
   border-top: 1px solid rgba(155, 114, 242, 0.12);
   min-height: 64px;
+  position: relative;
+  z-index: 30;
 }
 .zoom-controls {
   display: flex;
@@ -480,8 +505,20 @@
   gap: 20px;
   align-items: center;
   justify-content: center;
-  background: #080610cc;
+  background: rgba(8, 6, 16, 0.88);
+  backdrop-filter: blur(4px);
   font-size: 16px;
+  z-index: 20;
+  pointer-events: auto;
+  user-select: none;
+}
+.viewer-loading.error {
+  background: rgba(16, 7, 18, 0.92);
+}
+.viewer-loading .button {
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 25;
 }
 .spinner {
   width: 28px;
@@ -886,7 +923,7 @@
   }
   .metadata-body {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 25px;
   }
   .metadata-body > header {
@@ -901,6 +938,7 @@
     margin: 0;
     border: 0;
     padding: 0;
+    grid-column: 1 / -1;
   }
   .empty-inspector {
     display: grid;
@@ -1004,13 +1042,24 @@
     font-size: 11px;
     top: 10px;
     left: 8px;
+    padding: 4px 8px;
   }
   .coordinate-overlay {
     font-size: 11px;
-    left: 10px;
+    left: 8px;
+    bottom: 34px;
+    padding: 4px 8px;
   }
   .orientation {
-    right: 10px;
+    right: 12px;
+    bottom: 34px;
+    font-size: 11px;
+  }
+  .synthetic-watermark,
+  .archive-watermark {
+    font-size: 11px;
+    bottom: 6px;
+    padding: 2px 4px;
   }
 }
 @media (max-width: 680px) {
@@ -1113,15 +1162,35 @@
   .split {
     aspect-ratio: 1.1;
   }
-  .split .image-date {
+  .image-date {
     font-size: 10px;
-    max-width: 95%;
-    left: 3px;
-    padding: 4px;
+    top: 8px;
+    left: 8px;
+    padding: 3px 6px;
+  }
+  .coordinate-overlay {
+    font-size: 10px;
+    left: 8px;
+    bottom: 30px;
+    padding: 3px 6px;
+  }
+  .orientation {
+    right: 8px;
+    bottom: 30px;
+    font-size: 10px;
+  }
+  .split .image-date {
+    font-size: 9px;
+    max-width: 90%;
+    left: 4px;
+    top: 6px;
+    padding: 2px 4px;
   }
   .synthetic-watermark,
   .archive-watermark {
-    font-size: 10px;
+    font-size: 9px;
+    bottom: 4px;
+    padding: 2px 4px;
   }
   .timeline {
     padding-top: 12px;

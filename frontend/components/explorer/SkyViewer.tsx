@@ -197,13 +197,13 @@ export default function SkyViewer({
             SYNTHETIC / NOT TELESCOPE DATA
           </span>
         )}
-        {(loading || images.some((img) => !imageStatus[img.src])) && (
+        {loading && (
           <div className="viewer-loading" role="status">
             <span className="spinner" />
-            {loading ? "Generating registered observations…" : "Loading image…"}
+            Generating registered observations…
           </div>
         )}
-        {images.some((img) => imageStatus[img.src] === "failed") && (
+        {!loading && images.some((img) => imageStatus[img.src] === "failed") ? (
           <div className="viewer-loading error" role="alert">
             Image unavailable.
             <button
@@ -216,7 +216,12 @@ export default function SkyViewer({
               Retry image
             </button>
           </div>
-        )}
+        ) : !loading && images.some((img) => !imageStatus[img.src]) ? (
+          <div className="viewer-loading" role="status">
+            <span className="spinner" />
+            Loading image…
+          </div>
+        ) : null}
       </div>
       <div className="viewer-toolbar">
         <div className="zoom-controls">
