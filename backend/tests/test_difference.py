@@ -78,3 +78,30 @@ def test_significance_color_rendering():
 
     # Pixel 2: positive detection (+5 sigma) -> amber tint (Red > Blue)
     assert rgb[0, 2, 0] > rgb[0, 2, 2]
+
+
+def test_science_frame_mask_overlay():
+    arr = np.full((32, 32), 10.0, dtype=np.float32)
+    mask = np.ones((32, 32), dtype=bool)
+    mask[:16, :] = False
+    png_bytes = render_science_frame(
+        arr, mask=mask, is_calibrated=True, show_mask_overlay=True
+    )
+    img = Image.open(io.BytesIO(png_bytes))
+    rgb = np.array(img)
+    assert rgb.shape == (32, 32, 3)
+    # Masked pixels carry crimson hatching / tint (Red > Blue)
+    assert np.all(rgb[:16, :, 0] > rgb[:16, :, 2])
+
+
+def test_difference_frame_mask_overlay():
+    diff = np.zeros((32, 32), dtype=np.float32)
+    valid = np.ones((32, 32), dtype=bool)
+    valid[:16, :] = False
+    png_bytes = render_difference_frame(
+        diff, valid_mask=valid, is_calibrated=True, show_mask_overlay=True
+    )
+    img = Image.open(io.BytesIO(png_bytes))
+    rgb = np.array(img)
+    assert rgb.shape == (32, 32, 3)
+    assert np.all(rgb[:16, :, 0] > rgb[:16, :, 2])

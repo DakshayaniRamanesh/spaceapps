@@ -13,16 +13,29 @@ def png_from_array(rgb: np.ndarray) -> bytes:
     return buffer.getvalue()
 
 
+def apply_mask_overlay(rgb: np.ndarray, valid_mask: np.ndarray) -> np.ndarray:
+    """Overlay diagonal crimson hatching on invalid/unobserved pixels."""
+    invalid = ~valid_mask.astype(bool)
+    yy, xx = np.indices(invalid.shape)
+    hatch = ((yy + xx) % 6) < 2
+    stripe_rgb = np.array([235.0, 72.0, 92.0], dtype=np.float32)
+    tint_rgb = np.array([56.0, 16.0, 26.0], dtype=np.float32)
+    out = np.where((invalid & hatch)[..., None], stripe_rgb, rgb)
+    return np.where((invalid & ~hatch)[..., None], out * 0.35 + tint_rgb * 0.65, out)
+
+
 def render_science_frame(
     arr: np.ndarray,
     mask: np.ndarray | None = None,
     is_calibrated: bool = True,
+    show_mask_overlay: bool = False,
 ) -> bytes:
     """
     Render a float32 science array to 24-bit PNG with an astronomical arcsinh stretch.
     
     Preserves floating-point photometric measurements while rendering subtle background
     features and bright point sources without blowing out dynamic range.
+    When show_mask_overlay=True, overlays diagonal crimson hatching on masked/invalid pixels.
     """
     arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
 
@@ -47,6 +60,10 @@ def render_science_frame(
 
     # SkyTrace blue-tinted cool monochrome palette: [v*0.88, v*0.95, v] * 255
     rgb = np.stack([v * 0.88, v * 0.95, v], axis=-1) * 255
+
+    if show_mask_overlay and mask is not None:
+        rgb = apply_mask_overlay(rgb, mask)
+
     return png_from_array(rgb)
 
 
@@ -82,6 +99,7 @@ def render_difference_frame(
     diff: np.ndarray,
     valid_mask: np.ndarray | None = None,
     is_calibrated: bool = True,
+    show_mask_overlay: bool = False,
 ) -> bytes:
     """
     Render signed difference D = B - A to PNG.
@@ -114,6 +132,8 @@ def render_difference_frame(
 
     color = np.where((diff >= 0)[..., None], positive, negative)
     rgb = zero + strength * (color - zero)
+    if show_mask_overlay and valid_mask is not None:
+        rgb = apply_mask_overlay(rgb, valid_mask)
     return png_from_array(rgb)
 
 
