@@ -92,13 +92,13 @@ def test_ids_survive_cache_eviction():
     np.testing.assert_array_equal(before,provider.array(frame.id))
     assert decode_frame(frame.id)[1]==0
 
-def test_presets_and_disabled_provider():
+def test_presets_and_unprepared_irsa_provider():
     presets=client.get('/api/presets').json()
     assert len(presets)==5
     for preset in presets:
         FieldRequest(ra=preset['ra'],dec=preset['dec'])
-    with pytest.raises(NotImplementedError):
-        SpherexIRSAProvider().observations(FieldRequest(**PARAMS))
+    with pytest.raises(ValueError):
+        SpherexIRSAProvider().observations(FieldRequest(ra=11.125, dec=-20.25))
     assert client.get('/health').json()['real_data_enabled'] is False
 
 def test_fov_scales_angular_motion_instead_of_relabeling():

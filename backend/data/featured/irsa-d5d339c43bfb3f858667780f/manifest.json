@@ -1,0 +1,227 @@
+{
+  "schema_version": 2,
+  "source_type": "spherex-irsa",
+  "dataset_id": "irsa-d5d339c43bfb3f858667780f",
+  "request": {
+    "ra": 248.167611,
+    "dec": 66.754979,
+    "fov_arcmin": 12.0,
+    "detector": "D3"
+  },
+  "coordinate_system": "ICRS; north up, east left; common TAN grid",
+  "width": 118,
+  "height": 118,
+  "intensity_unit": "MJy/sr",
+  "wavelength_range_um": [
+    1.63,
+    2.41
+  ],
+  "wavelength_model": "Per-pixel LVF WCS-WAVE lookup; not a single broadband detector image",
+  "frames": [
+    {
+      "id": "irsa-d5d339c43bfb3f858667780f-00",
+      "timestamp": "2025-05-20T16:37:27.588Z",
+      "image_url": "/api/frames/irsa-d5d339c43bfb3f858667780f-00.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.012182509526610374,
+        "masked_fraction": 0.0930048836541224,
+        "calibrated": true,
+        "valid_fraction": 0.9069951163458776,
+        "flag_counts": {
+          "TRANSIENT": 302,
+          "OVERFLOW": 33,
+          "SUR_ERROR": 259,
+          "NONFUNC": 82,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 7,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 392,
+          "OUTLIER": 126,
+          "CROSSTALK": 0,
+          "SOURCE": 26171,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 165,
+          "SNOWBALL": 0,
+          "HALO": 461
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.09881527721881866,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.0
+      },
+      "obs_id": "2025W21_1B_0329_1",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W21_1B/l2b-v27-2026-199/3/level2_2025W21_1B_0329_1D3_spx_l2b-v27-2026-199.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W21_1B/l2b-v27-2026-199/3/level2_2025W21_1B_0329_1D3_spx_l2b-v27-2026-199.fits?center=248.167611%2C66.754979&size=0.29",
+      "sha256": "c0901298945a77dd2236b272bd5b05c86d3137b57082661b1a7d95e8e022f308",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:04:12.653556+00:00",
+      "lambda_um": 1.8124185427664112,
+      "bandwidth_um": 0.04462422120978663,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    },
+    {
+      "id": "irsa-d5d339c43bfb3f858667780f-01",
+      "timestamp": "2026-05-09T23:44:07.234Z",
+      "image_url": "/api/frames/irsa-d5d339c43bfb3f858667780f-01.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.010589402168989182,
+        "masked_fraction": 0.07526572823901179,
+        "calibrated": true,
+        "valid_fraction": 0.9247342717609882,
+        "flag_counts": {
+          "TRANSIENT": 298,
+          "OVERFLOW": 20,
+          "SUR_ERROR": 232,
+          "NONFUNC": 81,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 13,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 30,
+          "OUTLIER": 109,
+          "CROSSTALK": 0,
+          "SOURCE": 26154,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 124,
+          "SNOWBALL": 0,
+          "HALO": 541
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.09967748820781708,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.0
+      },
+      "obs_id": "2026W19_2A_0976_1",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W19_2A/l2b-v27-2026-245/3/level2_2026W19_2A_0976_1D3_spx_l2b-v27-2026-245.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W19_2A/l2b-v27-2026-245/3/level2_2026W19_2A_0976_1D3_spx_l2b-v27-2026-245.fits?center=248.167611%2C66.754979&size=0.29",
+      "sha256": "e6c7896510eda9fd3e94167c369975508ca1a5165eb85a9e158745c97a64e00d",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:04:12.690402+00:00",
+      "lambda_um": 1.8124661056472853,
+      "bandwidth_um": 0.04462500677086694,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    }
+  ],
+  "notice": "Real SPHEREx spectral images from NASA/IPAC IRSA. Celestial WCS alignment and a shared display stretch; zodiacal model subtracted once. Wavelengths may differ. Preview comparisons do not establish variability or motion. Scientific subtraction is unavailable until spectral-response, PSF and background validation is complete.",
+  "pairs": [
+    {
+      "a": "irsa-d5d339c43bfb3f858667780f-00",
+      "b": "irsa-d5d339c43bfb3f858667780f-01",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8573685722493536
+        },
+        {
+          "name": "Spectral screening",
+          "status": "pass",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 1.0
+        },
+        {
+          "name": "Registration",
+          "status": "blocked",
+          "reason": "21 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.33776042874885803
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 1.0,
+      "overlap_fraction": 0.8573685722493536
+    }
+  ],
+  "availability": "search_incomplete",
+  "search_complete": false,
+  "archive_records": 91,
+  "assessed_records": 4,
+  "processing_version": "irsa-preview-v2.2",
+  "created_at": "2026-11-14T07:04:12.732717+00:00",
+  "display_stretch": {
+    "low": 0.028685684651136398,
+    "high": 11.832192657470719,
+    "asinh_softening": 0.08
+  },
+  "warnings": [
+    "2025W20_2D_0243_1: IRSA request failed or timed out; retry later",
+    "2025W23_1C_0021_3: IRSA request failed or timed out; retry later",
+    "2025W24_1A_0631_3: IRSA request failed or timed out; retry later",
+    "2025W52_2A_0161_4: IRSA request failed or timed out; retry later",
+    "2026W01_1A_0257_4: IRSA request failed or timed out; retry later",
+    "2026W01_2A_0426_2: IRSA request failed or timed out; retry later",
+    "2026W17_1B_0434_3: IRSA request failed or timed out; retry later",
+    "2026W17_2A_0255_3: IRSA request failed or timed out; retry later",
+    "Assessed 4 of 91 archive records. This bounded search cannot rule out other compatible epochs."
+  ],
+  "grid": {
+    "WCSAXES": 2,
+    "CRPIX1": 59.5,
+    "CRPIX2": 59.5,
+    "CDELT1": -0.0016949152542373,
+    "CDELT2": 0.0016949152542373,
+    "CUNIT1": "deg",
+    "CUNIT2": "deg",
+    "CTYPE1": "RA---TAN",
+    "CTYPE2": "DEC--TAN",
+    "CRVAL1": 248.167611,
+    "CRVAL2": 66.754979,
+    "LONPOLE": 180.0,
+    "LATPOLE": 66.754979,
+    "MJDREF": 0.0,
+    "RADESYS": "ICRS"
+  }
+}

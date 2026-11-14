@@ -1,72 +1,46 @@
-# SkyTrace API v1
+# SkyTrace API v2.1
 
-Run FastAPI on port 8000. Interactive OpenAPI documentation: `http://127.0.0.1:8000/docs`. The browser accesses the same endpoints through Next.js's `/api` proxy.
+Real source identifier: `spherex-irsa`. Synthetic source identifier: `synthetic`.
+The environment setting `OBSERVATION_SOURCE=irsa` (the default) enables the real-data workflow. It does not enable scientific subtraction.
 
-| Endpoint | Result |
-| --- | --- |
-| `GET /health` | Source, service status, real-data availability |
-| `GET /api/presets` | Five reference fields with coordinates, classification, phenomenon, epoch and source |
-| `GET /api/observations` | A validated, deterministic eight-frame manifest |
-| `GET /api/frames/{frame_id}.png` | Actual PNG display image (384×384 RGB) |
-| `GET /api/difference?frame_a=...&frame_b=...` | Actual signed B − A residual PNG |
+## Workflow
 
-## Request
+1. `GET /health`: service status, source, `real_data_enabled`, `scientific_subtraction_enabled`, schema version and maximum FOV. Health describes this service, not current IRSA uptime.
+2. `POST /api/observation-jobs` with `{ra, dec, fov_arcmin, detector}`. RA is decimal degrees [0,360), Dec [-90,90], FOV [2,30] arcminutes, detector D1–D6. Nonfinite values are rejected. Returns 200 for a cached ready result or 202 with a queued/running job. Synthetic mode returns 409.
+3. `GET /api/jobs/{job_id}`: `queued | running | ready | failed`, stage, request and optional result URL, dataset ID, error code/message. Job failures do not mean no coverage.
+4. Fetch `result_url`, which points to `GET /api/observation-sets/{dataset_id}`.
 
-```http
-GET /api/observations?ra=269.452077&dec=4.693365&fov_arcmin=12&detector=D1
-```
+`GET /api/observations?ra=...&dec=...&fov_arcmin=...&detector=D3` serves an already prepared set. It returns 409 for an uncached real field; it does not synchronously start expensive processing. The explicitly enabled synthetic provider retains its synchronous numerical demonstration.
 
-- `ra`: finite decimal degrees, 0 ≤ RA < 360; required.
-- `dec`: finite decimal degrees, −90 ≤ Dec ≤ +90; required.
-- `fov_arcmin`: finite 2–60, default 12; square field.
-- `detector`: D1–D6, default D1.
+## ObservationSet (schema version 2)
 
-RA/Dec normalize to six decimal places; FOV to four. RA just below 360 is clamped below 360 after rounding. IDs derive from the normalized request. Display and metadata use the same normalized values.
+A manifest includes source type, dataset ID, canonical request, UTC creation time, processing version, grid/WCS, dimensions, intensity units, detector range, wavelength model, shared display stretch, frames, pair assessments, warnings and search scope.
 
-## Response
+Availability is separate from job status:
 
-```json
-{
-  "source_type": "synthetic",
-  "dataset_id": "skytrace-synthetic-v1-<field-hash>",
-  "request": {"ra":269.452077,"dec":4.693365,"fov_arcmin":12,"detector":"D1"},
-  "coordinate_system": "ICRS field center; illustrative local tangent offsets",
-  "width":384,
-  "height":384,
-  "intensity_unit":"arbitrary simulation units",
-  "wavelength_range_um":[0.75,1.09],
-  "wavelength_model":"Illustrative array-dependent response; no per-pixel wavelength calibration",
-  "frames":[
-    {
-      "id":"<opaque-frame-id>",
-      "timestamp":"2025-01-15T03:24:00+00:00",
-      "image_url":"/api/frames/<opaque-frame-id>.png",
-      "detector":"D1",
-      "source":"synthetic",
-      "quality":{
-        "registration":"Common synthetic tangent-plane grid",
-        "noise_sigma":2.5,
-        "masked_fraction":0.0,
-        "calibrated":false
-      }
-    }
-  ],
-  "notice":"Synthetic observations. Motion, variability, dates and noise are illustrative, not measurements of the named target."
-}
-```
+- `no_coverage`: no matching records in a completed query of the specified collections.
+- `single_epoch`: only one prepared exposure in a completed assessment.
+- `preview`: multiple prepared exposures; this does not certify time variability.
+- `search_incomplete`: metadata or cutout assessment was bounded/partial. Counts show assessed versus discovered records. Other compatible observations may exist.
+- `comparable`: reserved for a future validated science workflow, not emitted by the real-data preview processor.
 
-Example abbreviated to one frame; actual responses contain eight. Treat IDs as opaque and use the returned image URL. Metadata comes from Pydantic response models. The frontend shares `fov` in its user-facing URLs and translates it to `fov_arcmin` at the API boundary.
+Each real frame requires archive observation ID, collection, original access URL and SHA-256. Additional fields preserve the exact cutout URL, pipeline version, download time, FITS observation time, center wavelength/bandwidth and quality policy. `IMAGE` calibration does not mean a pair is validated for subtraction.
 
-## Errors
+Each pair records its frame IDs, `comparison_status`, `difference_allowed`, reason, sky/spectral overlap fractions and individual pass/review/blocked checks. An unknown check never passes. The current real-data release always sets `difference_allowed=false`.
 
-- 422: invalid query, detector, nonfinite values or incompatible difference pair.
-- 404: unknown/malformed frame ID, including an out-of-range frame index.
-- 503: disabled IRSA provider requested.
+## Products
 
-Errors use FastAPI's standard `detail` response. Unexpected server errors are not disguised as synthetic success.
+- `GET /api/frames/{frame_id}.png`: preview with source header; transparent missing pixels.
+- `GET /api/frames/{frame_id}/original.fits`: exact cached IRSA cutout bytes, available even if IRSA is temporarily down. SHA-256 is in the manifest.
+- `GET /api/frames/{frame_id}/science.npz`: float science/variance/wavelength/bandwidth arrays and boolean missing-data mask. `allow_pickle=False` when reading with NumPy. Arrays retain FITS lower-left orientation; PNGs are flipped vertically for north-up browser display.
+- `GET /api/observation-sets/{dataset_id}/manifest.json`: downloadable provenance and processing manifest.
+- `GET /api/difference?frame_a=...&frame_b=...`: real pairs return 422; invalid identifiers return 404. Synthetic registered pairs return B − A PNGs; mixed sources/fields/detectors are rejected.
+- `GET /api/presets`: the five challenge reference positions and coordinate provenance.
 
-## Display and comparison
+## Bounds and persistence
 
-PNG content has `Content-Type: image/png`, `X-Data-Source: synthetic`, and a one-day browser cache lifetime. Difference images also declare `X-Difference-Sign: B-minus-A`. Zero difference maps to RGB (8,14,24), positive to amber, negative to violet, with a fixed nonlinear display stretch. Raw arrays are not clipped before subtraction. A fixed intensity stretch across epochs makes variability visible.
+One worker processes at most one job; at most six jobs are queued/running in total. Uncached job submissions are limited to 12/minute per direct API client address; no client-provided forwarded IP is trusted. A same-host reverse proxy shares this admission budget. Cached featured results do not consume the archive-admission budget. Queue pressure returns 429 with Retry-After.
 
-Frames from different coordinates, fields of view or detectors cannot be subtracted. Identical-frame subtraction is permitted and yields a neutral image, which is a useful sanity check. Arrays are reproducible after cache eviction or process restart. Caches retain up to eight field arrays, 128 rendered frames and 64 rendered differences per process.
+Each job has a 240-second archive time budget, 120 MiB total download budget, 20 MiB per cutout, 5 MiB per metadata response, at most 12 shortlisted downloads, and 2–30 arcminute FOV. Search metadata and scientific preparation can be incomplete even if some PNGs are ready. Requests use an explicit IRSA host/path allowlist and reject redirects.
+
+Runtime positive cache TTL is 24 hours; negative cache TTL is one hour. About 1 GiB of completed runtime datasets is retained, plus the active job. Pruning can expire old URLs. Featured snapshots are immutable and have no runtime TTL. Use one process/replica per data directory; SQLite job recovery marks interrupted work failed after restart. The first version is not a distributed task service.

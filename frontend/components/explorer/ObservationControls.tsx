@@ -7,6 +7,7 @@ import {
   Field,
   Detector,
   DEFAULT_FIELD,
+  FEATURED_FIELD,
   validateField,
 } from "@/lib/types";
 export default function ObservationControls({
@@ -48,7 +49,7 @@ export default function ObservationControls({
       fov_arcmin: fov.trim() ? Number(fov) : NaN,
       detector,
     };
-    const err = validateField(f);
+    const err = validateField(f, demoEnabled ? 60 : 30);
     setError(err || "");
     if (!err) onLoad(f);
   }
@@ -71,7 +72,9 @@ export default function ObservationControls({
                   ra: p.ra,
                   dec: p.dec,
                   fov_arcmin:
-                    Number(fov) >= 2 && Number(fov) <= 60 ? Number(fov) : 12,
+                    Number(fov) >= 2 && Number(fov) <= (demoEnabled ? 60 : 30)
+                      ? Number(fov)
+                      : 12,
                   detector,
                 });
               }
@@ -150,7 +153,7 @@ export default function ObservationControls({
                 12,
                 24,
                 30,
-                60,
+                ...(demoEnabled ? [60] : []),
                 ...(![2, 6, 12, 24, 30, 60].includes(Number(fov))
                   ? [Number(fov)]
                   : []),
@@ -205,7 +208,7 @@ export default function ObservationControls({
               type="button"
               onClick={() => {
                 setError("");
-                onLoad({ ...DEFAULT_FIELD });
+                onLoad({ ...(demoEnabled ? DEFAULT_FIELD : FEATURED_FIELD) });
               }}
             >
               <RotateCcw size={13} /> Reset field
@@ -216,7 +219,7 @@ export default function ObservationControls({
             <p>
               {demoEnabled
                 ? "Development mode uses generated starfields, not observations of the selected target."
-                : "Real SPHEREx data is not connected in this release. Your field settings are ready for a validated provider."}
+                : "Queries use real SPHEREx DR1/QR3 exposures. Initial searches may take several minutes. Detector wavelengths vary across each image; comparisons remain previews until validated."}
             </p>
           </div>
         </div>

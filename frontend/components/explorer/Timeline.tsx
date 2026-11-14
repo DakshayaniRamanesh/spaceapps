@@ -20,7 +20,7 @@ export default function Timeline({
   onSpeed: (n: number) => void;
   disabled?: boolean;
 }) {
-  const unavailable = disabled || frames.length === 0;
+  const unavailable = disabled || frames.length < 2;
   return (
     <section className="timeline panel" aria-label="Observation timeline">
       <div className="timeline-top">
@@ -100,7 +100,9 @@ export default function Timeline({
       <div className="timeline-footer">
         <span>
           {frames.length
-            ? "Illustrative epochs · UTC"
+            ? frames[0].source === "synthetic"
+              ? "Illustrative epochs · UTC"
+              : "Actual observation times · UTC"
             : "Awaiting observations"}
         </span>
         <span>

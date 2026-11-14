@@ -32,7 +32,11 @@
 .observatory-center {
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+}
+html:has(.explorer) {
+  scroll-behavior: auto;
 }
 .controls,
 .intelligence {
@@ -86,7 +90,9 @@
   border: 1px solid rgba(155, 114, 242, 0.2);
   border-radius: 4px;
   font-size: 15px;
-  transition: border-color 0.18s, background 0.18s;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
 }
 .controls input {
   font: 15px var(--mono);
@@ -1204,4 +1210,66 @@ details[open] > .controls-body {
   details[open] > .controls-body {
     animation: none;
   }
+}
+.science-passport,
+.science-notice {
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(170, 193, 220, 0.18);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  background: rgba(10, 19, 30, 0.85);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.science-passport p {
+  margin: 0.5rem 0;
+}
+.science-passport .center-warning {
+  border-left: 2px solid #efc681;
+  padding-left: 0.75rem;
+  color: #efc681;
+}
+.science-passport summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
+  color: #efc681;
+}
+.science-passport a,
+.provenance a {
+  color: #b9d9ee;
+  text-decoration: underline;
+}
+.science-passport ul {
+  padding-left: 1.2rem;
+}
+.evidence-checks {
+  display: grid;
+  gap: 0.8rem;
+}
+.evidence-checks li strong,
+.evidence-checks li span {
+  display: block;
+}
+[data-verdict="pass"] {
+  color: #a4d4bf;
+}
+[data-verdict="review"] {
+  color: #efc681;
+}
+[data-verdict="blocked"] {
+  color: #ecaab1;
+}
+.provenance dd,
+.provenance code {
+  overflow-wrap: anywhere;
+  font-size: 0.72rem;
+}
+.about-integration {
+  max-width: 1000px;
+  margin: auto;
+  line-height: 1.8;
+}
+.about-integration p {
+  margin: 1rem 0;
 }

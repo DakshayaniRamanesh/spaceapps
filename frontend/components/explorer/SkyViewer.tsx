@@ -52,7 +52,6 @@ export default function SkyViewer({
   useEffect(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setImageStatus({});
     setRetry(0);
   }, [data.dataset_id]);
   function fit() {
@@ -163,7 +162,7 @@ export default function SkyViewer({
               alt={
                 mode === "difference"
                   ? "Calculated B minus A difference: amber positive, violet negative"
-                  : `Synthetic astronomical field, ${img.label}`
+                  : `${data.source_type === "synthetic" ? "Synthetic" : "SPHEREx infrared"} astronomical field, ${img.label}`
               }
               style={{
                 transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
@@ -187,12 +186,14 @@ export default function SkyViewer({
           DEC {data.request.dec.toFixed(4)}°
         </div>
         <span className="synthetic-watermark">
-          SYNTHETIC / NOT TELESCOPE DATA
+          {data.source_type === "synthetic"
+            ? "SYNTHETIC / NOT TELESCOPE DATA"
+            : "SPHEREx / NASA–IPAC IRSA · PREVIEW"}
         </span>
         {(loading || images.some((img) => !imageStatus[img.src])) && (
           <div className="viewer-loading" role="status">
             <span className="spinner" />
-            {loading ? "Generating registered observations…" : "Loading image…"}
+            {loading ? "Preparing observations…" : "Loading image…"}
           </div>
         )}
         {images.some((img) => imageStatus[img.src] === "failed") && (

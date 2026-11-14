@@ -1,0 +1,15 @@
+# One public service serves Next.js and its local FastAPI worker. The featured
+# NASA snapshots are in the image; a disk is optional for persistence across restarts.
+services:
+  - type: web
+    name: skytrace
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: OBSERVATION_SOURCE
+        value: irsa
+      - key: SKYTRACE_DATA_DIR
+        value: /tmp/skytrace
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"

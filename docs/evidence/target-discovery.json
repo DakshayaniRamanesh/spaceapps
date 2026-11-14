@@ -1,0 +1,66 @@
+{
+  "checked_at_utc": "2026-11-14T07:30:08.468836+00:00",
+  "scope": "Live DR1/QR3 wide-survey SIA metadata discovery at the five reference positions; detector D3. Counts are not detected targets or validated pairs.",
+  "targets": [
+    {
+      "target": "Barnard's Star",
+      "ra": 269.45207696,
+      "dec": 4.69336497,
+      "detector": "D3",
+      "archive_records": 60,
+      "metadata_complete": true,
+      "warnings": [],
+      "min_mjd": 60902.864715,
+      "max_mjd": 61303.185466,
+      "scope": "Metadata discovery only; target detection and compatible pairs not certified"
+    },
+    {
+      "target": "Epsilon Indi B",
+      "ra": 331.04414659,
+      "dec": -56.7828442,
+      "detector": "D3",
+      "archive_records": 99,
+      "metadata_complete": true,
+      "warnings": [],
+      "min_mjd": 60794.064813,
+      "max_mjd": 61311.336624,
+      "scope": "Metadata discovery only; target detection and compatible pairs not certified"
+    },
+    {
+      "target": "WISE 0855",
+      "ra": 133.79512917,
+      "dec": -7.24514722,
+      "detector": "D3",
+      "archive_records": 45,
+      "metadata_complete": true,
+      "warnings": [],
+      "min_mjd": 60800.700028,
+      "max_mjd": 61171.09635,
+      "scope": "Metadata discovery only; target detection and compatible pairs not certified"
+    },
+    {
+      "target": "RW Aurigae",
+      "ra": 76.95652603,
+      "dec": 30.40143817,
+      "detector": "D3",
+      "archive_records": 56,
+      "metadata_complete": true,
+      "warnings": [],
+      "min_mjd": 60929.677476,
+      "max_mjd": 61299.895897,
+      "scope": "Metadata discovery only; target detection and compatible pairs not certified"
+    },
+    {
+      "target": "R Draconis",
+      "ra": 248.16761083,
+      "dec": 66.75497942,
+      "detector": "D3",
+      "archive_records": 91,
+      "metadata_complete": true,
+      "warnings": [],
+      "min_mjd": 60811.955829,
+      "max_mjd": 61203.860905,
+      "scope": "Metadata discovery only; target detection and compatible pairs not certified"
+    }
+  ]
+}

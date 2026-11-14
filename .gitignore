@@ -10,3 +10,6 @@ __pycache__/
 .env.*.local
 playwright-report/
 test-results/
+backend/var/
+.cache/
+*.sqlite3

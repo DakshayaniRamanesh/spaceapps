@@ -1,33 +1,48 @@
-# Synthetic data methodology
+# Processing methods and scientific limits
 
-The purpose is to demonstrate time-domain navigation, not to approximate SPHEREx performance. Version: `skytrace-synthetic-v1`.
+## Real SPHEREx previews
 
-## Catalogue and geometry
+SkyTrace queries the documented IRSA SIA2 DR1 and QR3 wide-survey collections for exposures containing the requested center. Deep-survey collections and coadded all-sky spectral cubes are not part of this temporal workflow. A result is scoped to the collections queried, not all possible NASA data.
 
-A SHA-256-derived random seed from normalized center RA/Dec creates 2,600 stars distributed over a 62×62 arcminute local field, plus 14 central demonstration stars. The population is fixed when FOV or detector changes. Positions are local offsets, with raster x toward illustrative west and raster y toward illustrative south; the displayed compass uses north-up/east-left. This is not an astrometrically calibrated FITS WCS.
+Discovery deduplicates observation/detector identities. An approximate detector-position/orientation estimate from published footprints prioritizes potentially similar passbands; it is only a download-ranking heuristic. Candidates are spread over observation time within a maximum of 12 downloads. Exact wavelength screening uses the downloaded FITS, never the footprint estimate. The inventory records all discovered candidate URLs and observation MJDs.
 
-The 384×384 output maps the requested 2–60 arcminute square extent to pixels. Increasing FOV reveals more angular area and shrinks source separations in pixels. Different center coordinates seed different local catalogues: overlapping center requests do not reconstruct a continuous all-sky catalogue. No projection is used to infer per-pixel RA/Dec near poles or wrap boundaries.
+Detector-aligned cutouts are padded by sqrt(2) and an interpolation margin to cover a rotated north-up output square. Output sampling is approximately 6.15 arcseconds/pixel, rather than interpolating to an artificial high-resolution grid. Partial physical detector coverage remains transparent and is quantified.
 
-## Sources and epochs
+## Pixel policy and units
 
-Static flux amplitudes follow a lognormal distribution, with per-source illustrative response slopes. Six detector selections change those amplitudes exponentially and increase the Gaussian PSF sigma from 1.15 to 1.75 pixels. These response coefficients are arbitrary and not measured filter curves. PSF width is a display-scale parameter, not an angular instrument PSF.
+IMAGE is calibrated MJy/sr; VARIANCE is (MJy/sr)^2. Shapes and units are checked. We decode FLAGS bit names from the product header. SOURCE and FULLSAMPLE are retained; all other set bits, including unknown bits, are conservatively excluded. Nonfinite IMAGE/VARIANCE/ZODI or nonpositive variance also exclude a pixel.
 
-One source moves 0.14 arcminute horizontally and −0.075 arcminute vertically per epoch, starting near field center. Another remains fixed and changes peak amplitude sinusoidally across eight epochs. Those motions and amplitudes are independent of the chosen target's actual measured properties. At 2′–60′, the selected FOV changes their displayed separation accordingly.
+We subtract the supplied ZODI model once from Level-2 IMAGE. This does not remove every background or incorporate zodiacal-model uncertainty. The originals remain byte-for-byte intact, named by SHA-256. The frame quality report includes the requested center pixel and valid fraction within a two-native-pixel radius. Global coverage can be high while a bright source core is entirely masked. That region is not usable for target brightness measurements. Negative science values remain valid; no gap filling or clipping is applied to measurement arrays.
 
-The timestamps are eight synthetic epochs spaced 90 days apart from 2025-01-15 03:24 UTC. They do not represent SPHEREx observing cadence or acquisition dates. All static sources have exactly the same grid positions at every epoch. No atmosphere, parallax, real proper-motion solution, PSF drift, cosmological model, detector artifacts, source confusion treatment, or uncertainty propagation is simulated.
+## Celestial registration and uncertainties
 
-## Background and noise
+Astropy celestial WCS maps each output ICRS TAN pixel to each input cutout. All four bilinear contributors must be valid. If weights are w_i, brightness is sum(w_i I_i), while approximate variance is sum(w_i^2 V_i). Reprojecting a variance as though it were an intensity is incorrect. Neighboring output pixels are correlated; covariance, calibration and foreground systematics are not modeled. No calibrated significance is reported.
 
-Each float32 frame starts with a low smooth sinusoidal background around 20 arbitrary units. Gaussian source profiles are accumulated in bounded patches. Independent, reproducible Gaussian noise of sigma 2.5 is added per epoch, seeded by the full field request and frame index. The model does not use photon-counting Poisson noise.
+North is up and east is left. Numeric arrays retain FITS row orientation; only the display PNG is flipped. One pooled 1st-to-99.7th-percentile asinh stretch is used across all displayed epochs. Display normalization never changes numeric science values.
 
-## Rendering and subtraction
+Registration diagnostics use mutually matched bright field-source centroids after WCS reprojection, excluding the center target. At least three matches are required. The empirical screening threshold is RMS <=0.30 native pixels. This is a conservative prototype heuristic, not a mission accuracy specification; blends, undersampling, centroid errors and source changes can affect the diagnostic. No automatic astrometric correction is fitted to make a pair pass.
 
-Frame display uses `arcsinh(max(array − 15, 0) / 12) / arcsinh(1500 / 12)`, clipped only for display and tinted slightly blue. This fixed stretch is shared by all frames; automatic per-frame normalization would hide variability and is intentionally avoided.
+## Wavelength and comparison permissions
 
-Difference arithmetic is `float32(B) − float32(A)` on unrendered arrays. Absolute residual is stretched with `arcsinh(abs(diff)/8) / arcsinh(1000/8)` and clipped to [0,1]. Positive residuals use amber, negative residuals violet, and zero uses a dark neutral color. Random noise remains in the result. The PNG is a display product, not a significance map or a calibrated photometric measurement.
+WCS-WAVE is evaluated at output-pixel positions in each original detector mapping, with the spectral lookup separated from celestial SIP. We record center wavelength/bandwidth and preserve per-pixel maps. WCS-WAVE is visualization-grade. Analysis-grade CWAVE/CBAND and spectral-response verification are not implemented in this release.
 
-## Provenance
+The preliminary screening rule is |lambda_A-lambda_B| <= 0.25 min(bandwidth_A, bandwidth_B). We measure its satisfied fraction across valid overlapping pixels; a center-only match does not approve the field. Preview screening requires at least 80% valid sky overlap and at least 90% spectral agreement within that overlap. These thresholds rank previews; they do not certify identical response curves.
 
-Four preset centers were copied from SIMBAD ICRS J2000 reference coordinates on 2026-11-10. WISE 0855 uses the exact sexagesimal coordinates in the project brief, converted to degrees; no epoch was supplied. `scripts/make_presets.py` records the originals and conversions. Source URLs and verification state are in `presets.json`. No proper motion is applied to reference centers.
+A displayed multi-frame group must meet the spectral/coverage screen for every pair, not just adjacent dates. If none exists in the bounded sample, labeled spectrally different previews can still be shown with a warning. This is not evidence of brightness variability. Pair evidence also records registration, distinct observation times, and unresolved spectral-calibration, PSF/background and uncertainty checks.
 
-Hero imagery is separately generated non-scientific artwork. Landing-story frames are precomputed by this backend provider and clearly labeled. The explorer requests the backend at runtime for every field manifest; no hidden frontend synthetic provider substitutes for a failed API.
+**Real scientific subtraction remains disabled on both server and client.** WCS alignment and a PNG are insufficient to approve a difference. The featured pair's measured registration diagnostic also exceeds the conservative screening threshold. Claims of a discovered moving object, calibrated light curve, exact detection significance or proper motion are outside this release.
+
+## Coordinates and temporal truth
+
+FITS DATE-OBS (UTC), with MJD-OBS fallback, supplies the timestamp. Product release date and download date are not used as observation epochs. Named-target presets are reference sky positions, not source detections. Some positions are J2000; WISE 0855 has an unspecified coordinate epoch in the challenge brief. Trusted proper-motion propagation and parallax fitting are deferred. User-entered coordinates always select a fixed sky field, never a recentered moving-source frame.
+
+## Synthetic development mode
+
+The preserved simulator generates deterministic float32 fields with seeded noise, an exaggerated moving source and a variable source. Its arbitrary units, eight illustrative dates, detector responses and common tangent grid are not observations of the named targets. Synthetic difference images calculate B − A on the float arrays before color rendering. Negative values are violet; positive values amber. Production blocks synthetic frames unless the development UI and backend flags are both explicitly set.
+
+## References
+
+- https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-access/
+- https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products/
+- https://caltech-ipac.github.io/irsa-tutorials/spherex-intro/
+- https://caltech-ipac.github.io/irsa-tutorials/spherex-cutouts/

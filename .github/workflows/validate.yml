@@ -1,0 +1,75 @@
+name: Validate SkyTrace submission
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements-tested.txt
+      - run: python -m pytest -q backend/tests
+        env:
+          PYTHONPATH: backend
+      - run: python backend/tools/verify_featured.py
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test && npm run typecheck && npm run build
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - run: npm run test:e2e:demo
+        working-directory: frontend
+      - name: Build and smoke-test the production container
+        run: |
+          docker build -t skytrace:ci .
+          docker run -d --name skytrace-ci -p 3001:3000 skytrace:ci
+          python - <<'PYTHON'
+          import json, time, urllib.request, urllib.error
+          base = 'http://127.0.0.1:3001'
+          for attempt in range(30):
+              try:
+                  health = json.load(urllib.request.urlopen(base+'/health', timeout=3))
+                  assert health['real_data_enabled'] is True
+                  break
+              except (OSError, AssertionError):
+                  if attempt == 29:
+                      raise
+                  time.sleep(1)
+          payload = json.dumps(dict(ra=248.16761083, dec=66.75497942, fov_arcmin=12, detector='D3')).encode()
+          req = urllib.request.Request(base+'/api/observation-jobs', data=payload, headers={'Content-Type':'application/json'})
+          job = json.load(urllib.request.urlopen(req, timeout=5))
+          assert job['status'] == 'ready' and job['cache_hit']
+          data = json.load(urllib.request.urlopen(base+job['result_url'], timeout=5))
+          assert data['source_type'] == 'spherex-irsa' and len(data['frames']) >= 2
+          image = urllib.request.urlopen(base+data['frames'][0]['image_url'], timeout=5)
+          assert image.read(8) == b'\x89PNG\r\n\x1a\n'
+          url = base+'/api/difference?frame_a='+data['frames'][0]['id']+'&frame_b='+data['frames'][1]['id']
+          try:
+              urllib.request.urlopen(url, timeout=5)
+              raise AssertionError('Real subtraction must be blocked')
+          except urllib.error.HTTPError as error:
+              assert error.code == 422
+          print('Production container: health, cached real set, PNG and subtraction blocking passed')
+          PYTHON
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: |
+            frontend/test-results
+            frontend/playwright-report
+          retention-days: 7

@@ -71,7 +71,7 @@ export default function Navigation() {
             <i />
             {developmentDemoEnabled
               ? "Synthetic development mode"
-              : "Real data not connected"}
+              : "SPHEREx archive previews"}
           </span>
           {path !== "/explore" && (
             <Link

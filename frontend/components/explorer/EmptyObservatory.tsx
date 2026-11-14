@@ -10,7 +10,13 @@ import {
   Minus,
 } from "lucide-react";
 import Timeline from "./Timeline";
-export default function EmptyObservatory({ loading }: { loading: boolean }) {
+export default function EmptyObservatory({
+  loading,
+  message,
+}: {
+  loading: boolean;
+  message?: string;
+}) {
   return (
     <>
       <div className="mode-tabs" role="group" aria-label="Comparison mode">
@@ -36,7 +42,7 @@ export default function EmptyObservatory({ loading }: { loading: boolean }) {
       >
         <div className="viewer-heading">
           <span>Observation field</span>
-          <span>No data connected</span>
+          <span>{loading ? "Searching archive" : "No images loaded"}</span>
         </div>
         <div className="ready-stage">
           <div className="ready-orbit" aria-hidden="true">
@@ -50,14 +56,18 @@ export default function EmptyObservatory({ loading }: { loading: boolean }) {
             <br />
             READY.
           </h2>
-          <p>Connect SPHEREx observations to explore the infrared sky.</p>
+          <p>
+            Choose a featured field or search real SPHEREx exposures by
+            coordinates.
+          </p>
           <Link className="text-link" href="/about#integration">
             About the data connection <ArrowUpRight size={19} />
           </Link>
           <p className="connection-status" role="status">
-            {loading
-              ? "Checking the observation provider…"
-              : "Awaiting a validated observation source"}
+            {message ||
+              (loading
+                ? "Checking the observation provider…"
+                : "Choose another field or detector to search again.")}
           </p>
         </div>
         <div className="viewer-toolbar">

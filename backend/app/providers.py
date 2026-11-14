@@ -121,8 +121,13 @@ class SyntheticObservationProvider(ObservationProvider):
         return scene(field_key(req))[i]
 
 class SpherexIRSAProvider(ObservationProvider):
-    """Disabled until calibrated FITS/WCS/LVF registration is implemented."""
+    """Access prepared IRSA products; new fields are processed by bounded jobs."""
     def observations(self, request: FieldRequest) -> ObservationSet:
-        raise NotImplementedError('IRSA integration is not enabled. Use OBSERVATION_SOURCE=synthetic.')
+        from .irsa import ManifestStore
+        data = ManifestStore().cached(request)
+        if data is None:
+            raise ValueError('Field not prepared. Submit an observation job.')
+        return data
     def array(self, frame_id: str) -> np.ndarray:
-        raise NotImplementedError('IRSA integration is not enabled.')
+        from .irsa import ManifestStore
+        return ManifestStore().array(frame_id)

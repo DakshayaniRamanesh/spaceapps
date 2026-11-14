@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { ArrowUpRight, Compass, Eye, Sparkles, Orbit, Waves, Layers } from "lucide-react";
+import {
+  ArrowUpRight,
+  Compass,
+  Eye,
+  Sparkles,
+  Orbit,
+  Waves,
+  Layers,
+} from "lucide-react";
 import { Footer } from "@/components/ui/Navigation";
 import PipelineVisualization from "@/components/about/PipelineVisualization";
 
@@ -13,7 +21,10 @@ export default function AboutPage() {
   return (
     <main id="main" className="about-page-main">
       {/* SECTION 1: MISSION INTRODUCTION */}
-      <section className="about-hero section-pad" aria-labelledby="mission-title">
+      <section
+        className="about-hero section-pad"
+        aria-labelledby="mission-title"
+      >
         <div className="about-hero-backdrop" aria-hidden="true" />
         <div className="about-hero-content">
           <p className="eyebrow">THE SCIENCE BEHIND THE EXPERIENCE</p>
@@ -23,19 +34,17 @@ export default function AboutPage() {
             <em>A deeper perspective.</em>
           </h1>
           <p className="about-hero-lead">
-            SkyTrace is an independent aerospace visualization platform exploring the
-            time-domain sky. Inspired by NASA’s SPHEREx mission and created for the
-            NASA Space Apps Challenge 2026, it transforms multi-epoch infrared surveys
-            into intuitive, scientifically grounded celestial discovery.
+            SkyTrace is an independent aerospace visualization platform
+            exploring the time-domain sky. Inspired by NASA’s SPHEREx mission
+            and created for the NASA Space Apps Challenge 2026, it transforms
+            multi-epoch infrared surveys into intuitive, scientifically grounded
+            celestial discovery.
           </p>
           <div className="about-hero-actions">
             <Link href="/explore" className="button primary">
               Open the observatory <ArrowUpRight size={17} />
             </Link>
-            <a
-              href="#pipeline"
-              className="button secondary"
-            >
+            <a href="#pipeline" className="button secondary">
               Explore the data pipeline ↓
             </a>
           </div>
@@ -43,7 +52,10 @@ export default function AboutPage() {
       </section>
 
       {/* SECTION 2: WHY INFRARED MATTERS */}
-      <section className="about-science section-pad" aria-labelledby="infrared-title">
+      <section
+        className="about-science section-pad"
+        aria-labelledby="infrared-title"
+      >
         <div className="about-science-grid">
           <div className="about-science-narrative">
             <p className="eyebrow">WHY THE INFRARED?</p>
@@ -53,16 +65,17 @@ export default function AboutPage() {
               more than an image.
             </h2>
             <p>
-              Visible light reveals only the surfaces illuminated by glowing stars. But
-              the universe’s most profound transitions — the birth of solar systems
-              enshrouded in dense dust, prebiotic molecules frozen onto interstellar
-              grains, and the earliest galaxies stretched by cosmic expansion — whisper
-              almost entirely in the infrared.
+              Visible light reveals only the surfaces illuminated by glowing
+              stars. But the universe’s most profound transitions — the birth of
+              solar systems enshrouded in dense dust, prebiotic molecules frozen
+              onto interstellar grains, and the earliest galaxies stretched by
+              cosmic expansion — whisper almost entirely in the infrared.
             </p>
             <p>
-              By observing infrared wavelengths across 102 continuous spectral channels,
-              all-sky surveys unlock chemical fingerprints, cosmological inflation
-              traces, and temperature gradients that no single-color telescope can capture.
+              By observing infrared wavelengths across 102 continuous spectral
+              channels, all-sky surveys unlock chemical fingerprints,
+              cosmological inflation traces, and temperature gradients that no
+              single-color telescope can capture.
             </p>
             <a
               href="https://spherex.caltech.edu/page/instrument"
@@ -81,8 +94,9 @@ export default function AboutPage() {
               </div>
               <h3>Dust Penetration</h3>
               <p>
-                Infrared waves slip past interstellar dust grains that scatter optical
-                light, unmasking hidden stellar nurseries and galactic cores.
+                Infrared waves slip past interstellar dust grains that scatter
+                optical light, unmasking hidden stellar nurseries and galactic
+                cores.
               </p>
             </article>
 
@@ -92,8 +106,8 @@ export default function AboutPage() {
               </div>
               <h3>Molecular Signatures</h3>
               <p>
-                Water ice, carbon monoxide, and organic precursors absorb and emit at
-                diagnostic infrared resonances between 0.75 and 5.0 µm.
+                Water ice, carbon monoxide, and organic precursors absorb and
+                emit at diagnostic infrared resonances between 0.75 and 5.0 µm.
               </p>
             </article>
 
@@ -103,28 +117,80 @@ export default function AboutPage() {
               </div>
               <h3>Cosmic Expansion</h3>
               <p>
-                As light travels across billions of years of expanding spacetime, ancient
-                optical and UV photons stretch into the near-infrared spectrum.
+                As light travels across billions of years of expanding
+                spacetime, ancient optical and UV photons stretch into the
+                near-infrared spectrum.
               </p>
             </article>
           </div>
         </div>
       </section>
 
+      <section id="integration" className="section-pad about-integration">
+        <p className="eyebrow">CURRENT RELEASE · REAL-DATA PREVIEW</p>
+        <h2>Real exposures. Explicit limits.</h2>
+        <p>
+          SkyTrace queries the NASA/IPAC IRSA SPHEREx DR1 and QR3 wide-survey
+          collections. Featured snapshots and custom coordinate searches use the
+          same FITS processor. Original observation times, product links, cutout
+          checksums and processing metadata accompany each image.
+        </p>
+        <p>
+          Calibrated IMAGE values are masked using FLAGS and VARIANCE, the
+          supplied ZODI model is subtracted once, and cutouts are reprojected to
+          a common north-up ICRS grid with a shared asinh display stretch.
+          Masked measurements remain missing; display pixels are not used for
+          science arithmetic.
+        </p>
+        <div id="methodology">
+          <h3>What a comparison can establish</h3>
+          <p>
+            Wavelength varies across a SPHEREx detector. We screen wavelength
+            differences across overlapping pixels and measure field-source
+            registration where enough reference sources exist. WCS-WAVE
+            wavelengths support visualization; they do not certify
+            spectral-response equivalence. Real-image subtraction is disabled
+            pending analysis-grade spectral calibration, PSF matching and
+            background validation. No detection significance, light curve or
+            proper-motion measurement is claimed.
+          </p>
+          <p>
+            Searches assess a bounded sample of up to 12 cutouts. An incomplete
+            search does not prove compatible observations are absent. The five
+            presets are reference sky positions; high-proper-motion targets may
+            have moved since their catalog epoch. The fixed celestial grid is
+            never recentered to conceal motion.
+          </p>
+          <p>
+            Landing-page artwork and the animated pipeline below illustrate
+            concepts. They are separate from the real archive exposures in the
+            Explorer. Synthetic development mode requires an explicit opt-in.
+          </p>
+        </div>
+      </section>
+
       {/* SECTION 3: BEHIND THE DATA — THE IMAGE IS ONLY THE BEGINNING */}
-      <section id="pipeline" className="about-pipeline" aria-label="Scientific Data Processing Pipeline">
+      <section
+        id="pipeline"
+        className="about-pipeline"
+        aria-label="Scientific Data Processing Pipeline"
+      >
         {/* Cinematic Scroll Storytelling Exhibition */}
         <PipelineVisualization />
       </section>
 
       {/* SECTION 4: SOURCES & CREDITS */}
-      <section id="credits" className="about-credits section-pad" aria-labelledby="credits-title">
+      <section
+        id="credits"
+        className="about-credits section-pad"
+        aria-labelledby="credits-title"
+      >
         <div className="credits-header">
           <p className="eyebrow">PROVENANCE & CREDITS</p>
           <h2 id="credits-title">Rigorous boundaries. Full transparency.</h2>
           <p className="credits-lead">
-            SkyTrace maintains strict boundaries between scientific survey data and
-            curated editorial context.
+            SkyTrace maintains strict boundaries between scientific survey data
+            and curated editorial context.
           </p>
         </div>
 
@@ -136,8 +202,9 @@ export default function AboutPage() {
               <h3>Editorial Image Credits</h3>
             </div>
             <p className="credits-col-desc">
-              Curated, high-resolution backgrounds provide atmospheric and astronomical
-              context. They are <strong>not</strong> SPHEREx survey measurements:
+              Curated, high-resolution backgrounds provide atmospheric and
+              astronomical context. They are <strong>not</strong> SPHEREx survey
+              measurements:
             </p>
             <ul className="credits-links-list">
               <li>
@@ -218,13 +285,23 @@ export default function AboutPage() {
               <h3>Project Acknowledgment</h3>
             </div>
             <p className="credits-col-desc">
-              Independent concept created for the NASA Space Apps Challenge 2026.
+              Independent concept created for the NASA Space Apps Challenge
+              2026.
+            </p>
+            <p>
+              This publication makes use of data products from the
+              Spectro-Photometer for the History of the Universe, Epoch of
+              Reionization and Ices Explorer (SPHEREx), which is a joint project
+              of the Jet Propulsion Laboratory and the California Institute of
+              Technology, and is funded by the National Aeronautics and Space
+              Administration.
             </p>
             <div className="credits-disclaimer-box">
               <p>
                 Not affiliated with, endorsed by, or certified by NASA, Caltech,
                 JPL, or the Space Apps Challenge organizers. SPHEREx is a NASA
-                Astrophysics Medium-Class Explorer (MIDEX) mission managed by JPL.
+                Astrophysics Medium-Class Explorer (MIDEX) mission managed by
+                JPL.
               </p>
             </div>
           </article>
