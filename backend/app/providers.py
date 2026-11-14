@@ -148,9 +148,15 @@ def render_difference(diff: np.ndarray) -> bytes:
 
 class ObservationProvider(ABC):
     @abstractmethod
-    def observations(self, request: FieldRequest, *, limit: int = 12,
-                     start_mjd: float | None = None, end_mjd: float | None = None,
-                     spread: bool = False) -> ObservationSet: ...
+    def observations(
+        self,
+        request: FieldRequest,
+        *,
+        limit: int = 12,
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> ObservationSet: ...
     @abstractmethod
     def array(self, frame_id: str) -> np.ndarray: ...
     @abstractmethod
@@ -158,9 +164,15 @@ class ObservationProvider(ABC):
 
 
 class SyntheticObservationProvider(ObservationProvider):
-    def observations(self, request: FieldRequest, *, limit: int = 12,
-                     start_mjd: float | None = None, end_mjd: float | None = None,
-                     spread: bool = False) -> ObservationSet:
+    def observations(
+        self,
+        request: FieldRequest,
+        *,
+        limit: int = 12,
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> ObservationSet:
         """Synthetic scenes always contain 8 epochs; selection params are ignored."""
         request = canonical(request)
         key = field_key(request)
@@ -242,12 +254,22 @@ class SpherexIRSAProvider(ObservationProvider):
             },
         ]
 
-    def observations(self, request: FieldRequest, *, limit: int = 12,
-                     start_mjd: float | None = None, end_mjd: float | None = None,
-                     spread: bool = False) -> ObservationSet:
+    def observations(
+        self,
+        request: FieldRequest,
+        *,
+        limit: int = 12,
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> ObservationSet:
         request = canonical(request)
-        selection = EpochSelection(limit=limit, spread=spread,
-                                   start_mjd=start_mjd, end_mjd=end_mjd)
+        selection = EpochSelection(
+            limit=limit,
+            spread=spread,
+            start_mjd=start_mjd,
+            end_mjd=end_mjd,
+        )
         cache_k = (
             f"spx:{request.ra:.6f}:{request.dec:.6f}:{request.fov_arcmin:.4f}:{request.detector}"
             f":n{limit}:s{int(spread)}:"
@@ -260,8 +282,38 @@ class SpherexIRSAProvider(ObservationProvider):
 
         total_candidates = 0
         if self.fixtures_mode:
-            records = self._get_offline_fixtures(request)
-            total_candidates = len(records)
+            candidates = []
+            for record in self._get_offline_fixtures(request):
+                try:
+                    mjd = float(record["mjd"])
+                except (KeyError, TypeError, ValueError, OverflowError):
+                    continue
+                if not np.isfinite(mjd) or mjd <= 0:
+                    continue
+                if start_mjd is not None and mjd < start_mjd:
+                    continue
+                if end_mjd is not None and mjd > end_mjd:
+                    continue
+                candidates.append((mjd, record))
+            candidates.sort(key=lambda item: item[0])
+            total_candidates = len(candidates)
+            if spread:
+                records = []
+                bins: set[int] = set()
+                last_mjd: float | None = None
+                for mjd, record in candidates:
+                    bin_id = int(mjd // 30)
+                    if bin_id in bins or (
+                        last_mjd is not None and mjd - last_mjd < 29
+                    ):
+                        continue
+                    bins.add(bin_id)
+                    last_mjd = mjd
+                    records.append(record)
+                    if len(records) >= limit:
+                        break
+            else:
+                records = [record for _, record in candidates[:limit]]
         else:
             try:
                 records, total_candidates = self.client.search_observations(

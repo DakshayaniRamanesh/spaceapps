@@ -1,7 +1,54 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { Frame, dateLabel } from "@/lib/types";
+
+function LazyFrameImage({
+  src,
+  rootRef,
+}: {
+  src: string;
+  rootRef: { readonly current: HTMLDivElement | null };
+}) {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    const image = imageRef.current;
+    if (!root || !image) return;
+    if (!("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { root, rootMargin: "0px", threshold: 0.01 },
+    );
+    observer.observe(image);
+    return () => observer.disconnect();
+  }, [rootRef]);
+
+  return (
+    <img
+      ref={imageRef}
+      src={visible ? src : undefined}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      width={96}
+      height={96}
+    />
+  );
+}
+
 export default function Timeline({
   frames,
   index,
@@ -106,14 +153,7 @@ export default function Timeline({
             className={`frame-thumb ${index === i ? "selected" : ""}`}
             onClick={() => onIndex(i)}
           >
-            <img
-              src={f.image_url}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              width={96}
-              height={96}
-            />
+            <LazyFrameImage src={f.image_url} rootRef={stripRef} />
             <span className="frame-number">
               {String(i + 1).padStart(2, "0")}
             </span>

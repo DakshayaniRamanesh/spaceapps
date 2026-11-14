@@ -89,7 +89,6 @@ export default function Explorer() {
       const result: ObservationSet = await res.json();
       if (c.signal.aborted) return;
       if (!mayDisplaySource(result.source_type, developmentDemoEnabled)) return;
-      if (!result.frames.length) return;
       const merged: Field = {
         ...result.request,
         limit: f.limit,
@@ -97,6 +96,11 @@ export default function Explorer() {
         start_date: f.start_date,
         end_date: f.end_date,
       };
+      if (!result.frames.length) {
+        setField(merged);
+        setError(result.notice || "No observations matched this selection.");
+        return;
+      }
       setData(result);
       setField(merged);
       setIndex(0);

@@ -105,7 +105,13 @@ export function validateField(f: Field): string | undefined {
   )
     return "Epoch limit must be a whole number between 2 and 50.";
   for (const d of [f.start_date, f.end_date]) {
-    if (d !== undefined && d !== "" && (!ISO_DATE.test(d) || !Number.isFinite(Date.parse(d))))
+    if (d === undefined || d === "") continue;
+    if (!ISO_DATE.test(d)) return "Dates must be valid ISO dates (YYYY-MM-DD).";
+    const parsed = new Date(`${d}T00:00:00.000Z`);
+    if (
+      !Number.isFinite(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== d
+    )
       return "Dates must be valid ISO dates (YYYY-MM-DD).";
   }
   if (f.start_date && f.end_date && f.start_date >= f.end_date)

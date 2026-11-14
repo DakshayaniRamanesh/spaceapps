@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 import os
 import time
 from pathlib import Path
@@ -34,8 +35,8 @@ def mjd_to_utc_iso(mjd: float) -> str:
     try:
         t = Time(mjd, format="mjd", scale="utc")
         return t.isot + "Z"
-    except Exception:
-        return "1970-01-01T00:00:00Z"
+    except Exception as exc:
+        raise ValueError(f"Invalid observation MJD: {mjd}") from exc
 
 
 class IrsaSpherexClient:
@@ -107,40 +108,63 @@ class IrsaSpherexClient:
             logger.warning("SIA table lacks t_min; cannot establish observation epochs.")
             return [], 0
 
-        if start_mjd is not None:
-            filtered = filtered[filtered["t_min"] >= start_mjd]
-        if end_mjd is not None:
-            filtered = filtered[filtered["t_min"] <= end_mjd]
-        filtered.sort("t_min")
-
-        total_candidates = len(filtered)
-        if total_candidates == 0:
-            return [], 0
-
         size_deg = round((fov_arcmin / 60.0) * 1.15, 4)
         records: list[dict] = []
         seen_bins: set[int] = set()
+        dated_rows: list[tuple[float, Any]] = []
 
         for row in filtered:
+            try:
+                t_min = float(row["t_min"])
+            except (TypeError, ValueError, OverflowError):
+                continue
+            if not math.isfinite(t_min) or t_min <= 0:
+                continue
+            if start_mjd is not None and t_min < start_mjd:
+                continue
+            # end_mjd is the inclusive end-of-day boundary from the API.
+            if end_mjd is not None and t_min > end_mjd:
+                continue
+            dated_rows.append((t_min, row))
+
+        dated_rows.sort(key=lambda item: item[0])
+        total_candidates = len(dated_rows)
+        if total_candidates == 0:
+            return [], 0
+
+        last_spread_mjd: float | None = None
+
+        for t_min, row in dated_rows:
             access_url = str(row["access_url"]).strip()
             if not access_url:
                 continue
-            t_min = float(row["t_min"])
-            if t_min <= 0:
-                continue  # never invent an observation date
 
             obs_id = str(row["obs_id"]).strip() if "obs_id" in row.colnames else "unknown"
 
             # ~30-day sampling when spread; otherwise ~30 s product dedup.
-            bin_id = int(t_min // 30) if spread else round(t_min * 2880)
-            if bin_id in seen_bins:
+            if spread:
+                bin_id = int(t_min // 30)
+                if bin_id in seen_bins or (
+                    last_spread_mjd is not None and t_min - last_spread_mjd < 29
+                ):
+                    continue
+                seen_bins.add(bin_id)
+                last_spread_mjd = t_min
+            else:
+                bin_id = round(t_min * 2880)
+                if bin_id in seen_bins:
+                    continue
+                seen_bins.add(bin_id)
+
+            try:
+                timestamp = mjd_to_utc_iso(t_min)
+            except ValueError:
                 continue
-            seen_bins.add(bin_id)
 
             records.append({
                 "id": f"spx.{detector}.{obs_id}.{int(t_min * 1000)}",  # STABLE — do not change
                 "obs_id": obs_id,
-                "timestamp": mjd_to_utc_iso(t_min),
+                "timestamp": timestamp,
                 "mjd": t_min,
                 "access_url": access_url,
                 "cutout_url": f"{access_url}?center={ra:.6f},{dec:.6f}d&size={size_deg}",

@@ -1,4 +1,5 @@
 import json
+import math
 import os
 from pathlib import Path
 from functools import lru_cache
@@ -78,10 +79,12 @@ def observations(
 ):
     start_mjd = _parse_mjd(start_date, "start_date")
     end_mjd = _parse_mjd(end_date, "end_date")
-    if end_mjd is not None:
-        end_mjd += 1.0  # end_date is inclusive (through end of that UTC day)
-    if start_mjd is not None and end_mjd is not None and start_mjd >= end_mjd:
+    if start_date is not None and end_date is not None and start_date >= end_date:
         raise HTTPException(422, "start_date must be before end_date")
+    if end_mjd is not None:
+        # Include every observation on end_date, through the final representable
+        # MJD before midnight on the following UTC date.
+        end_mjd = math.nextafter(end_mjd + 1.0, -math.inf)
     try:
         return provider.observations(
             FieldRequest(ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector),

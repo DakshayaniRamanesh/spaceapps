@@ -20,6 +20,19 @@ GET /api/observations?ra=269.452077&dec=4.693365&fov_arcmin=12&detector=D1
 - `dec`: finite decimal degrees, −90 ≤ Dec ≤ +90; required.
 - `fov_arcmin`: finite 2–60, default 12; square field.
 - `detector`: D1–D6, default D1.
+- `limit`: integer 2–50, default 12. Maximum number of epochs shortlisted.
+- `start_date` / `end_date`: optional ISO dates (`YYYY-MM-DD`, UTC, inclusive)
+  filtering observation time. When both are supplied, `start_date` must be
+  earlier than `end_date`.
+- `spread`: boolean, default `false`. When true, samples approximately one
+  exposure per 30-day bin across the survey (a SkyTrace heuristic, not a mission
+  standard); selected epochs are kept at least 29 days apart.
+
+For example:
+
+```http
+GET /api/observations?ra=269.452077&dec=4.693365&fov_arcmin=12&detector=D1&limit=24&spread=true
+```
 
 RA/Dec normalize to six decimal places; FOV to four. RA just below 360 is clamped below 360 after rounding.
 
@@ -42,6 +55,13 @@ RA/Dec normalize to six decimal places; FOV to four. RA just below 360 is clampe
   "wavelength_range_um": [0.75, 1.09],
   "wavelength_model": "calibrated spectrophotometric position response",
   "release": "DR1+QR3",
+  "total_candidates": 498,
+  "epoch_selection": {
+    "limit": 24,
+    "spread": true,
+    "start_mjd": null,
+    "end_mjd": null
+  },
   "frames": [
     {
       "id": "spx.D1.2025W18_1B_0074_2.60794016",

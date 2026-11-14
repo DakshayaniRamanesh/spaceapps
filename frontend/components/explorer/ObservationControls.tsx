@@ -50,6 +50,15 @@ export default function ObservationControls({
       Math.abs(p.ra - Number(ra)) < 0.00001 &&
       Math.abs(p.dec - Number(dec)) < 0.00001,
   );
+  const selectedLimit = Number(limit);
+  const epochOptions = [
+    ...new Set([
+      ...EPOCH_LIMITS,
+      ...(Number.isInteger(selectedLimit) && selectedLimit >= 2 && selectedLimit <= 50
+        ? [selectedLimit]
+        : []),
+    ]),
+  ].sort((a, b) => a - b);
   function submit() {
     const f = {
       ra: ra.trim() ? Number(ra) : NaN,
@@ -168,7 +177,7 @@ export default function ObservationControls({
                 24,
                 30,
                 60,
-                ...(![ 2, 6, 12, 24, 30, 60].includes(Number(fov))
+                ...(![2, 6, 12, 24, 30, 60].includes(Number(fov))
                   ? [Number(fov)]
                   : []),
               ]
@@ -187,7 +196,7 @@ export default function ObservationControls({
               value={limit}
               onChange={(e) => setLimit(e.target.value)}
             >
-              {EPOCH_LIMITS.map((n) => (
+              {epochOptions.map((n) => (
                 <option key={n} value={n}>
                   {n} exposures
                 </option>
