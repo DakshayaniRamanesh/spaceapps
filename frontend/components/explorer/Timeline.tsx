@@ -7,12 +7,15 @@ import { Frame, dateLabel } from "@/lib/types";
 function LazyFrameImage({
   src,
   rootRef,
+  detector,
 }: {
   src: string;
   rootRef: { readonly current: HTMLDivElement | null };
+  detector?: string;
 }) {
   const imageRef = useRef<HTMLImageElement>(null);
   const [visible, setVisible] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -30,11 +33,20 @@ function LazyFrameImage({
           observer.disconnect();
         }
       },
-      { root, rootMargin: "0px", threshold: 0.01 },
+      { root, rootMargin: "60px", threshold: 0.01 },
     );
     observer.observe(image);
     return () => observer.disconnect();
   }, [rootRef]);
+
+  if (failed) {
+    return (
+      <div className="thumb-fallback" title="Thumbnail preview unavailable">
+        <span>{detector || "SPX"}</span>
+        <small>Unavailable</small>
+      </div>
+    );
+  }
 
   return (
     <img
@@ -45,6 +57,7 @@ function LazyFrameImage({
       decoding="async"
       width={96}
       height={96}
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -153,7 +166,11 @@ export default function Timeline({
             className={`frame-thumb ${index === i ? "selected" : ""}`}
             onClick={() => onIndex(i)}
           >
-            <LazyFrameImage src={f.image_url} rootRef={stripRef} />
+            <LazyFrameImage
+              src={f.image_url}
+              rootRef={stripRef}
+              detector={f.detector}
+            />
             <span className="frame-number">
               {String(i + 1).padStart(2, "0")}
             </span>
@@ -169,12 +186,17 @@ export default function Timeline({
           {frames.length
             ? totalCandidates && totalCandidates > frames.length
               ? `Showing ${frames.length} of ${totalCandidates} matching exposures · UTC`
-              : (epochLabel ?? "Illustrative epochs · UTC")
+              : (epochLabel ??
+                (frames[0]?.source === "spherex-irsa"
+                  ? "SPHEREx observation epochs · UTC"
+                  : "Illustrative epochs · UTC"))
             : "Awaiting observations"}
         </span>
         <span>
           {frames.length
-            ? "Aligned grid / fixed intensity stretch"
+            ? frames[0]?.source === "spherex-irsa"
+              ? "Aligned celestial grid / per-frame arcsinh stretch"
+              : "Aligned grid / fixed intensity stretch"
             : "Timeline available when data is connected"}
         </span>
       </div>

@@ -85,30 +85,44 @@ export default function MetadataPanel({
                 {data.width} × {data.height} px
               </dd>
               <dt>Display stretch</dt>
-              <dd>Fixed across epochs</dd>
+              <dd>
+                {f.source === "spherex-irsa"
+                  ? "Per-frame percentile arcsinh (MJy/sr)"
+                  : "Fixed across epochs"}
+              </dd>
             </dl>
           </section>
           <section className="metadata-group quality">
             <h4>Data quality</h4>
             <p>
               <i />
-              Common registered grid
+              {f.quality.registration || "Common registered grid"}
             </p>
-            <p>
-              <i />
-              Gaussian PSF + seeded noise
-            </p>
+            {f.source === "synthetic" && (
+              <p>
+                <i />
+                Gaussian PSF + seeded noise
+              </p>
+            )}
             <dl>
               <dt>Noise σ</dt>
-              <dd className="numeric">{f.quality.noise_sigma} a.u.</dd>
+              <dd className="numeric">
+                {f.source === "spherex-irsa"
+                  ? "Not calculated"
+                  : `${f.quality.noise_sigma} a.u.`}
+              </dd>
               <dt>Masked fraction</dt>
               <dd className="numeric">
-                {(f.quality.masked_fraction * 100).toFixed(1)}%
+                {f.source === "spherex-irsa"
+                  ? "Not calculated"
+                  : `${(f.quality.masked_fraction * 100).toFixed(1)}%`}
               </dd>
               <dt>Calibration</dt>
               <dd>
                 {f.quality.calibrated
-                  ? "Calibrated"
+                  ? f.source === "spherex-irsa"
+                    ? "Calibrated (photometric, MJy/sr)"
+                    : "Calibrated"
                   : "Not photometrically calibrated"}
               </dd>
             </dl>
@@ -139,7 +153,9 @@ export default function MetadataPanel({
                 ? "Amber pixels gained intensity. Violet pixels lost intensity. A moving source leaves a positive and negative pair."
                 : mode === "blink"
                   ? "Alternate two epochs. Steady stars stay fixed; the moving source appears to jump."
-                  : "Two bright sources near the center demonstrate motion and variability. Zoom in, then compare epochs."}
+                  : f.source === "spherex-irsa"
+                    ? "Compare observations across epochs to detect transients, moving objects, or flux variability. Zoom in to inspect target coordinates."
+                    : "Two bright sources near the center demonstrate motion and variability. Zoom in, then compare epochs."}
             </p>
             <span>
               {f.source === "spherex-irsa"

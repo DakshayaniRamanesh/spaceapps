@@ -15,11 +15,13 @@ export default function ObservationControls({
   onLoad,
   loading,
   demoEnabled = false,
+  statusMessage,
 }: {
   field: Field;
   onLoad: (f: Field) => void;
   loading: boolean;
   demoEnabled?: boolean;
+  statusMessage?: string;
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -244,22 +246,38 @@ export default function ObservationControls({
               Detector array<span>02</span>
             </div>
             <div className="detector-grid">
-              {detectors.map((d) => (
-                <button
-                  type="button"
-                  key={d}
-                  className={detector === d ? "selected" : ""}
-                  aria-pressed={detector === d}
-                  onClick={() => setDetector(d)}
-                >
-                  {d}
-                </button>
-              ))}
+              {detectors.map((d) => {
+                const isSelected = detector === d;
+                const isCurrent = field.detector === d;
+                return (
+                  <button
+                    type="button"
+                    key={d}
+                    className={`${isSelected ? "selected" : ""} ${isCurrent ? "current-detector" : ""}`}
+                    aria-pressed={isSelected}
+                    title={
+                      isCurrent && !isSelected
+                        ? `${d}: Currently displayed (unsubmitted selection is ${detector})`
+                        : isCurrent
+                          ? `${d}: Currently displayed detector`
+                          : isSelected
+                            ? `${d}: Selected (not yet submitted)`
+                            : d
+                    }
+                    onClick={() => setDetector(d)}
+                  >
+                    <span>{d}</span>
+                    {isCurrent && <span className="detector-badge">ACTIVE</span>}
+                  </button>
+                );
+              })}
             </div>
             <p className="hint">
-              {demoEnabled
-                ? "Simulated array responses. Assigned colors are not visible light."
-                : "Select the array for your observation request."}
+              {detector !== field.detector
+                ? `Detector ${detector} selected (unsubmitted) — click ${demoEnabled ? "Load observations" : "Check for observations"} to switch.`
+                : demoEnabled
+                  ? "Simulated array responses. Assigned colors are not visible light."
+                  : "Select a SPHEREx detector array (D1–D6) to query observations."}
             </p>
             {error && (
               <p className="error" id="field-error" role="alert">
@@ -292,9 +310,12 @@ export default function ObservationControls({
           <div className="simulation-note">
             <span className="eyebrow">A NOTE ON THE DATA</span>
             <p>
-              {demoEnabled
-                ? "Development mode uses generated starfields, not observations of the selected target."
-                : "Real SPHEREx data is not connected in this release. Your field settings are ready for a validated provider."}
+              {statusMessage ||
+                (loading
+                  ? "Querying SPHEREx observation records from NASA / IPAC IRSA archive…"
+                  : demoEnabled
+                    ? "Development mode uses generated starfields, not observations of the selected target."
+                    : "Connected to NASA / IPAC IRSA SPHEREx DR1+QR3 public archive. Observations are queried directly by coordinates and detector.")}
             </p>
           </div>
         </div>

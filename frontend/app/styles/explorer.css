@@ -28,10 +28,16 @@
   grid-template-columns: 310px minmax(0, 1fr) 310px;
   gap: 24px;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 .observatory-center {
   min-width: 0;
+  max-width: 100%;
+  width: 100%;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 .controls,
@@ -41,6 +47,8 @@
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   padding: 24px 22px;
   border-radius: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 .controls summary,
 .intelligence summary {
@@ -167,6 +175,11 @@
   font-weight: 500;
   color: var(--secondary-text);
   transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
 }
 .detector-grid button:hover {
   background: #2d1c49;
@@ -178,6 +191,25 @@
   border-color: var(--accent);
   color: white;
   box-shadow: 0 0 16px rgba(116, 41, 223, 0.35);
+}
+.detector-grid button.current-detector {
+  border-color: rgba(69, 219, 142, 0.6);
+}
+.detector-grid button.current-detector:not(.selected) {
+  background: #141f2a;
+  color: #c0edd6;
+}
+.detector-badge {
+  font: 700 9px/1 var(--mono);
+  letter-spacing: 0.05em;
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: rgba(69, 219, 142, 0.22);
+  color: #73f0ab;
+}
+.detector-grid button.selected .detector-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 .hint {
   font-size: 13px;
@@ -232,13 +264,17 @@
   padding: 5px;
   border-radius: 6px;
   min-height: 52px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .mode-tabs button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 42px;
   font-size: 14px;
   font-weight: 500;
@@ -257,11 +293,19 @@
   background: #211538;
   color: var(--text);
 }
+.comparison {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
 .comparison-options {
   display: flex;
   align-items: end;
   gap: 13px;
   padding: 19px 0 4px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .comparison-options label {
   font-size: 14px;
@@ -285,6 +329,9 @@
   border: 1px solid rgba(155, 114, 242, 0.16);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   isolation: isolate;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .viewer-heading {
   display: flex;
@@ -301,6 +348,8 @@
   border-bottom: 1px solid rgba(155, 114, 242, 0.12);
   position: relative;
   z-index: 30;
+  min-width: 0;
+  max-width: 100%;
 }
 .viewer-heading .mono {
   font-size: 13px;
@@ -324,6 +373,9 @@
   background: #020106;
   overflow: hidden;
   isolation: isolate;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -572,6 +624,9 @@
 }
 .timeline {
   padding: 22px 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .timeline-top {
   display: flex;
@@ -579,6 +634,9 @@
   gap: 16px;
   flex-wrap: wrap;
   justify-content: space-between;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .playback {
   display: flex;
@@ -613,6 +671,7 @@
 }
 .scrubber {
   width: 100%;
+  max-width: 100%;
   margin: 24px 0 20px;
   accent-color: var(--accent);
   height: 18px;
@@ -629,6 +688,9 @@
   padding: 6px 3px 14px;
   scrollbar-color: #604085 transparent;
   scrollbar-width: thin;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .frame-thumb {
   flex: 0 0 98px;
@@ -655,6 +717,30 @@
   aspect-ratio: 1;
   object-fit: contain;
   border-radius: 3px;
+  display: block;
+}
+.thumb-fallback {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #170d28;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-text);
+  font-size: 11px;
+  text-align: center;
+  border: 1px dashed rgba(155, 114, 242, 0.25);
+}
+.thumb-fallback span {
+  font: 600 12px var(--mono);
+  color: var(--accent);
+}
+.thumb-fallback small {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
 }
 .frame-number {
   position: absolute;
@@ -685,6 +771,9 @@
   font-size: 13px;
   color: var(--secondary-text);
   margin-top: 12px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .metadata-body h3 {
   font-size: 26px;
@@ -909,8 +998,11 @@
 }
 @media (min-width: 1600px) {
   .observatory {
-    grid-template-columns: 300px minmax(0, 1fr) 300px;
+    grid-template-columns: 310px minmax(0, 1fr) 310px;
     gap: 36px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .controls,
   .intelligence {
@@ -945,6 +1037,9 @@
   .observatory {
     grid-template-columns: 260px minmax(0, 1fr);
     gap: 25px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .intelligence {
     grid-column: 1/-1;
@@ -1014,6 +1109,9 @@
   .observatory {
     grid-template-columns: 230px minmax(0, 1fr);
     gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .controls {
     padding: 20px 17px;
@@ -1113,6 +1211,9 @@
     display: flex;
     flex-direction: column;
     gap: 22px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .controls,
   .intelligence,
