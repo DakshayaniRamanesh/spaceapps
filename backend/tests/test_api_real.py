@@ -80,13 +80,29 @@ def test_api_with_irsa_source(monkeypatch):
     img = Image.open(io.BytesIO(img_resp.content))
     assert img.size == (384, 384)
 
-    # Difference image endpoint
+    # Difference image endpoint (diff mode)
     diff_resp = client.get(f"/api/difference?frame_a={frame_0_id}&frame_b={frame_1_id}")
     assert diff_resp.status_code == 200
     assert diff_resp.headers["x-data-source"] == "spherex-irsa"
     assert diff_resp.headers["x-difference-sign"] == "B-minus-A"
     diff_img = Image.open(io.BytesIO(diff_resp.content))
     assert diff_img.size == (384, 384)
+
+    # Difference image endpoint (significance mode)
+    sig_resp = client.get(f"/api/difference?frame_a={frame_0_id}&frame_b={frame_1_id}&view=significance")
+    assert sig_resp.status_code == 200
+    assert sig_resp.headers["x-data-source"] == "spherex-irsa"
+    assert sig_resp.headers["x-difference-view"] == "significance"
+    sig_img = Image.open(io.BytesIO(sig_resp.content))
+    assert sig_img.size == (384, 384)
+
+    # Gaia catalog endpoint test
+    gaia_resp = client.get("/api/catalog/gaia", params={"ra": 304.6935, "dec": 42.4436, "fov_arcmin": 12.0})
+    assert gaia_resp.status_code == 200
+    gaia_data = gaia_resp.json()
+    assert gaia_data["catalog"] == "Gaia DR3"
+    assert gaia_data["epoch"] == "J2016.0"
+    assert "sources" in gaia_data
 
     # Reset monkeypatch and reload main
     monkeypatch.undo()

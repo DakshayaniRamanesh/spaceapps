@@ -20,6 +20,7 @@ from .science.difference import (
     compute_significance,
     render_significance_frame,
 )
+from .services.catalogs import query_gaia_dr3
 
 app = FastAPI(
     title='SkyTrace Observation API',
@@ -162,3 +163,16 @@ def difference(
         raise HTTPException(503, str(exc))
     except Exception as exc:
         raise HTTPException(502, f"Failed calculating difference: {exc}")
+
+
+@app.get('/api/catalog/gaia')
+def get_gaia_catalog(
+    ra: float = Query(..., ge=0, lt=360, description="ICRS Right Ascension in degrees"),
+    dec: float = Query(..., ge=-90, le=90, description="ICRS Declination in degrees"),
+    fov_arcmin: float = Query(12.0, ge=2, le=60, description="Field of view in arcminutes"),
+    limit: int = Query(100, ge=1, le=500, description="Maximum number of sources to return"),
+):
+    try:
+        return query_gaia_dr3(ra=ra, dec=dec, fov_arcmin=fov_arcmin, limit=limit)
+    except Exception as exc:
+        raise HTTPException(502, f"Failed querying Gaia DR3: {exc}")
