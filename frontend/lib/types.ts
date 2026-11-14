@@ -19,16 +19,21 @@ export type Frame = {
   timestamp: string;
   image_url: string;
   detector: Detector;
-  source: "synthetic";
+  source: "synthetic" | "spherex-irsa";
+  product_id?: string;
+  provenance_url?: string;
+  wavelength_um?: number;
   quality: {
     registration: string;
     noise_sigma: number;
     masked_fraction: number;
     calibrated: boolean;
+    flags?: string[];
+    notes?: string[];
   };
 };
 export type ObservationSet = {
-  source_type: "synthetic";
+  source_type: "synthetic" | "spherex-irsa";
   dataset_id: string;
   request: Field;
   frames: Frame[];
@@ -36,6 +41,8 @@ export type ObservationSet = {
   width: number;
   height: number;
   wavelength_range_um: [number, number];
+  intensity_unit?: string;
+  release?: string;
 };
 export type Mode = "single" | "blink" | "split" | "difference";
 export const DEFAULT_FIELD: Field = {

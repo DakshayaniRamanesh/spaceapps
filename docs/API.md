@@ -1,14 +1,14 @@
-# SkyTrace API v1
+# SkyTrace API v2
 
 Run FastAPI on port 8000. Interactive OpenAPI documentation: `http://127.0.0.1:8000/docs`. The browser accesses the same endpoints through Next.js's `/api` proxy.
 
 | Endpoint | Result |
 | --- | --- |
-| `GET /health` | Source, service status, real-data availability |
-| `GET /api/presets` | Five reference fields with coordinates, classification, phenomenon, epoch and source |
-| `GET /api/observations` | A validated, deterministic eight-frame manifest |
-| `GET /api/frames/{frame_id}.png` | Actual PNG display image (384×384 RGB) |
-| `GET /api/difference?frame_a=...&frame_b=...` | Actual signed B − A residual PNG |
+| `GET /health` | Source (`synthetic` or `spherex-irsa`), service status, real-data availability |
+| `GET /api/presets` | Reference fields with coordinates, classification, phenomenon, epoch and source |
+| `GET /api/observations` | Validated observation set manifest (real SPHEREx DR1+QR3 or synthetic) |
+| `GET /api/frames/{frame_id}.png` | Actual PNG display image (384×384 RGB) with source header |
+| `GET /api/difference?frame_a=...&frame_b=...` | Actual signed B − A residual PNG on common WCS grid |
 
 ## Request
 
@@ -21,52 +21,53 @@ GET /api/observations?ra=269.452077&dec=4.693365&fov_arcmin=12&detector=D1
 - `fov_arcmin`: finite 2–60, default 12; square field.
 - `detector`: D1–D6, default D1.
 
-RA/Dec normalize to six decimal places; FOV to four. RA just below 360 is clamped below 360 after rounding. IDs derive from the normalized request. Display and metadata use the same normalized values.
+RA/Dec normalize to six decimal places; FOV to four. RA just below 360 is clamped below 360 after rounding.
 
-## Response
+## Real Data Response (`source_type: "spherex-irsa"`)
 
 ```json
 {
-  "source_type": "synthetic",
-  "dataset_id": "skytrace-synthetic-v1-<field-hash>",
-  "request": {"ra":269.452077,"dec":4.693365,"fov_arcmin":12,"detector":"D1"},
-  "coordinate_system": "ICRS field center; illustrative local tangent offsets",
-  "width":384,
-  "height":384,
-  "intensity_unit":"arbitrary simulation units",
-  "wavelength_range_um":[0.75,1.09],
-  "wavelength_model":"Illustrative array-dependent response; no per-pixel wavelength calibration",
-  "frames":[
+  "source_type": "spherex-irsa",
+  "dataset_id": "spx-dr1-<hash>",
+  "request": {
+    "ra": 304.6935,
+    "dec": 42.4436,
+    "fov_arcmin": 12.0,
+    "detector": "D1"
+  },
+  "coordinate_system": "ICRS",
+  "width": 384,
+  "height": 384,
+  "intensity_unit": "MJy / sr",
+  "wavelength_range_um": [0.75, 1.09],
+  "wavelength_model": "calibrated spectrophotometric position response",
+  "release": "DR1+QR3",
+  "frames": [
     {
-      "id":"<opaque-frame-id>",
-      "timestamp":"2025-01-15T03:24:00+00:00",
-      "image_url":"/api/frames/<opaque-frame-id>.png",
-      "detector":"D1",
-      "source":"synthetic",
-      "quality":{
-        "registration":"Common synthetic tangent-plane grid",
-        "noise_sigma":2.5,
-        "masked_fraction":0.0,
-        "calibrated":false
+      "id": "spx.D1.2025W18_1B_0074_2.60794016",
+      "timestamp": "2025-04-29T00:24:27.897Z",
+      "image_url": "/api/frames/spx.D1.2025W18_1B_0074_2.60794016.png",
+      "detector": "D1",
+      "source": "spherex-irsa",
+      "product_id": "2025W18_1B_0074_2",
+      "provenance_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/...",
+      "wavelength_um": 0.753,
+      "quality": {
+        "registration": "Astropy WCS celestial TAN projection",
+        "noise_sigma": 0.5,
+        "masked_fraction": 0.0,
+        "calibrated": true,
+        "flags": ["calibrated_dr1_qr3"],
+        "notes": ["Level 2 spectral image cutout"]
       }
     }
   ],
-  "notice":"Synthetic observations. Motion, variability, dates and noise are illustrative, not measurements of the named target."
+  "notice": "Actual archived SPHEREx data (DR1+QR3); calibrated spectral image cutouts from NASA/IPAC IRSA."
 }
 ```
 
-Example abbreviated to one frame; actual responses contain eight. Treat IDs as opaque and use the returned image URL. Metadata comes from Pydantic response models. The frontend shares `fov` in its user-facing URLs and translates it to `fov_arcmin` at the API boundary.
+## Headers and Display
 
-## Errors
-
-- 422: invalid query, detector, nonfinite values or incompatible difference pair.
-- 404: unknown/malformed frame ID, including an out-of-range frame index.
-- 503: disabled IRSA provider requested.
-
-Errors use FastAPI's standard `detail` response. Unexpected server errors are not disguised as synthetic success.
-
-## Display and comparison
-
-PNG content has `Content-Type: image/png`, `X-Data-Source: synthetic`, and a one-day browser cache lifetime. Difference images also declare `X-Difference-Sign: B-minus-A`. Zero difference maps to RGB (8,14,24), positive to amber, negative to violet, with a fixed nonlinear display stretch. Raw arrays are not clipped before subtraction. A fixed intensity stretch across epochs makes variability visible.
-
-Frames from different coordinates, fields of view or detectors cannot be subtracted. Identical-frame subtraction is permitted and yields a neutral image, which is a useful sanity check. Arrays are reproducible after cache eviction or process restart. Caches retain up to eight field arrays, 128 rendered frames and 64 rendered differences per process.
+- Frame PNG: `Content-Type: image/png`, `X-Data-Source: spherex-irsa` (or `synthetic`).
+- Difference PNG: `Content-Type: image/png`, `X-Data-Source: spherex-irsa`, `X-Difference-Sign: B-minus-A`.
+- Color mapping: Amber = positive flux residual, Violet = negative flux residual, Dark neutral = zero or unobserved footprint.

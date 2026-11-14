@@ -163,7 +163,9 @@ export default function SkyViewer({
               alt={
                 mode === "difference"
                   ? "Calculated B minus A difference: amber positive, violet negative"
-                  : `Synthetic astronomical field, ${img.label}`
+                  : data.source_type === "spherex-irsa"
+                    ? `SPHEREx astronomical field, ${img.label}`
+                    : `Synthetic astronomical field, ${img.label}`
               }
               style={{
                 transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
@@ -186,9 +188,15 @@ export default function SkyViewer({
           RA {data.request.ra.toFixed(4)}°<br />
           DEC {data.request.dec.toFixed(4)}°
         </div>
-        <span className="synthetic-watermark">
-          SYNTHETIC / NOT TELESCOPE DATA
-        </span>
+        {data.source_type === "spherex-irsa" ? (
+          <span className="archive-watermark">
+            NASA / IPAC IRSA SPHEREx DR1+QR3 ARCHIVE
+          </span>
+        ) : (
+          <span className="synthetic-watermark">
+            SYNTHETIC / NOT TELESCOPE DATA
+          </span>
+        )}
         {(loading || images.some((img) => !imageStatus[img.src])) && (
           <div className="viewer-loading" role="status">
             <span className="spinner" />

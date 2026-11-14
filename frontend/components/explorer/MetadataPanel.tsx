@@ -38,7 +38,29 @@ export default function MetadataPanel({
             <h4>Observation details</h4>
             <dl>
               <dt>Data source</dt>
-              <dd className="amber">Synthetic development data</dd>
+              <dd className={f.source === "spherex-irsa" ? "green" : "amber"}>
+                {f.source === "spherex-irsa"
+                  ? `SPHEREx Archive (${data.release || "DR1+QR3"})`
+                  : "Synthetic development data"}
+              </dd>
+              {f.product_id ? (
+                <>
+                  <dt>Product ID</dt>
+                  <dd className="numeric">{f.product_id}</dd>
+                </>
+              ) : null}
+              {f.wavelength_um ? (
+                <>
+                  <dt>Wavelength</dt>
+                  <dd className="numeric">{f.wavelength_um.toFixed(3)} µm</dd>
+                </>
+              ) : null}
+              {data.intensity_unit ? (
+                <>
+                  <dt>Intensity unit</dt>
+                  <dd className="numeric">{data.intensity_unit}</dd>
+                </>
+              ) : null}
               <dt>Detector</dt>
               <dd>{data.request.detector}</dd>
               <dt>Array range</dt>
@@ -120,7 +142,9 @@ export default function MetadataPanel({
                   : "Two bright sources near the center demonstrate motion and variability. Zoom in, then compare epochs."}
             </p>
             <span>
-              Illustrative motion is exaggerated. No measured target data.
+              {f.source === "spherex-irsa"
+                ? "NASA / IPAC IRSA SPHEREx DR1+QR3 calibrated observations (DOI: 10.26131/IRSA678)."
+                : "Illustrative motion is exaggerated. No measured target data."}
             </span>
           </div>
         </div>

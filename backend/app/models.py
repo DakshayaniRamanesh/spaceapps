@@ -15,24 +15,30 @@ class Quality(BaseModel):
     noise_sigma: float = 2.5
     masked_fraction: float = 0.0
     calibrated: bool = False
+    flags: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
 
 class Frame(BaseModel):
     id: str
     timestamp: str
     image_url: str
     detector: Detector
-    source: Literal['synthetic'] = 'synthetic'
+    source: Literal['synthetic', 'spherex-irsa'] = 'synthetic'
+    product_id: str | None = None
+    provenance_url: str | None = None
+    wavelength_um: float | None = None
     quality: Quality = Field(default_factory=Quality)
 
 class ObservationSet(BaseModel):
-    source_type: Literal['synthetic'] = 'synthetic'
+    source_type: Literal['synthetic', 'spherex-irsa'] = 'synthetic'
     dataset_id: str
     request: FieldRequest
-    coordinate_system: str = 'ICRS field center; illustrative local tangent offsets'
+    coordinate_system: str = 'ICRS'
     width: int = 384
     height: int = 384
     intensity_unit: str = 'arbitrary simulation units'
     wavelength_range_um: tuple[float, float]
     wavelength_model: str = 'Illustrative array-dependent response; no per-pixel wavelength calibration'
+    release: str | None = None
     frames: list[Frame]
     notice: str = 'Synthetic observations. Motion, variability, dates and noise are illustrative, not measurements of the named target.'
