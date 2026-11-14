@@ -269,6 +269,19 @@ export default function Explorer() {
           onLoad={load}
           loading={loading}
           demoEnabled={developmentDemoEnabled}
+          statusMessage={
+            loading
+              ? "Querying NASA / IPAC IRSA archive for SPHEREx exposures…"
+              : error
+                ? error
+                : data
+                  ? data.source_type === "spherex-irsa"
+                    ? (data.notice || "Connected to NASA / IPAC IRSA SPHEREx DR1+QR3 archive. Calibrated spectral observations loaded.")
+                    : "Development mode uses generated starfields, not observations of the selected target."
+                  : developmentDemoEnabled
+                    ? "Development mode uses generated starfields, not observations of the selected target."
+                    : "Connected to NASA / IPAC IRSA SPHEREx DR1+QR3 archive. Ready to query observations."
+          }
         />
         <div className="observatory-center">
           {data ? (
@@ -323,13 +336,17 @@ export default function Explorer() {
                 totalCandidates={data.total_candidates}
                 epochLabel={
                   data.source_type === "spherex-irsa"
-                    ? "Archived epochs · UTC"
+                    ? "SPHEREx observation epochs · UTC"
                     : "Illustrative epochs · UTC"
                 }
               />
             </>
           ) : (
-            <EmptyObservatory loading={loading} />
+            <EmptyObservatory
+              loading={loading}
+              error={error}
+              onRetry={() => load(field)}
+            />
           )}
         </div>
         {data ? (
@@ -369,7 +386,9 @@ export default function Explorer() {
         <span>
           <i />{" "}
           {data
-            ? `Synthetic development data · ${data.frames.length} epochs`
+            ? data.source_type === "spherex-irsa"
+              ? `NASA / IPAC IRSA SPHEREx DR1+QR3 · ${data.frames.length} exposures`
+              : `Synthetic development data · ${data.frames.length} epochs`
             : "No observation data connected"}
         </span>
         <Link href="/about#methodology">
