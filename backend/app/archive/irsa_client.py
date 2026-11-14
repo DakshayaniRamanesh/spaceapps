@@ -64,24 +64,66 @@ class IrsaSpherexClient:
 
     def query_sia_table(self, ra: float, dec: float, fov_arcmin: float):
         """Query and cache the raw SIA table for a spatial position across all collections."""
+        from astropy.io.votable import parse_single_table
+
         cache_key = (round(ra, 4), round(dec, 4), round(fov_arcmin, 2))
         if cache_key in self._sia_cache:
             return self._sia_cache[cache_key]
 
+        coord_cache = self.cache_dir / f"sia_{cache_key[0]:.4f}_{cache_key[1]:.4f}_{cache_key[2]:.2f}.xml"
+        fallback_caches = sorted(self.cache_dir.glob(f"sia_{cache_key[0]:.4f}_{cache_key[1]:.4f}_*.xml"))
+        for disk_cache in [coord_cache, *fallback_caches]:
+            if disk_cache.exists() and disk_cache.stat().st_size > 1000:
+                try:
+                    table = parse_single_table(disk_cache).to_table(use_names_over_ids=True)
+                    self._sia_cache[cache_key] = table
+                    return table
+                except Exception as exc:
+                    logger.warning("Failed reading cached SIA VOTable %s: %s", disk_cache, exc)
+
         coord = SkyCoord(ra=ra, dec=dec, unit="deg", frame="icrs")
         search_radius = (fov_arcmin / 2.0) * u.arcmin
 
-        try:
-            logger.info("Querying IRSA SIA for (%s, %s) radius=%s", ra, dec, search_radius)
-            table = self._irsa.query_sia(
-                pos=(coord, search_radius),
-                collection=["spherex_dr1", "spherex_qr3"],
-            )
-            self._sia_cache[cache_key] = table
-            return table
-        except Exception as exc:
-            logger.warning("IRSA SIA query failed: %s", exc)
-            raise RuntimeError("IRSA SIA observation discovery failed") from exc
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries):
+            try:
+                logger.info("Querying IRSA SIA for (%s, %s) radius=%s (attempt %s)", ra, dec, search_radius, attempt + 1)
+                table = self._irsa.query_sia(
+                    pos=(coord, search_radius),
+                    collection=["spherex_dr1", "spherex_qr3"],
+                )
+                if hasattr(table, "to_table"):
+                    table = table.to_table()
+                self._sia_cache[cache_key] = table
+                return table
+            except Exception as exc:
+                last_error = exc
+                logger.warning("IRSA SIA query attempt %s failed: %s", attempt + 1, exc)
+                if attempt + 1 < self.max_retries:
+                    time.sleep(min(1.0 * (attempt + 1), self.timeout))
+
+        # Direct SIA v2 HTTP fallback if PyVO's /SIA/capabilities handshake gets a 502 from IRSA load balancer
+        radius_deg = max(round(fov_arcmin / 120.0, 5), 0.001)
+        sia_url = (
+            f"https://irsa.ipac.caltech.edu/SIA?POS=CIRCLE+{ra}+{dec}+{radius_deg}"
+            f"&COLLECTION=spherex_dr1&COLLECTION=spherex_qr3"
+        )
+        validate_trusted_url(sia_url)
+        for attempt in range(self.max_retries):
+            try:
+                with httpx.Client(timeout=self.timeout, follow_redirects=True) as client:
+                    resp = client.get(sia_url)
+                    if resp.status_code == 200 and b"<VOTABLE" in resp.content[:1024]:
+                        coord_cache.write_bytes(resp.content)
+                        table = parse_single_table(coord_cache).to_table(use_names_over_ids=True)
+                        self._sia_cache[cache_key] = table
+                        return table
+            except Exception as exc:
+                last_error = exc
+            if attempt + 1 < self.max_retries:
+                time.sleep(min(1.0 * (attempt + 1), self.timeout))
+
+        raise RuntimeError("IRSA SIA observation discovery failed") from last_error
 
     def search_observations(
         self,
