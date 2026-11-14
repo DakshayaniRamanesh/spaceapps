@@ -92,3 +92,16 @@ def test_science_frame_mask_overlay():
     assert rgb.shape == (32, 32, 3)
     # Masked pixels carry crimson hatching / tint (Red > Blue)
     assert np.all(rgb[:16, :, 0] > rgb[:16, :, 2])
+
+
+def test_difference_frame_mask_overlay():
+    diff = np.zeros((32, 32), dtype=np.float32)
+    valid = np.ones((32, 32), dtype=bool)
+    valid[:16, :] = False
+    png_bytes = render_difference_frame(
+        diff, valid_mask=valid, is_calibrated=True, show_mask_overlay=True
+    )
+    img = Image.open(io.BytesIO(png_bytes))
+    rgb = np.array(img)
+    assert rgb.shape == (32, 32, 3)
+    assert np.all(rgb[:16, :, 0] > rgb[:16, :, 2])

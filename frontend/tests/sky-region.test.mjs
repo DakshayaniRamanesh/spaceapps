@@ -99,4 +99,14 @@ test("spherical separation and proper motion calculation", () => {
   assert.ok(metrics.properMotionMasYr !== null);
   assert.ok(Math.abs(metrics.properMotionMasYr - 10300) < 15);
   assert.ok(Math.abs(metrics.positionAngleDeg - 0) < 0.1 || Math.abs(metrics.positionAngleDeg - 360) < 0.1);
+
+  const sameEpoch = computeMotionMetrics(
+    { u: 0.5, v: 0.5 },
+    { u: 0.5, v: 0.5 + dv },
+    barnard,
+    "2025-08-27T00:00:00Z",
+    "2025-08-27T00:00:00Z",
+  );
+  assert.equal(sameEpoch.properMotionMasYr, null);
+  assert.equal(sameEpoch.baselineDays, null);
 });

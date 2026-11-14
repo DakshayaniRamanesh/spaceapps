@@ -54,8 +54,12 @@ export default function SkyViewer({
     [region, setRegion] = useState<RegionPoint[] | null>(null),
     [hideOutside, setHideOutside] = useState(false),
     [maskOverlay, setMaskOverlay] = useState(false),
-    [pinA, setPinA] = useState<RegionPoint | null>(null),
-    [pinB, setPinB] = useState<RegionPoint | null>(null);
+    [pinA, setPinA] = useState<
+      (RegionPoint & { frameId: string; timestamp: string; label: string }) | null
+    >(null),
+    [pinB, setPinB] = useState<
+      (RegionPoint & { frameId: string; timestamp: string; label: string }) | null
+    >(null);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null,
   );
@@ -85,7 +89,9 @@ export default function SkyViewer({
       : [
           {
             src:
-              mode === "difference" ? diff : withOverlay(current.image_url),
+              mode === "difference"
+                ? withOverlay(diff)
+                : withOverlay(current.image_url),
             label:
               mode === "difference"
                 ? "B − A · intensity residual"
@@ -150,15 +156,17 @@ export default function SkyViewer({
   }
   const summary = region ? regionSummary(region, data.request) : null;
   const motion =
-    pinA && pinB
+    pinA && pinB && pinA.frameId !== pinB.frameId
       ? computeMotionMetrics(
           pinA,
           pinB,
           data.request,
-          fa.timestamp,
-          fb.timestamp,
+          pinA.timestamp,
+          pinB.timestamp,
         )
-      : null;
+      : pinA && pinB
+        ? computeMotionMetrics(pinA, pinB, data.request)
+        : null;
   function fit() {
     setZoom(1);
     setPan({ x: 0, y: 0 });
@@ -260,14 +268,34 @@ export default function SkyViewer({
                 e.preventDefault();
                 const pt = toGrid(e, canvas);
                 if (mode === "split") {
-                  if (i === 0) setPinA(pt);
-                  else setPinB(pt);
+                  const pinFrame = i === 0 ? fa : fb;
+                  const pinned = {
+                    ...pt,
+                    frameId: pinFrame.id,
+                    timestamp: pinFrame.timestamp,
+                    label: dateLabel(pinFrame.timestamp),
+                  };
+                  if (i === 0) setPinA(pinned);
+                  else setPinB(pinned);
                 } else {
-                  if (!pinA || (pinA && pinB)) {
-                    setPinA(pt);
+                  const placingA = !pinA || (pinA && pinB);
+                  const pinFrame =
+                    mode === "difference"
+                      ? placingA
+                        ? fa
+                        : fb
+                      : current;
+                  const pinned = {
+                    ...pt,
+                    frameId: pinFrame.id,
+                    timestamp: pinFrame.timestamp,
+                    label: dateLabel(pinFrame.timestamp),
+                  };
+                  if (placingA) {
+                    setPinA(pinned);
                     setPinB(null);
                   } else {
-                    setPinB(pt);
+                    setPinB(pinned);
                   }
                 }
                 return;
@@ -650,10 +678,10 @@ export default function SkyViewer({
             <span className="region-tag">Motion tracker</span>
             {pinA && !pinB ? (
               <span>
-                Pin A set · Click source in Epoch B to compute Δθ and proper
-                motion μ
+                Pin A set ({pinA.label}) · Switch to Epoch B and click source to
+                compute Δθ and proper motion μ
               </span>
-            ) : motion ? (
+            ) : motion && pinA && pinB ? (
               <>
                 <span>
                   Δθ = {motion.separationArcsec.toFixed(2)}″ (
@@ -662,17 +690,19 @@ export default function SkyViewer({
                 </span>
                 <span>
                   μ ={" "}
-                  {motion.properMotionMasYr !== null
-                    ? `${motion.properMotionMasYr.toFixed(1)} mas/yr`
-                    : "N/A"}
+                  {pinA.frameId === pinB.frameId
+                    ? "N/A (same epoch)"
+                    : motion.properMotionMasYr !== null
+                      ? `${motion.properMotionMasYr.toFixed(1)} mas/yr`
+                      : "N/A"}
                   {motion.baselineDays !== null
                     ? ` · Δt ${motion.baselineDays.toFixed(1)} d`
                     : ""}
                 </span>
                 <span>
-                  A ({motion.pinA.ra.toFixed(4)}°, {motion.pinA.dec.toFixed(4)}
-                  °) → B ({motion.pinB.ra.toFixed(4)}°,{" "}
-                  {motion.pinB.dec.toFixed(4)}°)
+                  A [{pinA.label}] ({motion.pinA.ra.toFixed(4)}°,{" "}
+                  {motion.pinA.dec.toFixed(4)}°) → B [{pinB.label}] (
+                  {motion.pinB.ra.toFixed(4)}°, {motion.pinB.dec.toFixed(4)}°)
                 </span>
               </>
             ) : null}

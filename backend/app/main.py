@@ -139,11 +139,18 @@ def frame(
 
 
 @lru_cache(maxsize=64)
-def difference_bytes(frame_a: str, frame_b: str, view: str = 'diff') -> tuple[bytes, str]:
+def difference_bytes(
+    frame_a: str,
+    frame_b: str,
+    view: str = 'diff',
+    overlay: str | None = None,
+) -> tuple[bytes, str]:
     is_real_a = frame_a.startswith('spx.')
     is_real_b = frame_b.startswith('spx.')
     if is_real_a != is_real_b:
         raise ValueError('Cannot compare real archival frames with synthetic frames.')
+
+    show_mask = overlay == 'mask'
 
     if not is_real_a:
         req_a, _ = decode_frame(frame_a)
@@ -156,6 +163,8 @@ def difference_bytes(frame_a: str, frame_b: str, view: str = 'diff') -> tuple[by
             sig, valid_both, _ = compute_significance(arr_a, arr_b, var_a, var_b, valid_a, valid_b)
             return render_significance_frame(sig, valid_mask=valid_both), 'synthetic'
         diff = difference_arrays(arr_a, arr_b)
+        if show_mask:
+            return render_difference_frame(diff, valid_mask=valid_a & valid_b, is_calibrated=False, show_mask_overlay=True), 'synthetic'
         return render_difference(diff), 'synthetic'
     else:
         arr_a, var_a, valid_a = provider.frame_science(frame_a)
@@ -164,7 +173,7 @@ def difference_bytes(frame_a: str, frame_b: str, view: str = 'diff') -> tuple[by
             sig, valid_both, _ = compute_significance(arr_a, arr_b, var_a, var_b, valid_a, valid_b)
             return render_significance_frame(sig, valid_mask=valid_both), 'spherex-irsa'
         diff, valid_both = compute_difference(arr_a, arr_b, valid_a, valid_b)
-        return render_difference_frame(diff, valid_mask=valid_both, is_calibrated=True), 'spherex-irsa'
+        return render_difference_frame(diff, valid_mask=valid_both, is_calibrated=True, show_mask_overlay=show_mask), 'spherex-irsa'
 
 
 @app.get('/api/difference', responses={200: {'content': {'image/png': {}}}})
@@ -172,6 +181,7 @@ def difference(
     frame_a: str = Query(max_length=240),
     frame_b: str = Query(max_length=240),
     view: str = Query('diff', pattern='^(diff|significance)$'),
+    overlay: str | None = Query(default=None, pattern='^mask$'),
 ):
     try:
         # Check validation
@@ -185,7 +195,7 @@ def difference(
             if a != b:
                 raise HTTPException(422, 'Compare frames from the same registered field and detector.')
 
-        content, source_label = difference_bytes(frame_a, frame_b, view=view)
+        content, source_label = difference_bytes(frame_a, frame_b, view=view, overlay=overlay)
         return Response(
             content,
             media_type='image/png',
@@ -194,6 +204,7 @@ def difference(
                 'X-Data-Source': source_label,
                 'X-Difference-Sign': 'B-minus-A',
                 'X-Difference-View': view,
+                'X-Quality-Overlay': overlay or 'none',
             },
         )
     except ValueError as exc:
