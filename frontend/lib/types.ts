@@ -8,11 +8,19 @@ export const ranges = [
   "3.83–4.41",
   "4.42–5.00",
 ];
+export const DEFAULT_LIMIT = 12;
+export const EPOCH_LIMITS = [12, 24, 36, 50] as const;
+
 export type Field = {
   ra: number;
   dec: number;
   fov_arcmin: number;
   detector: Detector;
+  /** Epoch shortlisting (Issue #2). Optional; omitted = backend defaults. */
+  limit?: number;
+  spread?: boolean;
+  start_date?: string; // ISO YYYY-MM-DD, inclusive
+  end_date?: string;
 };
 export type Frame = {
   id: string;
@@ -32,6 +40,12 @@ export type Frame = {
     notes?: string[];
   };
 };
+export type EpochSelection = {
+  limit: number;
+  spread: boolean;
+  start_mjd?: number | null;
+  end_mjd?: number | null;
+};
 export type ObservationSet = {
   source_type: "synthetic" | "spherex-irsa";
   dataset_id: string;
@@ -43,6 +57,8 @@ export type ObservationSet = {
   wavelength_range_um: [number, number];
   intensity_unit?: string;
   release?: string;
+  total_candidates?: number;
+  epoch_selection?: EpochSelection;
 };
 export type Mode = "single" | "blink" | "split" | "difference";
 export const DEFAULT_FIELD: Field = {
@@ -52,12 +68,18 @@ export const DEFAULT_FIELD: Field = {
   detector: "D1",
 };
 export function fieldQuery(f: Field) {
-  return new URLSearchParams({
+  const p = new URLSearchParams({
     ra: String(f.ra),
     dec: String(f.dec),
     fov: String(f.fov_arcmin),
     detector: f.detector,
-  }).toString();
+  });
+  if (f.limit !== undefined && f.limit !== DEFAULT_LIMIT)
+    p.set("limit", String(f.limit));
+  if (f.spread) p.set("spread", "1");
+  if (f.start_date) p.set("start", f.start_date);
+  if (f.end_date) p.set("end", f.end_date);
+  return p.toString();
 }
 export function dateLabel(t: string) {
   return new Date(t).toLocaleDateString("en-GB", {
@@ -67,6 +89,7 @@ export function dateLabel(t: string) {
     timeZone: "UTC",
   });
 }
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export function validateField(f: Field): string | undefined {
   if (!Number.isFinite(f.ra) || f.ra < 0 || f.ra >= 360)
     return "Right ascension must be 0° to less than 360°.";
@@ -76,4 +99,15 @@ export function validateField(f: Field): string | undefined {
     return "Field of view must be between 2 and 60 arcminutes.";
   if (!detectors.includes(f.detector))
     return "Choose a detector from D1 to D6.";
+  if (
+    f.limit !== undefined &&
+    (!Number.isInteger(f.limit) || f.limit < 2 || f.limit > 50)
+  )
+    return "Epoch limit must be a whole number between 2 and 50.";
+  for (const d of [f.start_date, f.end_date]) {
+    if (d !== undefined && d !== "" && (!ISO_DATE.test(d) || !Number.isFinite(Date.parse(d))))
+      return "Dates must be valid ISO dates (YYYY-MM-DD).";
+  }
+  if (f.start_date && f.end_date && f.start_date >= f.end_date)
+    return "Start date must be before end date.";
 }

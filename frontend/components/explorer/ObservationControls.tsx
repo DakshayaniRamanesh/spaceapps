@@ -7,6 +7,7 @@ import {
   Field,
   Detector,
   DEFAULT_FIELD,
+  EPOCH_LIMITS,
   validateField,
 } from "@/lib/types";
 export default function ObservationControls({
@@ -29,12 +30,20 @@ export default function ObservationControls({
     [dec, setDec] = useState(String(field.dec)),
     [fov, setFov] = useState(String(field.fov_arcmin)),
     [detector, setDetector] = useState<Detector>(field.detector),
+    [limit, setLimit] = useState(String(field.limit ?? 12)),
+    [spread, setSpread] = useState(Boolean(field.spread)),
+    [startDate, setStartDate] = useState(field.start_date ?? ""),
+    [endDate, setEndDate] = useState(field.end_date ?? ""),
     [error, setError] = useState("");
   useEffect(() => {
     setRa(String(field.ra));
     setDec(String(field.dec));
     setFov(String(field.fov_arcmin));
     setDetector(field.detector);
+    setLimit(String(field.limit ?? 12));
+    setSpread(Boolean(field.spread));
+    setStartDate(field.start_date ?? "");
+    setEndDate(field.end_date ?? "");
   }, [field]);
   const selected = presets.find(
     (p) =>
@@ -47,6 +56,10 @@ export default function ObservationControls({
       dec: dec.trim() ? Number(dec) : NaN,
       fov_arcmin: fov.trim() ? Number(fov) : NaN,
       detector,
+      limit: Number(limit),
+      spread,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
     };
     const err = validateField(f);
     setError(err || "");
@@ -73,6 +86,10 @@ export default function ObservationControls({
                   fov_arcmin:
                     Number(fov) >= 2 && Number(fov) <= 60 ? Number(fov) : 12,
                   detector,
+                  limit: Number(limit),
+                  spread,
+                  start_date: startDate || undefined,
+                  end_date: endDate || undefined,
                 });
               }
             }}
@@ -151,7 +168,7 @@ export default function ObservationControls({
                 24,
                 30,
                 60,
-                ...(![2, 6, 12, 24, 30, 60].includes(Number(fov))
+                ...(![ 2, 6, 12, 24, 30, 60].includes(Number(fov))
                   ? [Number(fov)]
                   : []),
               ]
@@ -162,6 +179,58 @@ export default function ObservationControls({
                   </option>
                 ))}
             </select>
+            <label htmlFor="limit">
+              Max epochs <span>2–50</span>
+            </label>
+            <select
+              id="limit"
+              value={limit}
+              onChange={(e) => setLimit(e.target.value)}
+            >
+              {EPOCH_LIMITS.map((n) => (
+                <option key={n} value={n}>
+                  {n} exposures
+                </option>
+              ))}
+            </select>
+            <label htmlFor="spread" className="checkbox-label">
+              <input
+                id="spread"
+                type="checkbox"
+                checked={spread}
+                onChange={(e) => setSpread(e.target.checked)}
+              />
+              Spread epochs across the survey (~monthly)
+            </label>
+            <div className="epoch-dates">
+              <div>
+                <label htmlFor="start">
+                  From <span>optional</span>
+                </label>
+                <input
+                  id="start"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="end">
+                  To <span>optional</span>
+                </label>
+                <input
+                  id="end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="hint">
+              More epochs lengthen the first load; cached frames return
+              instantly. Monthly sampling is a SkyTrace heuristic, not a
+              mission standard.
+            </p>
             <div className="field-heading">
               Detector array<span>02</span>
             </div>

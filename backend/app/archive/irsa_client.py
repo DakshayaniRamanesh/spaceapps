@@ -78,65 +78,82 @@ class IrsaSpherexClient:
         fov_arcmin: float,
         detector: str,
         max_epochs: int = 12,
-    ) -> list[dict]:
-        """Search SPHEREx DR1 and QR3 collections for covering spectral images."""
-        table = self.query_sia_table(ra, dec, fov_arcmin)
+        start_mjd: float | None = None,
+        end_mjd: float | None = None,
+        spread: bool = False,
+    ) -> tuple[list[dict], int]:
+        """Search SPHEREx DR1+QR3 for spectral images covering the field.
+
+        Returns (shortlisted records, total matching exposures before shortlisting).
+
+        Selection:
+        - start_mjd/end_mjd: inclusive observation-time window (MJD, UTC).
+        - spread=False: chronological order, ~30 s dedup of repeated products.
+        - spread=True: one exposure per ~30-day bin (team heuristic) so the
+          time-lapse spans the survey instead of clustering in a single visit.
+
+        Rows without a valid observation time (t_min <= 0) are dropped:
+        fabricating timestamps is forbidden (temporal-truth rule).
+        """
+        table = self.query_sia_table(ra, dec, fov_arcmin)  # cached per position
         if table is None or len(table) == 0:
-            return []
+            return [], 0
 
         bandpass = f"SPHEREx-{detector.upper()}"
-
-        # Filter by requested detector bandpass
         mask = [str(bp).strip() == bandpass for bp in table["energy_bandpassname"]]
         filtered = table[mask]
-        if len(filtered) == 0:
-            return []
 
-        # Sort chronologically by observation start time (t_min)
-        if "t_min" in filtered.colnames:
-            filtered.sort("t_min")
+        if "t_min" not in filtered.colnames:
+            logger.warning("SIA table lacks t_min; cannot establish observation epochs.")
+            return [], 0
+
+        if start_mjd is not None:
+            filtered = filtered[filtered["t_min"] >= start_mjd]
+        if end_mjd is not None:
+            filtered = filtered[filtered["t_min"] <= end_mjd]
+        filtered.sort("t_min")
+
+        total_candidates = len(filtered)
+        if total_candidates == 0:
+            return [], 0
 
         size_deg = round((fov_arcmin / 60.0) * 1.15, 4)
         records: list[dict] = []
-        seen_epochs = set()
+        seen_bins: set[int] = set()
 
         for row in filtered:
             access_url = str(row["access_url"]).strip()
             if not access_url:
                 continue
+            t_min = float(row["t_min"])
+            if t_min <= 0:
+                continue  # never invent an observation date
 
             obs_id = str(row["obs_id"]).strip() if "obs_id" in row.colnames else "unknown"
-            t_min = float(row["t_min"]) if "t_min" in row.colnames else 0.0
-            t_max = float(row["t_max"]) if "t_max" in row.colnames else t_min
 
-            # Cluster very close exposures (within 30 seconds) into single representative epoch
-            epoch_bin = round(t_min * 2880)  # ~30s binning
-            if epoch_bin in seen_epochs:
+            # ~30-day sampling when spread; otherwise ~30 s product dedup.
+            bin_id = int(t_min // 30) if spread else round(t_min * 2880)
+            if bin_id in seen_bins:
                 continue
-            seen_epochs.add(epoch_bin)
-
-            cutout_url = f"{access_url}?center={ra:.6f},{dec:.6f}d&size={size_deg}"
-            timestamp = mjd_to_utc_iso(t_min) if t_min > 0 else "2025-01-01T00:00:00Z"
-            frame_id = f"spx.{detector}.{obs_id}.{int(t_min * 1000)}"
+            seen_bins.add(bin_id)
 
             records.append({
-                "id": frame_id,
+                "id": f"spx.{detector}.{obs_id}.{int(t_min * 1000)}",  # STABLE — do not change
                 "obs_id": obs_id,
-                "timestamp": timestamp,
+                "timestamp": mjd_to_utc_iso(t_min),
                 "mjd": t_min,
                 "access_url": access_url,
-                "cutout_url": cutout_url,
+                "cutout_url": f"{access_url}?center={ra:.6f},{dec:.6f}d&size={size_deg}",
                 "detector": detector,
                 "collection": str(row["obs_collection"]) if "obs_collection" in row.colnames else "spherex_dr1",
                 "center_ra": ra,
                 "center_dec": dec,
                 "fov_arcmin": fov_arcmin,
             })
-
             if len(records) >= max_epochs:
                 break
 
-        return records
+        return records, total_candidates
 
     def fetch_cutout_bytes(self, cutout_url: str) -> bytes:
         """Download or read cached cutout FITS file."""

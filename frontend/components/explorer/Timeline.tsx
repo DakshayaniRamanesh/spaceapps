@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { Frame, dateLabel } from "@/lib/types";
 export default function Timeline({
@@ -10,6 +11,8 @@ export default function Timeline({
   speed,
   onSpeed,
   disabled = false,
+  totalCandidates,
+  epochLabel,
 }: {
   frames: Frame[];
   index: number;
@@ -19,8 +22,24 @@ export default function Timeline({
   speed: number;
   onSpeed: (n: number) => void;
   disabled?: boolean;
+  totalCandidates?: number;
+  epochLabel?: string;
 }) {
   const unavailable = disabled || frames.length === 0;
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  // Keep the active thumbnail visible in long timelines (Issue #2).
+  useEffect(() => {
+    const el = stripRef.current?.querySelector(`[data-index="${index}"]`);
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({
+      behavior: playing || reduce ? "auto" : "smooth",
+      inline: "nearest",
+      block: "nearest",
+    });
+  }, [index, playing]);
+
   return (
     <section className="timeline panel" aria-label="Observation timeline">
       <div className="timeline-top">
@@ -77,16 +96,24 @@ export default function Timeline({
         value={index}
         onChange={(e) => onIndex(Number(e.target.value))}
       />
-      <div className="frame-strip">
+      <div className="frame-strip" ref={stripRef}>
         {frames.map((f, i) => (
           <button
             key={f.id}
+            data-index={i}
             aria-label={`Observation ${i + 1}, ${dateLabel(f.timestamp)}`}
             aria-pressed={index === i}
             className={`frame-thumb ${index === i ? "selected" : ""}`}
             onClick={() => onIndex(i)}
           >
-            <img src={f.image_url} alt="" loading="eager" />
+            <img
+              src={f.image_url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width={96}
+              height={96}
+            />
             <span className="frame-number">
               {String(i + 1).padStart(2, "0")}
             </span>
@@ -100,7 +127,9 @@ export default function Timeline({
       <div className="timeline-footer">
         <span>
           {frames.length
-            ? "Illustrative epochs · UTC"
+            ? totalCandidates && totalCandidates > frames.length
+              ? `Showing ${frames.length} of ${totalCandidates} matching exposures · UTC`
+              : (epochLabel ?? "Illustrative epochs · UTC")
             : "Awaiting observations"}
         </span>
         <span>
