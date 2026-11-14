@@ -181,3 +181,91 @@ export function frameRegion(points: RegionPoint[], size: number) {
 
 export const polygonAttr = (points: RegionPoint[]) =>
   points.map((p) => `${p.u.toFixed(4)},${p.v.toFixed(4)}`).join(" ");
+
+export type MotionMetrics = {
+  pinA: { ra: number; dec: number };
+  pinB: { ra: number; dec: number };
+  separationArcsec: number;
+  separationMas: number;
+  deltaRaArcsec: number;
+  deltaDecArcsec: number;
+  positionAngleDeg: number;
+  baselineDays: number | null;
+  baselineYears: number | null;
+  properMotionMasYr: number | null;
+};
+
+/**
+ * Spherical angular separation (arcsec) using the Vincenty atan2 form of the
+ * spherical law of cosines for high precision at sub-arcsecond scales.
+ */
+export function angularSeparationArcsec(
+  a: { ra: number; dec: number },
+  b: { ra: number; dec: number },
+): number {
+  const dAlpha = (b.ra - a.ra) * DEG;
+  const dec1 = a.dec * DEG;
+  const dec2 = b.dec * DEG;
+  const sinD1 = Math.sin(dec1),
+    cosD1 = Math.cos(dec1);
+  const sinD2 = Math.sin(dec2),
+    cosD2 = Math.cos(dec2);
+  const cosDA = Math.cos(dAlpha),
+    sinDA = Math.sin(dAlpha);
+  const y = Math.hypot(
+    cosD2 * sinDA,
+    cosD1 * sinD2 - sinD1 * cosD2 * cosDA,
+  );
+  const x = sinD1 * sinD2 + cosD1 * cosD2 * cosDA;
+  const thetaRad = Math.atan2(y, x);
+  return (thetaRad / DEG) * 3600;
+}
+
+/**
+ * Compute angular displacement and proper motion (mas/yr) between two
+ * normalized grid pin coordinates in Epoch A and Epoch B.
+ */
+export function computeMotionMetrics(
+  pinA: RegionPoint,
+  pinB: RegionPoint,
+  geom: SkyGeometry,
+  timestampA?: string,
+  timestampB?: string,
+): MotionMetrics {
+  const skyA = gridToSky(pinA, geom);
+  const skyB = gridToSky(pinB, geom);
+  const separationArcsec = angularSeparationArcsec(skyA, skyB);
+  const separationMas = separationArcsec * 1000;
+  const meanDecRad = ((skyA.dec + skyB.dec) / 2) * DEG;
+  const dRaDeg = ((skyB.ra - skyA.ra + 540) % 360) - 180;
+  const deltaRaArcsec = dRaDeg * Math.cos(meanDecRad) * 3600;
+  const deltaDecArcsec = (skyB.dec - skyA.dec) * 3600;
+  const positionAngleDeg =
+    ((Math.atan2(deltaRaArcsec, deltaDecArcsec) * 180) / Math.PI + 360) % 360;
+
+  const tA = timestampA ? Date.parse(timestampA) : NaN;
+  const tB = timestampB ? Date.parse(timestampB) : NaN;
+  let baselineDays: number | null = null;
+  let baselineYears: number | null = null;
+  let properMotionMasYr: number | null = null;
+
+  if (Number.isFinite(tA) && Number.isFinite(tB) && Math.abs(tB - tA) > 0) {
+    baselineDays = Math.abs(tB - tA) / (86400 * 1000);
+    baselineYears = baselineDays / 365.25;
+    properMotionMasYr =
+      baselineYears > 1e-6 ? separationMas / baselineYears : null;
+  }
+
+  return {
+    pinA: skyA,
+    pinB: skyB,
+    separationArcsec,
+    separationMas,
+    deltaRaArcsec,
+    deltaDecArcsec,
+    positionAngleDeg,
+    baselineDays,
+    baselineYears,
+    properMotionMasYr,
+  };
+}

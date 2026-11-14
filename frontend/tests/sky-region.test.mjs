@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  angularSeparationArcsec,
+  computeMotionMetrics,
   frameRegion,
   gridToSky,
   isUsableRegion,
@@ -74,4 +76,27 @@ test("zoom to region centres the bounding box and caps zoom", () => {
   const g = frameRegion(tiny, 400);
   assert.equal(g.zoom, 8);
   assert.ok(g.pan.x < 0 && g.pan.y > 0);
+});
+
+test("spherical separation and proper motion calculation", () => {
+  // ~10.3 arcsec northward separation over 1 Julian year -> ~10,300 mas/yr
+  const sep = angularSeparationArcsec(
+    { ra: 269.452077, dec: 4.693365 },
+    { ra: 269.452077, dec: 4.693365 + 10.3 / 3600 },
+  );
+  assert.ok(Math.abs(sep - 10.3) < 1e-4);
+
+  const fov = 12; // 720 arcsec across v in [0, 1]
+  const dv = 10.3 / (fov * 60);
+  const metrics = computeMotionMetrics(
+    { u: 0.5, v: 0.5 },
+    { u: 0.5, v: 0.5 + dv },
+    barnard,
+    "2025-08-27T00:00:00Z",
+    "2026-08-27T06:00:00Z",
+  );
+  assert.ok(Math.abs(metrics.separationArcsec - 10.3) < 0.01);
+  assert.ok(metrics.properMotionMasYr !== null);
+  assert.ok(Math.abs(metrics.properMotionMasYr - 10300) < 15);
+  assert.ok(Math.abs(metrics.positionAngleDeg - 0) < 0.1 || Math.abs(metrics.positionAngleDeg - 360) < 0.1);
 });

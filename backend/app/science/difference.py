@@ -17,12 +17,14 @@ def render_science_frame(
     arr: np.ndarray,
     mask: np.ndarray | None = None,
     is_calibrated: bool = True,
+    show_mask_overlay: bool = False,
 ) -> bytes:
     """
     Render a float32 science array to 24-bit PNG with an astronomical arcsinh stretch.
     
     Preserves floating-point photometric measurements while rendering subtle background
     features and bright point sources without blowing out dynamic range.
+    When show_mask_overlay=True, overlays diagonal crimson hatching on masked/invalid pixels.
     """
     arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
 
@@ -47,6 +49,16 @@ def render_science_frame(
 
     # SkyTrace blue-tinted cool monochrome palette: [v*0.88, v*0.95, v] * 255
     rgb = np.stack([v * 0.88, v * 0.95, v], axis=-1) * 255
+
+    if show_mask_overlay and mask is not None:
+        invalid = ~mask.astype(bool)
+        yy, xx = np.indices(invalid.shape)
+        hatch = ((yy + xx) % 6) < 2
+        stripe_rgb = np.array([235.0, 72.0, 92.0], dtype=np.float32)
+        tint_rgb = np.array([56.0, 16.0, 26.0], dtype=np.float32)
+        rgb = np.where((invalid & hatch)[..., None], stripe_rgb, rgb)
+        rgb = np.where((invalid & ~hatch)[..., None], rgb * 0.35 + tint_rgb * 0.65, rgb)
+
     return png_from_array(rgb)
 
 

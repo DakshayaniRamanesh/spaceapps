@@ -11,11 +11,14 @@ import {
   Eye,
   EyeOff,
   X,
+  ShieldAlert,
+  Waypoints,
 } from "lucide-react";
 import { ObservationSet, Mode, dateLabel } from "@/lib/types";
 import {
   RegionPoint,
   clamp01,
+  computeMotionMetrics,
   frameRegion,
   isUsableRegion,
   polygonAttr,
@@ -46,10 +49,13 @@ export default function SkyViewer({
       Record<string, "loaded" | "failed">
     >({}),
     [retry, setRetry] = useState(0),
-    [tool, setTool] = useState<"pan" | "lasso">("pan"),
+    [tool, setTool] = useState<"pan" | "lasso" | "track">("pan"),
     [draft, setDraft] = useState<RegionPoint[] | null>(null),
     [region, setRegion] = useState<RegionPoint[] | null>(null),
-    [hideOutside, setHideOutside] = useState(false);
+    [hideOutside, setHideOutside] = useState(false),
+    [maskOverlay, setMaskOverlay] = useState(false),
+    [pinA, setPinA] = useState<RegionPoint | null>(null),
+    [pinB, setPinB] = useState<RegionPoint | null>(null);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null,
   );
@@ -62,15 +68,24 @@ export default function SkyViewer({
   const current =
     mode === "blink" ? (blinkIndex ? fb : fa) : data.frames[index];
   const diff = `/api/difference?${new URLSearchParams({ frame_a: fa.id, frame_b: fb.id })}`;
+  const withOverlay = (url: string) =>
+    maskOverlay ? `${url}${url.includes("?") ? "&" : "?"}overlay=mask` : url;
   const images =
     mode === "split"
       ? [
-          { src: fa.image_url, label: `A · ${dateLabel(fa.timestamp)}` },
-          { src: fb.image_url, label: `B · ${dateLabel(fb.timestamp)}` },
+          {
+            src: withOverlay(fa.image_url),
+            label: `A · ${dateLabel(fa.timestamp)}`,
+          },
+          {
+            src: withOverlay(fb.image_url),
+            label: `B · ${dateLabel(fb.timestamp)}`,
+          },
         ]
       : [
           {
-            src: mode === "difference" ? diff : current.image_url,
+            src:
+              mode === "difference" ? diff : withOverlay(current.image_url),
             label:
               mode === "difference"
                 ? "B − A · intensity residual"
@@ -88,6 +103,8 @@ export default function SkyViewer({
   useEffect(() => {
     setRegion(null);
     setDraft(null);
+    setPinA(null);
+    setPinB(null);
     setTool("pan");
   }, [geometryKey]);
   function panLimit(z: number) {
@@ -132,6 +149,16 @@ export default function SkyViewer({
     fit();
   }
   const summary = region ? regionSummary(region, data.request) : null;
+  const motion =
+    pinA && pinB
+      ? computeMotionMetrics(
+          pinA,
+          pinB,
+          data.request,
+          fa.timestamp,
+          fb.timestamp,
+        )
+      : null;
   function fit() {
     setZoom(1);
     setPan({ x: 0, y: 0 });
@@ -177,10 +204,22 @@ export default function SkyViewer({
             setDraft(null);
             setTool((t) => (t === "lasso" ? "pan" : "lasso"));
           }
+          if (e.key === "t" || e.key === "T") {
+            e.preventDefault();
+            setDraft(null);
+            setTool((t) => (t === "track" ? "pan" : "track"));
+          }
+          if (e.key === "m" || e.key === "M") {
+            e.preventDefault();
+            setMaskOverlay((v) => !v);
+          }
           if (e.key === "Escape") {
             if (draft) setDraft(null);
-            else if (tool === "lasso") setTool("pan");
-            else if (region) clearRegion();
+            else if (tool === "lasso" || tool === "track") setTool("pan");
+            else if (pinA || pinB) {
+              setPinA(null);
+              setPinB(null);
+            } else if (region) clearRegion();
           }
           if (zoom > 1 && e.shiftKey && e.key.startsWith("Arrow")) {
             e.preventDefault();
@@ -202,10 +241,37 @@ export default function SkyViewer({
             key={i}
             style={{
               cursor:
-                tool === "lasso" ? "crosshair" : zoom > 1 ? "grab" : "default",
-              touchAction: tool === "lasso" || zoom > 1 ? "none" : "pan-y",
+                tool === "lasso" || tool === "track"
+                  ? "crosshair"
+                  : zoom > 1
+                    ? "grab"
+                    : "default",
+              touchAction:
+                tool === "lasso" || tool === "track" || zoom > 1
+                  ? "none"
+                  : "pan-y",
             }}
             onPointerDown={(e) => {
+              if (tool === "track") {
+                const canvas = e.currentTarget.querySelector<HTMLElement>(
+                  ".image-canvas",
+                );
+                if (!canvas) return;
+                e.preventDefault();
+                const pt = toGrid(e, canvas);
+                if (mode === "split") {
+                  if (i === 0) setPinA(pt);
+                  else setPinB(pt);
+                } else {
+                  if (!pinA || (pinA && pinB)) {
+                    setPinA(pt);
+                    setPinB(null);
+                  } else {
+                    setPinB(pt);
+                  }
+                }
+                return;
+              }
               if (tool === "lasso") {
                 const canvas = e.currentTarget.querySelector<HTMLElement>(
                   ".image-canvas",
@@ -295,21 +361,34 @@ export default function SkyViewer({
                   setImageStatus((s) => ({ ...s, [img.src]: "loaded" }))
                 }
               />
-              {(region || draft) && (
+              {(region || draft || pinA || pinB) && (
                 <svg
                   className="region-overlay"
                   viewBox="0 0 1 1"
                   preserveAspectRatio="none"
                   aria-hidden="true"
                 >
+                  <defs>
+                    {region && (
+                      <mask id={`${maskId}-${i}`}>
+                        <rect width="1" height="1" fill="white" />
+                        <polygon points={polygonAttr(region)} fill="black" />
+                      </mask>
+                    )}
+                    <marker
+                      id={`${maskId}-arrow-${i}`}
+                      viewBox="0 0 10 10"
+                      refX="7"
+                      refY="5"
+                      markerWidth="5"
+                      markerHeight="5"
+                      orient="auto-start-reverse"
+                    >
+                      <path d="M 0 1 L 8 5 L 0 9 z" fill="#6ee7ff" />
+                    </marker>
+                  </defs>
                   {region && (
                     <>
-                      <defs>
-                        <mask id={`${maskId}-${i}`}>
-                          <rect width="1" height="1" fill="white" />
-                          <polygon points={polygonAttr(region)} fill="black" />
-                        </mask>
-                      </defs>
                       <rect
                         width="1"
                         height="1"
@@ -330,6 +409,53 @@ export default function SkyViewer({
                       className="region-draft"
                       vectorEffect="non-scaling-stroke"
                     />
+                  )}
+                  {pinA && pinB && (
+                    <line
+                      x1={pinA.u}
+                      y1={pinA.v}
+                      x2={pinB.u}
+                      y2={pinB.v}
+                      className="motion-vector"
+                      vectorEffect="non-scaling-stroke"
+                      markerEnd={`url(#${maskId}-arrow-${i})`}
+                    />
+                  )}
+                  {pinA && (
+                    <g>
+                      <circle
+                        cx={pinA.u}
+                        cy={pinA.v}
+                        r={0.012}
+                        className="motion-pin pin-a"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <text
+                        x={pinA.u + 0.016}
+                        y={pinA.v - 0.012}
+                        className="motion-pin-label"
+                      >
+                        A
+                      </text>
+                    </g>
+                  )}
+                  {pinB && (
+                    <g>
+                      <circle
+                        cx={pinB.u}
+                        cy={pinB.v}
+                        r={0.012}
+                        className="motion-pin pin-b"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <text
+                        x={pinB.u + 0.016}
+                        y={pinB.v - 0.012}
+                        className="motion-pin-label"
+                      >
+                        B
+                      </text>
+                    </g>
                   )}
                 </svg>
               )}
@@ -424,11 +550,35 @@ export default function SkyViewer({
           >
             <LassoSelect size={16} />
           </button>
+          <button
+            aria-pressed={maskOverlay}
+            onClick={() => setMaskOverlay((v) => !v)}
+            title="Toggle data quality & footprint mask overlay (M)"
+            aria-label="Toggle data quality mask overlay"
+          >
+            <ShieldAlert size={16} />
+          </button>
+          <button
+            aria-pressed={tool === "track"}
+            onClick={() => {
+              setDraft(null);
+              setTool((t) => (t === "track" ? "pan" : "track"));
+            }}
+            title="Track celestial motion: click source in Epoch A then Epoch B (T)"
+            aria-label="Track celestial motion"
+          >
+            <Waypoints size={16} />
+          </button>
         </div>
         {tool === "lasso" ? (
           <span className="pan-hint lasso-hint">
             <LassoSelect size={13} /> Draw around the objects to focus on · Esc
             to cancel
+          </span>
+        ) : tool === "track" ? (
+          <span className="pan-hint lasso-hint">
+            <Waypoints size={13} /> Click source position in Epoch A, then in
+            Epoch B to measure Δθ and proper motion μ
           </span>
         ) : mode === "difference" ? (
           <span className="difference-legend">
@@ -486,6 +636,57 @@ export default function SkyViewer({
               aria-label="Clear region"
             >
               <X size={15} /> Clear
+            </button>
+          </div>
+        </div>
+      )}
+      {(pinA || pinB) && (
+        <div
+          className="region-bar motion-bar"
+          role="group"
+          aria-label="Celestial motion tracker"
+        >
+          <div className="region-stats mono">
+            <span className="region-tag">Motion tracker</span>
+            {pinA && !pinB ? (
+              <span>
+                Pin A set · Click source in Epoch B to compute Δθ and proper
+                motion μ
+              </span>
+            ) : motion ? (
+              <>
+                <span>
+                  Δθ = {motion.separationArcsec.toFixed(2)}″ (
+                  {Math.round(motion.separationMas)} mas) · PA{" "}
+                  {motion.positionAngleDeg.toFixed(1)}°
+                </span>
+                <span>
+                  μ ={" "}
+                  {motion.properMotionMasYr !== null
+                    ? `${motion.properMotionMasYr.toFixed(1)} mas/yr`
+                    : "N/A"}
+                  {motion.baselineDays !== null
+                    ? ` · Δt ${motion.baselineDays.toFixed(1)} d`
+                    : ""}
+                </span>
+                <span>
+                  A ({motion.pinA.ra.toFixed(4)}°, {motion.pinA.dec.toFixed(4)}
+                  °) → B ({motion.pinB.ra.toFixed(4)}°,{" "}
+                  {motion.pinB.dec.toFixed(4)}°)
+                </span>
+              </>
+            ) : null}
+          </div>
+          <div className="region-actions">
+            <button
+              className="button secondary"
+              onClick={() => {
+                setPinA(null);
+                setPinB(null);
+              }}
+              aria-label="Clear pins"
+            >
+              <X size={15} /> Clear pins
             </button>
           </div>
         </div>

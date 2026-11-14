@@ -97,9 +97,15 @@ def observations(
 
 
 @lru_cache(maxsize=128)
-def frame_bytes(frame_id: str) -> tuple[bytes, str]:
+def frame_bytes(frame_id: str, overlay: str | None = None) -> tuple[bytes, str]:
     is_real = frame_id.startswith('spx.')
     source_label = 'spherex-irsa' if is_real else 'synthetic'
+    if overlay == 'mask':
+        arr, _var, valid_mask = provider.frame_science(frame_id)
+        content = render_science_frame(
+            arr, mask=valid_mask, is_calibrated=is_real, show_mask_overlay=True
+        )
+        return content, source_label
     arr = provider.array(frame_id)
     if is_real:
         content = render_science_frame(arr, is_calibrated=True)
@@ -109,13 +115,20 @@ def frame_bytes(frame_id: str) -> tuple[bytes, str]:
 
 
 @app.get('/api/frames/{frame_id}.png', responses={200: {'content': {'image/png': {}}}})
-def frame(frame_id: str):
+def frame(
+    frame_id: str,
+    overlay: str | None = Query(default=None, pattern='^mask$'),
+):
     try:
-        content, source_label = frame_bytes(frame_id)
+        content, source_label = frame_bytes(frame_id, overlay)
         return Response(
             content,
             media_type='image/png',
-            headers={'Cache-Control': 'public, max-age=86400', 'X-Data-Source': source_label},
+            headers={
+                'Cache-Control': 'public, max-age=86400',
+                'X-Data-Source': source_label,
+                'X-Quality-Overlay': overlay or 'none',
+            },
         )
     except ValueError as exc:
         raise HTTPException(404, str(exc))
