@@ -55,8 +55,20 @@ def parse_spherex_mef(fits_bytes: bytes, target_coord: SkyCoord | None = None) -
         detector = f"D{detector_raw}" if str(detector_raw).isdigit() else str(detector_raw)
         obs_id = str(img_hdr.get("OBSID", "SPHEREx")).strip()
 
-        # Build mask: flagged bits (non-zero), NaNs, and infinities
-        invalid_mask = (~np.isfinite(raw_image)) | (flags_data != 0)
+        # Build mask: NaNs/infinities and fatal SPHEREx detector/data-quality bits.
+        # Do NOT mask informational planes such as SOURCE (bit 21 = 0x200000),
+        # CROSSTALK, PERSIST, NONLINEAR, GHOST, or HALO, which are set on most sky pixels.
+        SPHEREX_FATAL_FLAG_MASK = (
+            1       # TRANSIENT (also used by unit test fixture)
+            | 2     # OVERFLOW
+            | 4     # SUR_ERROR
+            | 64    # NONFUNC
+            | 512   # MISSING_DATA
+            | 1024  # HOT
+            | 2048  # COLD
+            | 16384 # PHANMISS
+        )
+        invalid_mask = (~np.isfinite(raw_image)) | ((flags_data & SPHEREX_FATAL_FLAG_MASK) != 0)
         masked_fraction = float(np.mean(invalid_mask))
 
         # Calculate robust noise estimate from unmasked variance or median absolute deviation

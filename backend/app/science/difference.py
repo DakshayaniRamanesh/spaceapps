@@ -90,8 +90,19 @@ def render_difference_frame(
     Zero / Invalid footprint: Dark neutral [8, 14, 24]
     """
     diff = np.nan_to_num(diff, nan=0.0, posinf=0.0, neginf=0.0)
-    scale = 2.0 if is_calibrated else 8.0
-    sat = 50.0 if is_calibrated else 1000.0
+    if is_calibrated:
+        abs_diff = np.abs(diff)
+        sample = abs_diff[valid_mask] if valid_mask is not None else abs_diff.ravel()
+        nonzero = sample[sample > 0]
+        if len(nonzero) > 100:
+            sat = max(float(np.percentile(nonzero, 99.5)), 0.25)
+            scale = max(sat * 0.05, 0.01)
+        else:
+            scale = 2.0
+            sat = 50.0
+    else:
+        scale = 8.0
+        sat = 1000.0
 
     strength = np.clip(np.arcsinh(np.abs(diff) / scale) / np.arcsinh(sat / scale), 0, 1)[..., None]
     if valid_mask is not None:
