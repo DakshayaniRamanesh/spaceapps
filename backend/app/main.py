@@ -76,7 +76,21 @@ def observations(
     end_date: str | None = Query(None, pattern=r'^\d{4}-\d{2}-\d{2}$',
                                  description="Inclusive observation-window end (ISO date, UTC)"),
     spread: bool = Query(False, description="Sample ~one epoch per 30-day bin across the survey"),
+    min_wavelength_um: float | None = Query(
+        None, gt=0, allow_inf_nan=False,
+        description="Inclusive minimum field-center WCS-WAVE wavelength in microns; applied after epoch shortlisting",
+    ),
+    max_wavelength_um: float | None = Query(
+        None, gt=0, allow_inf_nan=False,
+        description="Inclusive maximum field-center WCS-WAVE wavelength in microns; applied after epoch shortlisting",
+    ),
 ):
+    if (min_wavelength_um is not None and max_wavelength_um is not None
+            and min_wavelength_um > max_wavelength_um):
+        raise HTTPException(422, "min_wavelength_um must not exceed max_wavelength_um")
+    if (isinstance(provider, SyntheticObservationProvider)
+            and (min_wavelength_um is not None or max_wavelength_um is not None)):
+        raise HTTPException(422, "Wavelength filtering requires real SPHEREx WCS-WAVE data; synthetic frames have no measured wavelength")
     start_mjd = _parse_mjd(start_date, "start_date")
     end_mjd = _parse_mjd(end_date, "end_date")
     if start_date is not None and end_date is not None and start_date >= end_date:
@@ -87,7 +101,10 @@ def observations(
         end_mjd = math.nextafter(end_mjd + 1.0, -math.inf)
     try:
         return provider.observations(
-            FieldRequest(ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector),
+            FieldRequest(
+                ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector,
+                min_wavelength_um=min_wavelength_um, max_wavelength_um=max_wavelength_um,
+            ),
             limit=limit, start_mjd=start_mjd, end_mjd=end_mjd, spread=spread,
         )
     except NotImplementedError as exc:

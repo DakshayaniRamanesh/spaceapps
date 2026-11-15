@@ -16,6 +16,8 @@ export type Field = {
   dec: number;
   fov_arcmin: number;
   detector: Detector;
+  min_wavelength_um?: number | null;
+  max_wavelength_um?: number | null;
   /** Epoch shortlisting (Issue #2). Optional; omitted = backend defaults. */
   limit?: number;
   spread?: boolean;
@@ -30,7 +32,9 @@ export type Frame = {
   source: "synthetic" | "spherex-irsa";
   product_id?: string;
   provenance_url?: string;
-  wavelength_um?: number;
+  wavelength_um?: number | null;
+  bandwidth_um?: number | null;
+  wavelength_source?: "wcs-wave" | null;
   quality: {
     registration: string;
     noise_sigma: number;
@@ -79,6 +83,10 @@ export function fieldQuery(f: Field) {
   if (f.spread) p.set("spread", "1");
   if (f.start_date) p.set("start", f.start_date);
   if (f.end_date) p.set("end", f.end_date);
+  if (f.min_wavelength_um != null)
+    p.set("min_wavelength_um", String(f.min_wavelength_um));
+  if (f.max_wavelength_um != null)
+    p.set("max_wavelength_um", String(f.max_wavelength_um));
   return p.toString();
 }
 export function dateLabel(t: string) {
@@ -99,6 +107,16 @@ export function validateField(f: Field): string | undefined {
     return "Field of view must be between 2 and 60 arcminutes.";
   if (!detectors.includes(f.detector))
     return "Choose a detector from D1 to D6.";
+  for (const wavelength of [f.min_wavelength_um, f.max_wavelength_um]) {
+    if (wavelength != null && (!Number.isFinite(wavelength) || wavelength <= 0))
+      return "Wavelength bounds must be positive, finite values in µm.";
+  }
+  if (
+    f.min_wavelength_um != null &&
+    f.max_wavelength_um != null &&
+    f.min_wavelength_um > f.max_wavelength_um
+  )
+    return "Minimum wavelength must not exceed maximum wavelength.";
   if (
     f.limit !== undefined &&
     (!Number.isInteger(f.limit) || f.limit < 2 || f.limit > 50)

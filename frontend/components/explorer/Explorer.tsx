@@ -79,6 +79,10 @@ export default function Explorer() {
       if (f.spread) q.set("spread", "true");
       if (f.start_date) q.set("start_date", f.start_date);
       if (f.end_date) q.set("end_date", f.end_date);
+      if (f.min_wavelength_um != null)
+        q.set("min_wavelength_um", String(f.min_wavelength_um));
+      if (f.max_wavelength_um != null)
+        q.set("max_wavelength_um", String(f.max_wavelength_um));
       const res = await fetch(`/api/observations?${q}`, { signal: c.signal });
       if (!res.ok)
         throw new Error(
@@ -135,6 +139,12 @@ export default function Explorer() {
         spread: q.get("spread") === "1",
         start_date: q.get("start") || undefined,
         end_date: q.get("end") || undefined,
+        min_wavelength_um: q.has("min_wavelength_um")
+          ? num("min_wavelength_um", NaN)
+          : undefined,
+        max_wavelength_um: q.has("max_wavelength_um")
+          ? num("max_wavelength_um", NaN)
+          : undefined,
       };
       void load(f);
     }
@@ -269,6 +279,17 @@ export default function Explorer() {
           onLoad={load}
           loading={loading}
           demoEnabled={developmentDemoEnabled}
+          activeFrame={
+            data?.frames[
+              mode === "blink"
+                ? blinkIndex
+                  ? b
+                  : a
+                : mode === "difference" || mode === "split"
+                  ? b
+                  : index
+            ]
+          }
           statusMessage={
             loading
               ? "Querying NASA / IPAC IRSA archive for SPHEREx exposures…"

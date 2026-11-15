@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -25,6 +26,7 @@ from .services.cache import (
     ARRAY_CACHE,
     SCIENCE_CACHE,
     MANIFEST_CACHE,
+    BoundedArrayCache,
     register_frame_record,
     get_frame_record,
 )
@@ -50,12 +52,14 @@ def canonical(req: FieldRequest) -> FieldRequest:
         dec=round(req.dec, 6),
         fov_arcmin=round(req.fov_arcmin, 4),
         detector=req.detector,
+        min_wavelength_um=req.min_wavelength_um,
+        max_wavelength_um=req.max_wavelength_um,
     )
 
 
 def field_key(req: FieldRequest) -> str:
     return base64.urlsafe_b64encode(
-        json.dumps(canonical(req).model_dump(), sort_keys=True, separators=(',', ':')).encode()
+        json.dumps(canonical(req).model_dump(exclude_none=True), sort_keys=True, separators=(',', ':')).encode()
     ).decode().rstrip('=')
 
 
@@ -174,6 +178,8 @@ class SyntheticObservationProvider(ObservationProvider):
         spread: bool = False,
     ) -> ObservationSet:
         """Synthetic scenes always contain 8 epochs; selection params are ignored."""
+        if request.min_wavelength_um is not None or request.max_wavelength_um is not None:
+            raise ValueError("Wavelength filtering requires real SPHEREx WCS-WAVE data")
         request = canonical(request)
         key = field_key(request)
         scene(key)
@@ -214,6 +220,30 @@ class SpherexIRSAProvider(ObservationProvider):
     def __init__(self, client: IrsaSpherexClient | None = None, fixtures_mode: bool | None = None):
         self.client = client or IrsaSpherexClient()
         self.fixtures_mode = fixtures_mode if fixtures_mode is not None else (os.getenv("SPHEREX_FIXTURES_MODE") == "1")
+        self._spectral_cache = BoundedArrayCache(max_items=128)
+
+    def _load_cutout(self, record: dict):
+        if "local_fixture" in record and Path(record["local_fixture"]).exists():
+            fits_bytes = Path(record["local_fixture"]).read_bytes()
+        else:
+            fits_bytes = self.client.fetch_cutout_bytes(record["cutout_url"])
+        center = SkyCoord(ra=record["center_ra"], dec=record["center_dec"], unit="deg", frame="icrs")
+        return parse_spherex_mef(fits_bytes, target_coord=center)
+
+    def _spectral_metadata(self, record: dict) -> tuple[float | None, float | None]:
+        # The same exposure ID can be queried at different sky positions. Cache
+        # by cutout and target coordinate so wavelengths never leak across fields.
+        key = json.dumps([
+            record.get("local_fixture", record["cutout_url"]),
+            record["center_ra"], record["center_dec"],
+        ])
+        cached = self._spectral_cache.get(key)
+        if cached is not None:
+            return cached
+        cutout = self._load_cutout(record)
+        result = (cutout.central_wavelength_um, cutout.bandwidth_um)
+        self._spectral_cache.set(key, result)
+        return result
 
     def _get_offline_fixtures(self, request: FieldRequest) -> list[dict]:
         """Load deterministic test fixtures for offline testing."""
@@ -276,6 +306,9 @@ class SpherexIRSAProvider(ObservationProvider):
             f"{start_mjd if start_mjd is not None else ''}:"
             f"{end_mjd if end_mjd is not None else ''}"
         )
+        spectral_filter = request.min_wavelength_um is not None or request.max_wavelength_um is not None
+        if spectral_filter:
+            cache_k += f":wave:{request.min_wavelength_um}:{request.max_wavelength_um}"
         cached_manifest = MANIFEST_CACHE.get(cache_k)
         if cached_manifest is not None:
             return cached_manifest
@@ -336,6 +369,7 @@ class SpherexIRSAProvider(ObservationProvider):
                 coordinate_system="ICRS",
                 intensity_unit="MJy / sr",
                 wavelength_range_um=wavelength_range,
+                wavelength_model="Field-center WCS-WAVE lookup (visualization-grade); nominal detector range is not a per-frame passband",
                 release="DR1+QR3",
                 frames=[],
                 total_candidates=total_candidates,
@@ -346,7 +380,27 @@ class SpherexIRSAProvider(ObservationProvider):
             return empty_set
 
         frames: list[Frame] = []
-        for rec in records:
+        metadata_failed = False
+        metadata: list[tuple[float | None, float | None]] = []
+        # FITS cutouts are required to evaluate the LVF at this field center.
+        # Bound concurrent downloads and reuse the existing on-disk FITS cache.
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            pending = [executor.submit(self._spectral_metadata, rec) for rec in records]
+            for rec, future in zip(records, pending):
+                try:
+                    metadata.append(future.result())
+                except Exception as exc:
+                    logger.warning("WCS-WAVE metadata unavailable for %s: %s", rec["id"], exc)
+                    metadata.append((None, None))
+                    metadata_failed = True
+
+        for rec, (wavelength, bandwidth) in zip(records, metadata):
+            if spectral_filter and (
+                wavelength is None
+                or (request.min_wavelength_um is not None and wavelength < request.min_wavelength_um)
+                or (request.max_wavelength_um is not None and wavelength > request.max_wavelength_um)
+            ):
+                continue
             frame_id = rec["id"]
             register_frame_record(frame_id, rec)
             frames.append(
@@ -358,6 +412,9 @@ class SpherexIRSAProvider(ObservationProvider):
                     source="spherex-irsa",
                     product_id=rec["obs_id"],
                     provenance_url=rec["access_url"],
+                    wavelength_um=wavelength,
+                    bandwidth_um=bandwidth,
+                    wavelength_source="wcs-wave" if wavelength is not None else None,
                     quality=Quality(
                         registration="Astropy WCS celestial TAN projection",
                         noise_sigma=0.5,
@@ -369,6 +426,17 @@ class SpherexIRSAProvider(ObservationProvider):
                 )
             )
 
+        notice = "Actual archived SPHEREx data (DR1+QR3); calibrated spectral image cutouts from NASA/IPAC IRSA."
+        if spectral_filter:
+            notice += (
+                f" Wavelength window matched {len(frames)} of {len(records)} shortlisted epochs at the field center."
+                " Epochs without a valid WCS-WAVE wavelength are excluded. Increase Max epochs to search more exposures."
+            )
+        if any(wave is None or band is None for wave, band in metadata):
+            notice += " Some field-center spectral metadata is unavailable."
+        if metadata_failed:
+            notice += " Some cutouts could not be read; retry the query to retrieve their spectral metadata."
+
         manifest = ObservationSet(
             source_type="spherex-irsa",
             dataset_id=f"spx-dr1-{hashlib.sha256(cache_k.encode()).hexdigest()[:12]}",
@@ -376,13 +444,15 @@ class SpherexIRSAProvider(ObservationProvider):
             coordinate_system="ICRS",
             intensity_unit="MJy / sr",
             wavelength_range_um=wavelength_range,
+            wavelength_model="Field-center WCS-WAVE lookup (visualization-grade); nominal detector range is not a per-frame passband",
             release="DR1+QR3",
             frames=frames,
             total_candidates=total_candidates,
             epoch_selection=selection,
-            notice="Actual archived SPHEREx data (DR1+QR3); calibrated spectral image cutouts from NASA/IPAC IRSA.",
+            notice=notice,
         )
-        MANIFEST_CACHE.set(cache_k, manifest)
+        if not metadata_failed:
+            MANIFEST_CACHE.set(cache_k, manifest)
         return manifest
 
     def array(self, frame_id: str) -> np.ndarray:
@@ -398,14 +468,7 @@ class SpherexIRSAProvider(ObservationProvider):
         if record is None:
             raise ValueError(f"Unknown frame identifier: {frame_id}")
 
-        fits_bytes: bytes
-        if "local_fixture" in record and Path(record["local_fixture"]).exists():
-            fits_bytes = Path(record["local_fixture"]).read_bytes()
-        else:
-            fits_bytes = self.client.fetch_cutout_bytes(record["cutout_url"])
-
-        center_coord = SkyCoord(ra=record["center_ra"], dec=record["center_dec"], unit="deg", frame="icrs")
-        cutout = parse_spherex_mef(fits_bytes, target_coord=center_coord)
+        cutout = self._load_cutout(record)
 
         flux, var, valid_mask = reproject_to_grid(
             cutout=cutout,

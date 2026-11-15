@@ -23,5 +23,7 @@ def test_parse_spherex_mef_structure():
     assert cutout.mask[2, 2] == True  # Bad pixel is masked
     assert cutout.date_obs == "2025-04-29T00:24:27.897"
     assert np.isclose(cutout.mjd_obs, 60794.016989)
-    assert cutout.central_wavelength_um is not None
-    assert 0.7 <= cutout.central_wavelength_um <= 1.2
+    # This legacy fixture has an incomplete WCS-WAVE extension. It must not
+    # acquire a detector midpoint masquerading as a field-center measurement.
+    assert cutout.central_wavelength_um is None
+    assert cutout.bandwidth_um is None

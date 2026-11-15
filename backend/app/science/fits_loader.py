@@ -82,34 +82,34 @@ def parse_spherex_mef(fits_bytes: bytes, target_coord: SkyCoord | None = None) -
             else:
                 noise_sigma = 1.0
 
-        DETECTOR_RANGES = {
-            "D1": (0.75, 1.09),
-            "D2": (1.10, 1.62),
-            "D3": (1.63, 2.41),
-            "D4": (2.42, 3.82),
-            "D5": (3.83, 4.41),
-            "D6": (4.42, 5.00),
-        }
-
-        # Extract central wavelength and bandwidth via spectral WCS if target coord is supplied
+        # WCS-WAVE is a visualization-grade lookup at the requested sky position,
+        # not the nominal detector midpoint or the bandwidth of the whole array.
         cw_um: float | None = None
         bw_um: float | None = None
-
-        if target_coord is not None:
-            try:
+        try:
+            if target_coord is None:
+                y, x = (np.asarray(raw_image.shape) - 1) / 2
+            else:
                 x, y = spatial_wcs.world_to_pixel(target_coord)
+            if (np.isfinite(x) and np.isfinite(y)
+                    and -0.5 <= x < raw_image.shape[1] - 0.5
+                    and -0.5 <= y < raw_image.shape[0] - 0.5
+                    and "WCS-WAVE" in hdul
+                    and img_hdr.get("CTYPE1W") == "WAVE-TAB"
+                    and img_hdr.get("CTYPE2W") == "WAVE-TAB"):
                 spectral_wcs = WCS(img_hdr, fobj=hdul, key="W")
                 spectral_wcs.sip = None
                 wave, band = spectral_wcs.pixel_to_world(x, y)
-                cw_um = float(wave.to(u.micrometer).value)
-                bw_um = float(band.to(u.micrometer).value)
-            except Exception:
-                pass
-
-        if cw_um is None and detector in DETECTOR_RANGES:
-            low, high = DETECTOR_RANGES[detector]
-            cw_um = round((low + high) / 2.0, 4)
-            bw_um = round(high - low, 4)
+                cw = float(wave.to_value(u.micrometer))
+                bw = float(band.to_value(u.micrometer))
+                if np.isfinite(cw) and cw > 0:
+                    cw_um = cw
+                if np.isfinite(bw) and bw > 0:
+                    bw_um = bw
+        except Exception:
+            # Spectral lookup failures must not block flux display or acquire a
+            # fabricated detector midpoint. Leave spectral values unavailable.
+            pass
 
         return SpherexFitsCutout(
             image=raw_image,

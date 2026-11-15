@@ -49,10 +49,26 @@ export default function MetadataPanel({
                   <dd className="numeric">{f.product_id}</dd>
                 </>
               ) : null}
-              {f.wavelength_um ? (
+              {f.source === "spherex-irsa" ? (
                 <>
-                  <dt>Wavelength</dt>
-                  <dd className="numeric">{f.wavelength_um.toFixed(3)} µm</dd>
+                  <dt>Center λ₀</dt>
+                  <dd className="numeric">
+                    {f.wavelength_um != null
+                      ? `${f.wavelength_um.toFixed(4)} µm`
+                      : "Unavailable"}
+                  </dd>
+                  <dt>Bandwidth Δλ</dt>
+                  <dd className="numeric">
+                    {f.bandwidth_um != null
+                      ? `${f.bandwidth_um.toFixed(4)} µm`
+                      : "Unavailable"}
+                  </dd>
+                  <dt>Spectral source</dt>
+                  <dd>
+                    {f.wavelength_source === "wcs-wave"
+                      ? "WCS-WAVE (visualization)"
+                      : "Unavailable"}
+                  </dd>
                 </>
               ) : null}
               {data.intensity_unit ? (
