@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Crosshair, RotateCcw, ArrowRight } from "lucide-react";
 import presets from "@/lib/presets.json";
 import SpectralControls from "./SpectralControls";
@@ -28,11 +28,6 @@ export default function ObservationControls({
   statusMessage?: string;
   activeFrame?: Frame;
 }) {
-  const disclosure = useRef<HTMLDetailsElement>(null);
-  useEffect(() => {
-    if (window.matchMedia("(max-width: 680px)").matches && disclosure.current)
-      disclosure.current.open = false;
-  }, []);
   const [ra, setRa] = useState(String(field.ra)),
     [dec, setDec] = useState(String(field.dec)),
     [fov, setFov] = useState(String(field.fov_arcmin)),
@@ -99,7 +94,7 @@ export default function ObservationControls({
   }
   return (
     <aside className="controls panel">
-      <details open ref={disclosure}>
+      <details open>
         <summary>
           <Crosshair size={16} /> Observation controls
         </summary>
