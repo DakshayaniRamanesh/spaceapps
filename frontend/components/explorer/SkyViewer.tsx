@@ -13,6 +13,7 @@ import {
   X,
   ShieldAlert,
   Waypoints,
+  ChevronDown,
 } from "lucide-react";
 import RegisteredImage from "./RegisteredImage";
 import type { Hit, Overlay } from "@/lib/catalogues";
@@ -216,6 +217,10 @@ export default function SkyViewer({
     (pair?.overlap_fraction != null && pair.overlap_fraction < 0.85) ||
     fa?.quality?.center_valid === false ||
     fb?.quality?.center_valid === false;
+  const warningCount =
+    (waveDiffers ? 1 : 0) +
+    (registrationWarning ? 1 : 0) +
+    (coverageWarning ? 1 : 0);
   return (
     <section
       className="viewer panel"
@@ -231,37 +236,60 @@ export default function SkyViewer({
         </span>
       </div>
       {mode === "difference" && (
-        <div className="difference-banner" role="status">
-          <div className="difference-badge">
-            <span className="badge-tag">EXPERIMENTAL</span>
-            <span>Visual Difference (B − A) · Not Scientifically Validated</span>
-          </div>
-          {data.source_type === "spherex-irsa" && (
+        <details className="difference-banner" open role="status">
+          <summary className="difference-banner-header">
+            <div className="difference-badge">
+              <span className="badge-tag">EXPERIMENTAL</span>
+              <span className="diff-title">
+                Visual Difference (B − A)
+                <span className="diff-subtitle"> · Not Scientifically Validated</span>
+              </span>
+            </div>
+            {data.source_type === "spherex-irsa" && warningCount > 0 && (
+              <span className="caveats-toggle">
+                <span className="caveats-count">
+                  {warningCount} {warningCount === 1 ? "advisory" : "advisories"}
+                </span>
+                <ChevronDown size={13} className="caveats-chevron" />
+              </span>
+            )}
+          </summary>
+          {data.source_type === "spherex-irsa" && warningCount > 0 && (
             <div className="difference-contextual-warnings">
               {waveDiffers && (
                 <div className="diff-warning-item">
-                  <strong>Spectral difference:</strong> Frame A center is{" "}
-                  {fa?.lambda_um?.toFixed(3)} µm, Frame B center is{" "}
-                  {fb?.lambda_um?.toFixed(3)} µm. Residuals may reflect filter and
-                  dispersion differences rather than temporal variability.
+                  <ShieldAlert size={14} className="warning-icon" />
+                  <div className="warning-text">
+                    <strong>Spectral difference:</strong> Frame A is{" "}
+                    <span className="mono">{fa?.lambda_um?.toFixed(3)} µm</span>,
+                    Frame B is{" "}
+                    <span className="mono">{fb?.lambda_um?.toFixed(3)} µm</span>.
+                    Residuals may reflect bandpass differences rather than temporal variability.
+                  </div>
                 </div>
               )}
               {registrationWarning && (
                 <div className="diff-warning-item">
-                  <strong>Registration notice:</strong> {registrationWarning}.
-                  Residual dipole artifacts may appear around bright sources.
+                  <ShieldAlert size={14} className="warning-icon" />
+                  <div className="warning-text">
+                    <strong>Registration notice:</strong> {registrationWarning}.
+                    Residual dipole artifacts may appear around bright sources.
+                  </div>
                 </div>
               )}
               {coverageWarning && (
                 <div className="diff-warning-item">
-                  <strong>Partial coverage:</strong> One or both frames contain
-                  masked pixels or limited common footprint. Dark neutral areas
-                  indicate zero or unobserved pixels.
+                  <ShieldAlert size={14} className="warning-icon" />
+                  <div className="warning-text">
+                    <strong>Partial coverage:</strong> One or both frames contain
+                    masked pixels or limited common footprint. Zero and unobserved
+                    pixels are rendered dark neutral.
+                  </div>
                 </div>
               )}
             </div>
           )}
-        </div>
+        </details>
       )}
       <div
         key={mode}
