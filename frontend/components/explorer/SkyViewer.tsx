@@ -17,6 +17,7 @@ import {
 import RegisteredImage from "./RegisteredImage";
 import type { Hit, Overlay } from "@/lib/catalogues";
 import { ObservationSet, Mode, dateLabel } from "@/lib/types";
+import { selectedPair } from "@/lib/observations";
 import {
   RegionPoint,
   clamp01,
@@ -87,7 +88,10 @@ export default function SkyViewer({
     fb = data.frames[b];
   const current =
     mode === "blink" ? (blinkIndex ? fb : fa) : data.frames[index];
-  const diff = `/api/difference?${new URLSearchParams({ frame_a: fa.id, frame_b: fb.id })}`;
+  const diff =
+    data.source_type === "spherex-irsa"
+      ? `/api/difference-preview?${new URLSearchParams({ frame_a: fa.id, frame_b: fb.id })}`
+      : `/api/difference?${new URLSearchParams({ frame_a: fa.id, frame_b: fb.id })}`;
   const withOverlay = (url: string) =>
     maskOverlay ? `${url}${url.includes("?") ? "&" : "?"}overlay=mask` : url;
   const images =
@@ -196,6 +200,22 @@ export default function SkyViewer({
       return v;
     });
   }
+  const pair = selectedPair(data, a, b);
+  const waveDiffers =
+    fa?.lambda_um != null &&
+    fb?.lambda_um != null &&
+    Math.abs(fa.lambda_um - fb.lambda_um) > 0.05;
+  const regCheck = pair?.checks?.find((c) =>
+    c.name.toLowerCase().includes("registration"),
+  );
+  const registrationWarning =
+    regCheck && regCheck.status !== "pass"
+      ? regCheck.reason || "Residual astrometric uncertainty between epochs"
+      : null;
+  const coverageWarning =
+    (pair?.overlap_fraction != null && pair.overlap_fraction < 0.85) ||
+    fa?.quality?.center_valid === false ||
+    fb?.quality?.center_valid === false;
   return (
     <section
       className="viewer panel"
@@ -210,6 +230,39 @@ export default function SkyViewer({
           {data.request.detector} / {data.request.fov_arcmin} ARCMIN
         </span>
       </div>
+      {mode === "difference" && (
+        <div className="difference-banner" role="status">
+          <div className="difference-badge">
+            <span className="badge-tag">EXPERIMENTAL</span>
+            <span>Visual Difference (B − A) · Not Scientifically Validated</span>
+          </div>
+          {data.source_type === "spherex-irsa" && (
+            <div className="difference-contextual-warnings">
+              {waveDiffers && (
+                <div className="diff-warning-item">
+                  <strong>Spectral difference:</strong> Frame A center is{" "}
+                  {fa?.lambda_um?.toFixed(3)} µm, Frame B center is{" "}
+                  {fb?.lambda_um?.toFixed(3)} µm. Residuals may reflect filter and
+                  dispersion differences rather than temporal variability.
+                </div>
+              )}
+              {registrationWarning && (
+                <div className="diff-warning-item">
+                  <strong>Registration notice:</strong> {registrationWarning}.
+                  Residual dipole artifacts may appear around bright sources.
+                </div>
+              )}
+              {coverageWarning && (
+                <div className="diff-warning-item">
+                  <strong>Partial coverage:</strong> One or both frames contain
+                  masked pixels or limited common footprint. Dark neutral areas
+                  indicate zero or unobserved pixels.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       <div
         key={mode}
         className={`image-stage mode-enter ${mode === "split" ? "split" : ""}`}

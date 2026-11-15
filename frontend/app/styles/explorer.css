@@ -1281,6 +1281,19 @@ html:has(.explorer) {
   align-items: center;
   gap: 10px;
 }
+.archive-refresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.archive-refresh p {
+  flex: 1 1 260px;
+  font-size: 14px;
+  color: var(--muted);
+}
 .api-error {
   display: flex;
   gap: 14px;
@@ -1738,7 +1751,16 @@ details[open] > .controls-body {
     animation: none;
   }
 }
-.science-passport,
+.science-passport {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(170, 193, 220, 0.18);
+  border-radius: 8px;
+  margin: 1rem 0;
+  background: rgba(10, 19, 30, 0.6);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
 .science-notice {
   padding: 1rem 1.2rem;
   border: 1px solid rgba(170, 193, 220, 0.18);
@@ -1748,6 +1770,52 @@ details[open] > .controls-body {
   font-size: 0.82rem;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+.difference-banner {
+  margin: 0.5rem 0.75rem 0.75rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(245, 199, 125, 0.08);
+  border: 1px solid rgba(245, 199, 125, 0.28);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.difference-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #f5c77d;
+  letter-spacing: 0.02em;
+}
+.difference-badge .badge-tag {
+  background: #f5c77d;
+  color: #0b121b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.difference-contextual-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: rgba(220, 230, 242, 0.88);
+  line-height: 1.4;
+}
+.diff-warning-item {
+  padding: 0.25rem 0.5rem;
+  background: rgba(11, 18, 27, 0.6);
+  border-left: 2px solid #efc681;
+  border-radius: 0 4px 4px 0;
+}
+.diff-warning-item strong {
+  color: #efc681;
+  margin-right: 0.3rem;
 }
 .science-passport p {
   margin: 0.5rem 0;

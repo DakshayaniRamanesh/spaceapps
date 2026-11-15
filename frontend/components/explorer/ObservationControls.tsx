@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Crosshair, RotateCcw, ArrowRight } from "lucide-react";
 import presets from "@/lib/presets.json";
 import SpectralControls from "./SpectralControls";
@@ -28,6 +28,8 @@ export default function ObservationControls({
   statusMessage?: string;
   activeFrame?: Frame;
 }) {
+  const raInput = useRef<HTMLInputElement>(null);
+  const [custom, setCustom] = useState(false);
   const [ra, setRa] = useState(String(field.ra)),
     [dec, setDec] = useState(String(field.dec)),
     [fov, setFov] = useState(String(field.fov_arcmin)),
@@ -44,6 +46,7 @@ export default function ObservationControls({
     ),
     [error, setError] = useState("");
   useEffect(() => {
+    if (field.ra !== Number(ra) || field.dec !== Number(dec)) setCustom(false);
     setRa(String(field.ra));
     setDec(String(field.dec));
     setFov(String(field.fov_arcmin));
@@ -59,11 +62,13 @@ export default function ObservationControls({
       field.max_wavelength_um == null ? "" : String(field.max_wavelength_um),
     );
   }, [field]);
-  const selected = presets.find(
-    (p) =>
-      Math.abs(p.ra - Number(ra)) < 0.00001 &&
-      Math.abs(p.dec - Number(dec)) < 0.00001,
-  );
+  const selected = custom
+    ? undefined
+    : presets.find(
+        (p) =>
+          Math.abs(p.ra - Number(ra)) < 0.00001 &&
+          Math.abs(p.dec - Number(dec)) < 0.00001,
+      );
   const selectedLimit = Number(limit);
   const epochOptions = [
     ...new Set([
@@ -105,26 +110,39 @@ export default function ObservationControls({
             value={selected?.id || ""}
             onChange={(e) => {
               const p = presets.find((p) => p.id === e.target.value);
-              if (p) {
-                setError("");
-                onLoad({
-                  ra: p.ra,
-                  dec: p.dec,
-                  fov_arcmin:
-                    Number(fov) >= 2 && Number(fov) <= 60 ? Number(fov) : 12,
-                  detector,
-                  limit: Number(limit),
-                  spread,
-                  start_date: startDate || undefined,
-                  end_date: endDate || undefined,
-                  min_wavelength_um: minWave.trim()
-                    ? Number(minWave)
-                    : undefined,
-                  max_wavelength_um: maxWave.trim()
-                    ? Number(maxWave)
-                    : undefined,
-                });
+              setError("");
+              if (!p) {
+                setCustom(true);
+                raInput.current?.focus();
+                raInput.current?.select();
+                return;
               }
+              const next: Field = {
+                ra: p.ra,
+                dec: p.dec,
+                fov_arcmin:
+                  Number(fov) >= 2 && Number(fov) <= (demoEnabled ? 60 : 30)
+                    ? Number(fov)
+                    : 12,
+                detector,
+                limit: Number(limit),
+                spread,
+                start_date: startDate || undefined,
+                end_date: endDate || undefined,
+                min_wavelength_um: minWave.trim()
+                  ? Number(minWave)
+                  : undefined,
+                max_wavelength_um: maxWave.trim()
+                  ? Number(maxWave)
+                  : undefined,
+              };
+              const invalid = validateField(next, demoEnabled ? 60 : 30);
+              if (invalid) {
+                setError(invalid);
+                return;
+              }
+              setCustom(false);
+              onLoad(next);
             }}
           >
             <option value="">Custom sky region</option>
@@ -134,13 +152,20 @@ export default function ObservationControls({
               </option>
             ))}
           </select>
-          {selected && (
+          {selected ? (
             <p className="preset-note">
               {selected.classification}
               <br />
               {selected.verified
                 ? "ICRS · J2000 reference position"
                 : "Brief-supplied position · epoch unspecified"}
+            </p>
+          ) : (
+            <p className="preset-note" id="custom-region-help">
+              Enter an ICRS center in decimal degrees: RA from 0° to less than
+              360°, Dec from −90° to +90°. The field of view sets the width and
+              height of the square sky region. Choose a detector, then check for
+              observations.
             </p>
           )}
           <form
@@ -161,14 +186,24 @@ export default function ObservationControls({
             </label>
             <input
               id="ra"
+              ref={raInput}
               inputMode="decimal"
               type="number"
               value={ra}
-              onChange={(e) => setRa(e.target.value)}
+              onChange={(e) => {
+                setCustom(true);
+                setRa(e.target.value);
+              }}
               min="0"
               max="359.999999"
               step="any"
-              aria-describedby={error ? "field-error" : undefined}
+              aria-describedby={
+                error
+                  ? "field-error"
+                  : !selected
+                    ? "custom-region-help"
+                    : undefined
+              }
             />
             <label
               htmlFor="dec"
@@ -181,7 +216,17 @@ export default function ObservationControls({
               inputMode="decimal"
               type="number"
               value={dec}
-              onChange={(e) => setDec(e.target.value)}
+              onChange={(e) => {
+                setCustom(true);
+                setDec(e.target.value);
+              }}
+              aria-describedby={
+                error
+                  ? "field-error"
+                  : !selected
+                    ? "custom-region-help"
+                    : undefined
+              }
               min="-90"
               max="90"
               step="any"
@@ -189,29 +234,43 @@ export default function ObservationControls({
             <label htmlFor="fov">
               Field of view <span>arcmin</span>
             </label>
-            <select
-              id="fov"
-              value={fov}
-              onChange={(e) => setFov(e.target.value)}
-            >
-              {[
-                2,
-                6,
-                12,
-                24,
-                30,
-                ...(demoEnabled ? [60] : []),
-                ...(![2, 6, 12, 24, 30, 60].includes(Number(fov))
-                  ? [Number(fov)]
-                  : []),
-              ]
-                .sort((a, b) => a - b)
-                .map((n) => (
-                  <option key={n} value={n}>
-                    {n}′ × {n}′
-                  </option>
-                ))}
-            </select>
+            {!selected ? (
+              <input
+                id="fov"
+                type="number"
+                inputMode="decimal"
+                min="2"
+                max={demoEnabled ? 60 : 30}
+                step="any"
+                value={fov}
+                onChange={(e) => setFov(e.target.value)}
+                aria-describedby={error ? "field-error" : "custom-region-help"}
+              />
+            ) : (
+              <select
+                id="fov"
+                value={fov}
+                onChange={(e) => setFov(e.target.value)}
+              >
+                {[
+                  2,
+                  6,
+                  12,
+                  24,
+                  30,
+                  ...(demoEnabled ? [60] : []),
+                  ...(![2, 6, 12, 24, 30, 60].includes(Number(fov))
+                    ? [Number(fov)]
+                    : []),
+                ]
+                  .sort((a, b) => a - b)
+                  .map((n) => (
+                    <option key={n} value={n}>
+                      {n}′ × {n}′
+                    </option>
+                  ))}
+              </select>
+            )}
             <label htmlFor="limit">
               Max epochs <span>2–50</span>
             </label>
@@ -343,6 +402,7 @@ export default function ObservationControls({
               type="button"
               onClick={() => {
                 setError("");
+                setCustom(false);
                 onLoad({ ...(demoEnabled ? DEFAULT_FIELD : FEATURED_FIELD) });
               }}
             >

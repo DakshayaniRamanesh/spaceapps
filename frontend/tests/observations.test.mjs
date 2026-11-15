@@ -35,7 +35,7 @@ test("real-data access requires a healthy recognized provider", () => {
     false,
   );
 });
-test("pair lookup supports either order; real subtraction remains disabled", () => {
+test("pair lookup supports either order; real subtraction preview is supported with >= 2 frames", () => {
   const pair = {
     a: "a",
     b: "b",
@@ -49,7 +49,11 @@ test("pair lookup supports either order; real subtraction remains disabled", () 
     pairs: [pair],
   };
   assert.equal(selectedPair(data, 1, 0), pair);
-  assert.equal(differenceAllowed(data, 0, 1), false);
+  assert.equal(differenceAllowed(data, 0, 1), true);
+  assert.equal(
+    differenceAllowed({ ...data, frames: [{ id: "a" }] }, 0, 0),
+    false,
+  );
   assert.equal(
     differenceAllowed({ ...data, source_type: "synthetic" }, 0, 1),
     true,

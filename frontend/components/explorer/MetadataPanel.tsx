@@ -2,14 +2,19 @@
 import { useEffect, useRef } from "react";
 import { Activity, Info } from "lucide-react";
 import { ObservationSet, Mode, dateLabel } from "@/lib/types";
+import PairEvidence from "./PairEvidence";
 export default function MetadataPanel({
   data,
   index,
   mode,
+  a = 0,
+  b = 1,
 }: {
   data: ObservationSet;
   index: number;
   mode: Mode;
+  a?: number;
+  b?: number;
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -188,12 +193,13 @@ export default function MetadataPanel({
               <dd className="numeric">{data.frames.length}</dd>
             </dl>
           </section>
+          <PairEvidence data={data} a={a} b={b} />
           <div className="viewer-help">
             <Info size={19} />
             <h4>Look for the change.</h4>
             <p>
               {real
-                ? "Blink to inspect differences. Wavelength, image blur, masks and background can also change appearance; the evidence panel explains limitations."
+                ? "Blink or difference to inspect variations. Wavelength, image blur, masks and background can also change appearance; inspect comparison details for limitations."
                 : mode === "difference"
                   ? "Amber pixels gained intensity. Violet pixels lost intensity. A moving source leaves a positive and negative pair."
                   : mode === "blink"

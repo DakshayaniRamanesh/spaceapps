@@ -110,6 +110,39 @@ test("custom-coordinate job reports pending and archive failure without inventin
     page.getByRole("button", { name: "Difference", exact: true }),
   ).toBeDisabled();
   await expect(page).toHaveURL(/ra=31&dec=10&fov=6&detector=D2/);
+  const alert = page.locator(".api-error");
+  await expect(alert).toContainText("This field requires live archive access");
+  // Retry keeps the requested custom field; recovery explicitly switches to
+  // the bundled real observations and works without a live archive query.
+  const retry = page.waitForRequest(
+    (r) => r.method() === "POST" && r.url().includes("observation-jobs"),
+  );
+  await alert.getByRole("button", { name: "Retry", exact: true }).click();
+  expect((await retry).postDataJSON()).toMatchObject({
+    ra: 31,
+    dec: 10,
+    fov_arcmin: 6,
+    detector: "D2",
+  });
+  await expect(alert).toBeVisible();
+  await page.unroute("**/api/observation-jobs");
+  const recovery = page.waitForResponse(
+    (r) =>
+      r.request().method() === "POST" && r.url().includes("observation-jobs"),
+  );
+  await alert.getByRole("button", { name: "Load featured field" }).click();
+  expect(await (await recovery).json()).toMatchObject({
+    status: "ready",
+    cache_hit: true,
+  });
+  await expect(page.locator(".frame-thumb")).toHaveCount(2);
+  await expect(alert).toHaveCount(0);
+  await expect(page).toHaveURL(/dec=66.754979&fov=12&detector=D3/);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });
 
 test("completed empty search is distinct from a failed or pending search", async ({

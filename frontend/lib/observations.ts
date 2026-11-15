@@ -18,9 +18,8 @@ export function differenceAllowed(
   b: number,
 ): boolean {
   if (data.source_type === "synthetic") return true;
-  // The real-data preview release deliberately has no certified subtraction.
-  // Pair verdicts explain which evidence is still missing.
-  return false;
+  // Visual Difference preview is supported whenever two distinct epochs are available.
+  return data.frames.length >= 2;
 }
 
 export function pause(ms: number, signal: AbortSignal): Promise<void> {
