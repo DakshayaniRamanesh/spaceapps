@@ -68,7 +68,7 @@ class ManifestStore:
                 continue
         # Filter an existing bounded preview without touching immutable featured
         # FITS. This is explicitly a subset view, never a new complete archive search.
-        filtering = req.start_date is not None or req.end_date is not None or req.spread or req.min_wavelength_um is not None or req.max_wavelength_um is not None
+        filtering = req.limit != 12 or req.start_date is not None or req.end_date is not None or req.spread or req.min_wavelength_um is not None or req.max_wavelength_um is not None
         if filtering and req.limit <= 12:
             base_req = req.model_copy(update={'start_date': None, 'end_date': None, 'spread': False,
                                               'limit': 12, 'min_wavelength_um': None, 'max_wavelength_um': None})
@@ -92,21 +92,34 @@ class ManifestStore:
                     bins.add(bucket)
                     last = epoch
                     frames.append(frame)
+                matched = len(frames)
                 frames = frames[:req.limit]
-                view_id = 'irsa-'+hashlib.sha256(json.dumps([base.dataset_id, request_payload(req)], sort_keys=True).encode()).hexdigest()[:24]
+                view_id = 'irsa-'+hashlib.sha256(json.dumps(['cached-selection-v2', base.dataset_id, request_payload(req)], sort_keys=True).encode()).hexdigest()[:24]
                 ids = {f.id for f in frames}
                 data = base.model_copy(deep=True, update={
                     'dataset_id': view_id, 'request': req, 'frames': frames,
                     'pairs': [p for p in base.pairs if p.a in ids and p.b in ids],
                     'search_complete': False, 'availability': 'search_incomplete',
+                    'total_candidates': matched,
                     'epoch_selection': EpochSelection(limit=req.limit, spread=req.spread, start_mjd=req.start_mjd, end_mjd=req.end_mjd),
                     'notice': 'Filtered cached SPHEREx preview. No additional archive exposures were searched.',
                     'warnings': [*base.warnings, 'Selection applies only to this cached preview subset, not the complete archive inventory.']})
                 destination = self.root/view_id
-                destination.mkdir(exist_ok=True)
-                temporary = destination/f'.manifest-{time.time_ns()}.tmp'
-                temporary.write_text(data.model_dump_json(indent=2))
-                temporary.replace(destination/'manifest.json')
+                # Publish immutable directories once. Replacing a manifest being
+                # read by another request fails on Windows and races on all hosts.
+                if not (destination/'manifest.json').is_file():
+                    staging = Path(tempfile.mkdtemp(prefix='.view-', dir=self.root))
+                    try:
+                        (staging/'manifest.json').write_text(data.model_dump_json(indent=2))
+                        try:
+                            staging.rename(destination)
+                        except OSError:
+                            if not (destination/'manifest.json').is_file():
+                                raise
+                    finally:
+                        if staging.exists():
+                            assert staging.resolve().is_relative_to(self.root.resolve())
+                            shutil.rmtree(staging)
                 return data
         return None
 

@@ -53,6 +53,8 @@ Both observation GET parameters and POST job bodies accept `limit` (2–50, defa
 
 Date and wavelength selections, monthly sampling and the cap can filter an existing cached preview without contacting IRSA. Such a derived manifest explicitly says it is a **cached preview subset**, sets `search_complete=false`, keeps the exact source frame URLs and WCS, and does not claim a new full archive search. Requests above the default 12-epoch cap require a new bounded archive job. Custom jobs honor the selection while retaining the 240-second / 120 MiB budgets, so a requested 50 epochs is a maximum, not a guaranteed count. Monthly spacing is a SkyTrace heuristic (30-day bins with at least 29 days between selected epochs).
 
+Cached-view `total_candidates` counts only eligible frames in that cached subset, never the original unfiltered archive inventory. Each derived view is published once by an atomic directory rename and then remains immutable, so concurrent readers never contend with manifest replacement on Windows.
+
 `GET /api/frames/{frame_id}.png?overlay=mask` highlights excluded/missing pixels in amber using the exact stored science mask and PNG vertical orientation; good image pixels retain the shared stretch unchanged. Real-image `/api/difference` remains blocked, including significance-view requests. The former coordinate-only `/api/catalog/gaia` path is replaced by the dataset-aware endpoint below.
 
 ### Catalogue contract

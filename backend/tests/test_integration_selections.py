@@ -50,11 +50,41 @@ def test_featured_filter_views_keep_original_frames_wcs_and_honest_scope(tmp_pat
     assert selected and selected.dataset_id != data.dataset_id
     assert selected.grid == data.grid
     assert selected.frames and all(f.lambda_um == wave for f in selected.frames)
+    assert selected.total_candidates == len(selected.frames)
     assert not selected.search_complete
     assert 'subset' in selected.warnings[-1]
     assert path.read_bytes() == original_bytes
     assert store.load(selected.dataset_id).frames == selected.frames
     assert store.frame_path(selected.frames[0].id).is_file()
+    limited = store.cached(data.request.model_copy(update={'limit': 2}))
+    assert limited is not None and len(limited.frames) <= 2
+    assert not limited.search_complete
+
+
+def test_cached_views_are_immutable_under_concurrent_requests_and_open_readers(tmp_path, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    store = ManifestStore(tmp_path)
+    data = ObservationSet.model_validate_json(next(store.seeds.glob('*/manifest.json')).read_text())
+    req = data.request.model_copy(update={'start_date': '2025-01-01'})
+    replace = Path.replace
+    def locked_replace(path, target):
+        if Path(target).name == 'manifest.json' and Path(target).exists():
+            raise PermissionError('Simulated Windows reader denies manifest replacement')
+        return replace(path, target)
+    monkeypatch.setattr(Path, 'replace', locked_replace)
+    def read_view(_):
+        view = store.cached(req)
+        return store.load(view.dataset_id).model_dump()
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(read_view, range(32)))
+    assert all(result == results[0] for result in results)
+    published = tmp_path/results[0]['dataset_id']/'manifest.json'
+    before = published.read_bytes()
+    with published.open('rb') as reader:
+        assert store.cached(req).dataset_id == results[0]['dataset_id']
+        assert reader.read() == before
+    assert published.read_bytes() == before
+    assert not list(tmp_path.glob('.view-*'))
 
 
 def test_mask_overlay_flips_exact_science_mask_and_does_not_change_good_pixels(monkeypatch):
