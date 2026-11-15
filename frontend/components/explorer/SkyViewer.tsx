@@ -13,12 +13,10 @@ import {
   X,
   ShieldAlert,
   Waypoints,
-  ChevronDown,
 } from "lucide-react";
 import RegisteredImage from "./RegisteredImage";
 import type { Hit, Overlay } from "@/lib/catalogues";
 import { ObservationSet, Mode, dateLabel } from "@/lib/types";
-import { selectedPair } from "@/lib/observations";
 import {
   RegionPoint,
   clamp01,
@@ -201,26 +199,6 @@ export default function SkyViewer({
       return v;
     });
   }
-  const pair = selectedPair(data, a, b);
-  const waveDiffers =
-    fa?.lambda_um != null &&
-    fb?.lambda_um != null &&
-    Math.abs(fa.lambda_um - fb.lambda_um) > 0.05;
-  const regCheck = pair?.checks?.find((c) =>
-    c.name.toLowerCase().includes("registration"),
-  );
-  const registrationWarning =
-    regCheck && regCheck.status !== "pass"
-      ? regCheck.reason || "Residual astrometric uncertainty between epochs"
-      : null;
-  const coverageWarning =
-    (pair?.overlap_fraction != null && pair.overlap_fraction < 0.85) ||
-    fa?.quality?.center_valid === false ||
-    fb?.quality?.center_valid === false;
-  const warningCount =
-    (waveDiffers ? 1 : 0) +
-    (registrationWarning ? 1 : 0) +
-    (coverageWarning ? 1 : 0);
   return (
     <section
       className="viewer panel"
@@ -235,62 +213,6 @@ export default function SkyViewer({
           {data.request.detector} / {data.request.fov_arcmin} ARCMIN
         </span>
       </div>
-      {mode === "difference" && (
-        <details className="difference-banner" open role="status">
-          <summary className="difference-banner-header">
-            <div className="difference-badge">
-              <span className="badge-tag">EXPERIMENTAL</span>
-              <span className="diff-title">
-                Visual Difference (B − A)
-                <span className="diff-subtitle"> · Not Scientifically Validated</span>
-              </span>
-            </div>
-            {data.source_type === "spherex-irsa" && warningCount > 0 && (
-              <span className="caveats-toggle">
-                <span className="caveats-count">
-                  {warningCount} {warningCount === 1 ? "advisory" : "advisories"}
-                </span>
-                <ChevronDown size={13} className="caveats-chevron" />
-              </span>
-            )}
-          </summary>
-          {data.source_type === "spherex-irsa" && warningCount > 0 && (
-            <div className="difference-contextual-warnings">
-              {waveDiffers && (
-                <div className="diff-warning-item">
-                  <ShieldAlert size={14} className="warning-icon" />
-                  <div className="warning-text">
-                    <strong>Spectral difference:</strong> Frame A is{" "}
-                    <span className="mono">{fa?.lambda_um?.toFixed(3)} µm</span>,
-                    Frame B is{" "}
-                    <span className="mono">{fb?.lambda_um?.toFixed(3)} µm</span>.
-                    Residuals may reflect bandpass differences rather than temporal variability.
-                  </div>
-                </div>
-              )}
-              {registrationWarning && (
-                <div className="diff-warning-item">
-                  <ShieldAlert size={14} className="warning-icon" />
-                  <div className="warning-text">
-                    <strong>Registration notice:</strong> {registrationWarning}.
-                    Residual dipole artifacts may appear around bright sources.
-                  </div>
-                </div>
-              )}
-              {coverageWarning && (
-                <div className="diff-warning-item">
-                  <ShieldAlert size={14} className="warning-icon" />
-                  <div className="warning-text">
-                    <strong>Partial coverage:</strong> One or both frames contain
-                    masked pixels or limited common footprint. Zero and unobserved
-                    pixels are rendered dark neutral.
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </details>
-      )}
       <div
         key={mode}
         className={`image-stage mode-enter ${mode === "split" ? "split" : ""}`}
