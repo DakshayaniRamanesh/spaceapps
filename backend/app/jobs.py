@@ -54,9 +54,9 @@ class JobManager:
         with self.connect() as db:
             db.execute('UPDATE jobs SET payload=? WHERE id=?', (job.model_dump_json(), job.job_id))
 
-    def submit(self, req: FieldRequest):
+    def submit(self, req: FieldRequest, *, refresh=False):
         with self.lock:
-            cached = self.store.cached(req)
+            cached = None if refresh else self.store.cached(req)
             if cached:
                 return Job(job_id=cached.dataset_id, status='ready', stage='Cached real observations', request=req,
                            dataset_id=cached.dataset_id, result_url=f'/api/observation-sets/{cached.dataset_id}', cache_hit=True)
@@ -66,11 +66,12 @@ class JobManager:
                     job = Job.model_validate_json(payload)
                     if job.status in ('queued', 'running'):
                         active.append(job)
-                        if request_key(job.request) == request_key(req):
+                        if request_key(job.request) == request_key(req) and (not refresh or job.refresh):
                             return job
                 if len(active) >= 6:
                     raise QueueFull('The archive worker is busy. Retry shortly.')
-                job = Job(job_id=uuid.uuid4().hex, status='queued', stage='Queued for archive worker', request=req)
+                job = Job(job_id=uuid.uuid4().hex, status='queued', stage='Queued for archive worker', request=req,
+                          refresh=refresh)
                 db.execute('INSERT INTO jobs VALUES (?,?,?,?)',
                            (job.job_id, request_key(req), time.time(), job.model_dump_json()))
             self.pool.submit(self.run, job.job_id)
@@ -84,7 +85,7 @@ class JobManager:
             job.stage = stage
             self.save(job)
         try:
-            data = self.processor.process(job.request, progress)
+            data = self.processor.process(job.request, progress, **({'refresh': True} if job.refresh else {}))
             job.status, job.stage = 'ready', 'Real-data result prepared'
             job.dataset_id = data.dataset_id
             job.result_url = f'/api/observation-sets/{data.dataset_id}'

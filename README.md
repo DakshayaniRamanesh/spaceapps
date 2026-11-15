@@ -63,6 +63,15 @@ A coordinate preset identifies a field, not proof the named source is visible or
 
 Bundled preview counts: Barnard’s Star field 6, Epsilon Indi B field 2, WISE 0855 field 6, RW Aurigae field 6, R Draconis field 2. Other settings start a bounded live query.
 
+To explore a custom region, choose **Custom sky region** under **Target preset**.
+Enter the ICRS center as RA in decimal degrees [0, 360) and Dec in [-90, 90],
+then enter a square field width from 2 to 30 arcminutes (fractional sizes are
+supported). Select a detector and optional filters, then click **Check for
+observations**. Selecting custom mode keeps the current coordinates for editing;
+the search starts only when submitted. **Share field** preserves the submitted
+coordinates and filters. An uncached search can take several minutes and may
+return no coverage or an archive error.
+
 ## What is implemented
 
 - Real DR1/QR3 wide-survey discovery, product deduplication, footprint-assisted candidate ranking and bounded downloads.

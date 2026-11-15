@@ -151,3 +151,4 @@ class Job(BaseModel):
     error_code: str | None = None
     message: str | None = None
     cache_hit: bool = False
+    refresh: bool = False

@@ -1281,6 +1281,19 @@ html:has(.explorer) {
   align-items: center;
   gap: 10px;
 }
+.archive-refresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.archive-refresh p {
+  flex: 1 1 260px;
+  font-size: 14px;
+  color: var(--muted);
+}
 .api-error {
   display: flex;
   gap: 14px;

@@ -35,6 +35,8 @@ export default function Explorer() {
     [data, setData] = useState<ObservationSet | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
+    [archiveUnavailable, setArchiveUnavailable] = useState(false),
+    [resultOrigin, setResultOrigin] = useState(""),
     [progress, setProgress] = useState("Checking the observation service…"),
     [emptyNotice, setEmptyNotice] = useState(""),
     [index, setIndex] = useState(0),
@@ -49,7 +51,8 @@ export default function Explorer() {
     [shareFallback, setShareFallback] = useState("");
   const controller = useRef<AbortController | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const load = useCallback(async (f: Field, writeUrl = true) => {
+  const lastRefresh = useRef(false);
+  const load = useCallback(async (f: Field, writeUrl = true, refresh = false) => {
     const invalid = validateField(f, developmentDemoEnabled ? 60 : 30);
     if (invalid) {
       setError(invalid);
@@ -63,6 +66,9 @@ export default function Explorer() {
     setEmptyNotice("");
     setProgress("Checking the observation service…");
     setError("");
+    setArchiveUnavailable(false);
+    setResultOrigin("");
+    lastRefresh.current = refresh;
     setPlaying(false);
     setField(f);
     setData(null);
@@ -105,7 +111,7 @@ export default function Explorer() {
       let result: ObservationSet;
       if (health.real_data_enabled) {
         let job = await checkedJson<Job>(
-          await fetch("/api/observation-jobs", {
+          await fetch(`/api/observation-jobs${refresh ? "?refresh=true" : ""}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(f),
@@ -127,15 +133,22 @@ export default function Explorer() {
             }),
           );
         }
-        if (job.status === "failed")
+        if (job.status === "failed") {
+          if (!c.signal.aborted)
+            setArchiveUnavailable(job.error_code === "archive_unavailable");
           throw new Error(
             job.message || "The archive search failed. Please retry.",
           );
+        }
         if (!job.result_url)
           throw new Error("The observation job returned no result.");
         result = await checkedJson<ObservationSet>(
           await fetch(job.result_url, { signal: c.signal }),
         );
+        if (!c.signal.aborted)
+          setResultOrigin(job.cache_hit
+            ? "Cached preview · use Check latest archive to search for updates."
+            : "Archive queried this session · bounded DR1/QR3 wide-survey sample; not all available exposures.");
       } else {
         result = await checkedJson<ObservationSet>(
           await fetch(`/api/observations?${q}`, { signal: c.signal }),
@@ -324,8 +337,26 @@ export default function Explorer() {
       {error && (
         <div className="api-error" role="alert">
           <AlertCircle size={19} />
-          <span>{error}</span>
-          <button onClick={() => load(field)}>Retry</button>
+          <span>
+            {error}
+            {archiveUnavailable &&
+              " This field requires live archive access. The bundled featured field is available without IRSA."}
+          </span>
+          <button onClick={() => load(field, true, lastRefresh.current)}>Retry</button>
+          {archiveUnavailable && (
+            <button onClick={() => load({ ...FEATURED_FIELD })}>
+              Load featured field
+            </button>
+          )}
+        </div>
+      )}
+      {!developmentDemoEnabled && (
+        <div className="archive-refresh">
+          <p>{resultOrigin || "Search published SPHEREx DR1/QR3 exposures. New archive data is ingested weekly; SIA search can lag by about a day."}</p>
+          <button className="button secondary" disabled={loading || !!validateField(field, 30)}
+            onClick={() => load(field, true, true)}>
+            Check latest archive
+          </button>
         </div>
       )}
       <div className="observatory">

@@ -80,15 +80,15 @@ def presets():
 
 
 @app.post('/api/observation-jobs', response_model=Job)
-def submit_job(req: FieldRequest, response: Response, request: Request):
+def submit_job(req: FieldRequest, response: Response, request: Request, refresh: bool = False):
     if source != 'irsa':
         raise HTTPException(409, 'Archive jobs require OBSERVATION_SOURCE=irsa')
     if req.fov_arcmin > 30:
         raise HTTPException(422, 'Real-data requests support fields from 2 to 30 arcminutes.')
     try:
-        if store.cached(req) is None:
+        if refresh or store.cached(req) is None:
             admit_client(request)
-        job = jobs.submit(req)
+        job = jobs.submit(req, refresh=refresh)
         response.status_code = 200 if job.status == 'ready' else 202
         response.headers['Cache-Control'] = 'no-store'
         return job
