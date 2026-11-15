@@ -93,7 +93,7 @@ test("URL state, invalid input, detector and FOV", async ({ page }) => {
   ).toContainText("less than 360");
   expect(apiCalls).toBe(0);
   await page.getByLabel("Right ascension").fill("130");
-  await page.getByLabel("Field of view").selectOption("24");
+  await page.getByLabel("Field of view").fill("24");
   await page.getByRole("button", { name: "D3", exact: true }).click();
   await page
     .getByRole("button", { name: "Load observations", exact: true })

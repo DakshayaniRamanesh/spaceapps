@@ -42,7 +42,7 @@ class ManifestStore:
     def _directory(self, dataset_id):
         if not re.fullmatch(r'irsa-[a-f0-9]{24}', dataset_id):
             raise ValueError('Unknown observation set')
-        for base in (self.seeds, self.root):
+        for base in (self.root, self.seeds):
             path = base / dataset_id
             if (path / 'manifest.json').is_file():
                 return path
@@ -54,7 +54,7 @@ class ManifestStore:
     def cached(self, req):
         key = request_key(req)
         # Featured snapshots are immutable, versioned real-data demonstrations.
-        for base in (self.seeds, self.root):
+        for base in (self.root, self.seeds):
             index = base / f'{key}.json'
             if not index.is_file():
                 continue
@@ -172,11 +172,11 @@ class IRSAProcessor:
     def __init__(self, store, archive_factory=ArchiveClient):
         self.store, self.archive_factory = store, archive_factory
 
-    def process(self, request, progress=lambda stage: None):
+    def process(self, request, progress=lambda stage: None, *, refresh=False):
         req = canonical(request)
         if req.fov_arcmin > 30:
             raise ValueError('Real-data requests are limited to 2–30 arcminutes')
-        cached = self.store.cached(req)
+        cached = None if refresh else self.store.cached(req)
         if cached:
             return cached
         self.store.trim()
