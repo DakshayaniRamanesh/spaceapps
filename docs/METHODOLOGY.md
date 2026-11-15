@@ -34,7 +34,39 @@ A displayed multi-frame group must meet the spectral/coverage screen for every p
 
 ## Coordinates and temporal truth
 
-FITS DATE-OBS (UTC), with MJD-OBS fallback, supplies the timestamp. Product release date and download date are not used as observation epochs. Named-target presets are reference sky positions, not source detections. Some positions are J2000; WISE 0855 has an unspecified coordinate epoch in the challenge brief. Trusted proper-motion propagation and parallax fitting are deferred. User-entered coordinates always select a fixed sky field, never a recentered moving-source frame.
+FITS DATE-OBS (UTC), with MJD-OBS fallback, supplies the timestamp. Product release date and download date are not used as observation epochs. Named-target presets are reference sky positions, not source detections. Some positions are J2000; WISE 0855 has an unspecified coordinate epoch in the challenge brief. Preset recentering and parallax fitting are deferred. User-entered coordinates always select a fixed sky field, never a recentered moving-source frame.
+
+## Gaia DR3 and AllWISE reference overlays
+
+The Explorer's compact Catalogue overlays panel below the viewer independently enables Gaia DR3 circles and WISE / AllWISE Source Catalog diamonds. Both are off initially. These identify catalogue entries for context, never detections, discoveries, cross-matches or measured motion in SPHEREx. Magnitudes retain their exact passband labels and are not directly comparable with SPHEREx intensity. Entries can be selected by click/tap, keyboard, or the source picker; the picker keeps coincident entries inspectable without assigning a shared physical identity.
+
+Gaia uses the public ESA TAP service and `gaiadr3.gaia_source` (`source_id`, `ra`, `dec`, `ref_epoch`, `pmra`, `pmdec`, `phot_g_mean_mag`, `ruwe`). AllWISE uses IRSA TAP and `allwise_p3as_psd` (`designation`, `ra`, `dec`, `w1mpro`, `w2mpro`, `ph_qual`, `cc_flags`). AllWISE is the 2013 combined WISE release, not a time-resolved WISE exposure catalogue. Its static `ra`/`dec` have no single supplied reference epoch here; J2000 must not be substituted for that missing epoch. AllWISE motion-fit coordinates are deliberately not used.
+
+Projection reconstructs the exact explicit ICRS TAN WCS stored in the manifest. It does not recreate the grid from the requested field size. The query center is the sky coordinate of the image center. The spherical separation to all four outer pixel corners supplies an enclosing cone, including the corners, across RA=0 and near the poles. This relies on the supported TAN footprint (at most one degree radius); unsupported or incomplete older grids are refused. Returned sources are projected with Astropy's zero-origin `world_to_pixel` and retained inside pixel edges `[-.5,width-.5)` / `[-.5,height-.5)`. The PNG vertical flip is applied exactly once: `png_y = height - 1 - fits_y`. Browser placement adds half a pixel to convert pixel centers to image-edge fractions. A ResizeObserver fits the common image rectangle inside each image port; image and marker plane share the same zoom/pan transform and are clipped to image and port. No linear RA/Dec-to-CSS conversion is used.
+
+Gaia sources with both proper-motion components and a reference epoch use Astropy `SkyCoord.apply_space_motion` from the catalogue's Julian TCB epoch to each frame's actual UTC observation date. This is angular motion without distance/radial-velocity information: annual parallax, perspective acceleration, binary motion and uncertainty propagation are not modeled. Missing astrometry retains the catalogue coordinate with `propagation_unavailable`; missing motion is never replaced by a measured zero. AllWISE retains its catalogue position, labelled `catalogue_position`. Positions are batched for all frames once and reused during single playback, blink and split viewing. There is no claim of measured motion from catalogue/image offsets.
+
+The Gaia cone adds a fixed **120 arcsec** margin to admit sources outside the original field. This is bounded preselection, not a completeness guarantee: motion exceeding the margin, unmodeled astrometry and brightness/result caps can omit sources. The default cap of 500 (maximum 1000) bounds marker DOM nodes and all-frame projection cost in 2–30 arcminute Explorer fields, rather than attempting dense-field completeness. Results are brightness ordered; the cap covers the padded cone before projection, so even an empty projected field may have a truncated cone. Counts refer to entries inside the active image (or either split image), not confirmed detections or a complete inventory. Quality indicators are reported without silently certifying positions. See API.md for timeouts, cache lifetimes and retry states. Synthetic fields and missing WCS explicitly disable accurate real overlays.
+
+Attribution and authoritative schemas/services:
+
+- [ESA Gaia DR3](https://www.cosmos.esa.int/web/gaia/dr3), [Gaia archive](https://gea.esac.esa.int/archive/) (ESA/Gaia/DPAC).
+- [AllWISE release documentation](https://wise2.ipac.caltech.edu/docs/release/allwise/), [AllWISE source-table columns](https://wise2.ipac.caltech.edu/docs/release/allwise/expsup/sec2_1a.html) (NASA/JPL-Caltech/UCLA; NASA/IPAC IRSA).
+- [IRSA TAP protocol and schema discovery](https://irsa.ipac.caltech.edu/docs/program_interface/TAP.html).
+- [Astropy space motion](https://docs.astropy.org/en/stable/coordinates/apply_space_motion.html).
+
+Verification commands from the repository root (Windows: use `npm.cmd` and `backend/.venv/Scripts/python.exe` if needed):
+
+```text
+python -m pytest
+npm --prefix frontend test
+npm --prefix frontend run typecheck
+npm --prefix frontend run build
+npm --prefix frontend run test:e2e
+python scripts/check_catalogues.py
+```
+
+Backend tests mock upstream CSV transport and cover orientation with asymmetric, off-center rectangular-grid fixtures, wrapping/polar geometry, propagation/fallback, identifiers, cache/limits and errors. Browser catalogue tests mock catalogue responses separately from genuine bundled SPHEREx imagery, covering layer states, accessibility, viewport registration, frame changes and split/blink modes. Screenshot names containing `fixture` show test catalogue positions, not live service verification. The live script queries both real services and prints success/failure without inventing fallback sources.
 
 ## Synthetic development mode
 

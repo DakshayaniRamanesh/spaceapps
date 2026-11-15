@@ -16,6 +16,9 @@ from .models import FieldRequest, Detector, ObservationSet, Job
 from .providers import SyntheticObservationProvider, decode_frame, render_frame, render_difference, difference_arrays
 from .irsa import IRSAProcessor, ManifestStore
 from .jobs import JobManager, QueueFull
+from .catalogues import Catalogue, Overlay, CatalogueService, CatalogueUnavailable, OverlayUnavailable
+
+catalogues = CatalogueService()
 
 source = os.getenv('OBSERVATION_SOURCE', 'irsa')
 if source not in ('synthetic', 'irsa'):
@@ -132,6 +135,22 @@ def manifest(dataset_id: str):
         return JSONResponse(data.model_dump(), headers={'Content-Disposition': f'attachment; filename="{dataset_id}.json"'})
     except ValueError as exc:
         raise HTTPException(404, str(exc))
+
+
+@app.get('/api/observation-sets/{dataset_id}/catalogues/{catalogue}', response_model=Overlay)
+def catalogue_overlay(dataset_id: str, catalogue: Catalogue, response: Response,
+                      limit: int = Query(500, ge=1, le=1000)):
+    try:
+        data = store.load(dataset_id)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
+    response.headers['Cache-Control'] = 'no-store'
+    try:
+        return catalogues.overlay(data, catalogue, limit)
+    except OverlayUnavailable as exc:
+        raise HTTPException(409, str(exc))
+    except CatalogueUnavailable as exc:
+        raise HTTPException(503, str(exc), headers={'Retry-After': '30'})
 
 
 @lru_cache(maxsize=128)

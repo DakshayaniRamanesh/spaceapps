@@ -86,6 +86,7 @@ export type ObservationSet = {
   created_at?: string | null;
   warnings?: string[];
   pairs?: Pair[];
+  grid?: Record<string, string | number>;
 };
 export const FEATURED_FIELD: Field = {
   ra: 248.16761083,

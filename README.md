@@ -30,6 +30,25 @@ npm run dev
 
 Open http://localhost:3000/explore. The Python API is also available at http://127.0.0.1:8000/docs. The launcher uses `backend/.venv` when present. `API_INTERNAL_URL` configures the Next.js proxy when running services separately and must be supplied at **build time** for standalone production builds.
 
+On Windows PowerShell, use the executable paths directly; activation is optional:
+
+```powershell
+python -m venv backend/.venv
+backend/.venv/Scripts/python.exe -m pip install -r backend/requirements-tested.txt
+npm.cmd --prefix frontend ci
+npm.cmd run dev
+```
+
+Once dependencies are installed, subsequent runs only need `npm.cmd run dev` from the repository root. Stop both services with Ctrl+C.
+
+## Catalogue overlays
+
+Open http://localhost:3000/explore and find **Catalogue overlays** below the image viewer. Enable **Gaia DR3**, **WISE · AllWISE Source Catalog**, or both. Select a marker with click/tap or keyboard, or use the source picker to inspect overlapping entries. Each layer has its own count, loading/error state and Retry action.
+
+The backend uses the stored image WCS and observation dates; Gaia positions use supplied proper motion when available, while AllWISE positions remain static. Markers are reference positions, not confirmed SPHEREx detections. Real catalogue overlays are disabled in synthetic mode. They require access to the public ESA/IRSA catalogue services; a timeout can leave images usable with a failed layer and Retry action. No fallback sources are invented.
+
+See [catalogue implementation and verification](docs/CATALOGUE_VERIFICATION.md) for tests, live-service limitations and the changed files, plus the [API contract](docs/API.md) and [coordinate methodology](docs/METHODOLOGY.md).
+
 ## Demonstration
 
 The initial field is R Draconis, ICRS RA 248.167611°, Dec 66.754979°, 12 arcminutes, D3.

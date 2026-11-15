@@ -44,3 +44,34 @@ One worker processes at most one job; at most six jobs are queued/running in tot
 Each job has a 240-second archive time budget, 120 MiB total download budget, 20 MiB per cutout, 5 MiB per metadata response, at most 12 shortlisted downloads, and 2–30 arcminute FOV. Search metadata and scientific preparation can be incomplete even if some PNGs are ready. Requests use an explicit IRSA host/path allowlist and reject redirects.
 
 Runtime positive cache TTL is 24 hours; negative cache TTL is one hour. About 1 GiB of completed runtime datasets is retained, plus the active job. Pruning can expire old URLs. Featured snapshots are immutable and have no runtime TTL. Use one process/replica per data directory; SQLite job recovery marks interrupted work failed after restart. The first version is not a distributed task service.
+
+## Catalogue overlays
+
+`GET /api/observation-sets/{dataset_id}/catalogues/{catalogue}?limit=500`
+
+`catalogue` is `gaia` (ESA `gaiadr3.gaia_source`, Gaia DR3) or `wise` (IRSA `allwise_p3as_psd`, **AllWISE Source Catalog**, not NEOWISE time series). `limit` is an integer from 1–1000; default 500. The existing same-origin `/api` rewrite proxies this endpoint. No arbitrary URLs, ADQL, coordinates, frame IDs or epoch options are accepted. All frame IDs and epochs come from the stored dataset. This bounded synchronous path does not enter the FITS job queue.
+
+Response fields (also exposed in FastAPI OpenAPI via the `Overlay` response model):
+
+| Field | Meaning |
+| --- | --- |
+| `dataset_id`, `catalogue`, `release` | Exact dataset, layer and selected release |
+| `width`, `height` | Manifest common output PNG dimensions |
+| `frames` | Frame-ID to observation UTC timestamp map; all frames projected together |
+| `sources` | Entries inside at least one frame, with exact string `source_id` |
+| Source `ra`, `dec`, `reference_epoch` | Original catalogue coordinates in degrees, Julian reference year when supplied (Gaia TCB); AllWISE epoch null |
+| Source `pmra`, `pmdec`, `proper_motion_unit` | Nullable mas/yr; RA component includes cos(dec) |
+| Source `magnitudes`, `quality`, `warnings` | Labelled passbands (Gaia G, WISE W1/W2); RUWE or AllWISE `ph_qual`/`cc_flags`; caveats |
+| Source `positions` | Frame-ID to `{x,y,ra,dec,treatment}`; absent if outside that frame |
+| Position `x`, `y` | Zero-origin PNG pixel centers; top-left origin. CSS position is `(x+.5)/width`, `(y+.5)/height` |
+| Position `treatment` | `propagated_position`, `catalogue_position`, or `propagation_unavailable` |
+| `retrieved_at`, `provenance_url`, `service_url` | UTC retrieval time and fixed official documentation/service links |
+| `result_limit`, `preselection_count`, `truncated` | Cone-query row cap, retained preselection rows and extra-row overflow detection |
+| `query_radius_deg`, `motion_margin_arcsec` | Spherical WCS footprint cone radius and Gaia 120 arcsec expansion |
+| `completeness`, `warnings` | Explicit limited-inventory and science caveats |
+
+All missing measurements are JSON null. Identifiers are never parsed as floating point. Sources are ordered by ascending Gaia G or AllWISE W1 and identifier as a deterministic tie breaker; no photometric quality cut is imposed. The cap applies **before** clipping to the image; the displayed count may therefore be much smaller. Fetching cap+1 detects truncation; a truncated query never claims an inventory of the field.
+
+Errors: 404 unknown/expired dataset; 422 invalid catalogue/limit; 409 synthetic, empty or unsupported/missing WCS; 503 timeout, upstream rate limit, malformed response or service busy, with `Retry-After: 30`. A failure is never returned or cached as a successful empty layer. Redirects are rejected. Upstream connect timeout is 8 seconds, read timeout 25 seconds, with a streaming elapsed-budget check of 30 seconds and a 2 MiB body ceiling. One in-flight query per catalogue per API process bounds upstream concurrency; busy callers get a retryable error without queued FITS work.
+
+Separate in-memory LRU caches hold raw queries and projected frame batches (32 entries each, 15-minute success TTL, 60-second empty-query TTL). Keys include processing version, release, exact generated geometry/query and cap; projection keys additionally include dataset ID, exact WCS, dimensions and frame IDs/times. No failure caching or automatic retry. Browser caches successful layer results for the current mounted field and aborts obsolete requests; playback, zoom, pan and repeated toggles do not request new queries. Changing datasets clears selections and layers.

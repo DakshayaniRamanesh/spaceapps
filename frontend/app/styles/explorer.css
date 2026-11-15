@@ -316,6 +316,140 @@ html:has(.explorer) {
   user-select: none;
   image-rendering: auto;
 }
+.registered-port {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.registered-image {
+  position: relative;
+  flex: none;
+}
+.catalogue-markers {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.catalogue-marker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.catalogue-marker span,
+.catalogue-symbol {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #b5a0ff;
+  border-radius: 50%;
+  background: transparent;
+}
+.catalogue-marker.wise span,
+.catalogue-symbol.wise {
+  border-color: #efc681;
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+.catalogue-marker:focus-visible {
+  outline: 2px solid white;
+  border-radius: 3px;
+}
+.catalogue-marker:hover span {
+  background: rgba(255, 255, 255, 0.3);
+}
+.catalogue-panel {
+  padding: 18px 22px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0d081a;
+}
+.catalogue-help {
+  margin-top: 12px;
+}
+.catalogue-help summary {
+  cursor: pointer;
+  color: var(--secondary-text);
+}
+.catalogue-panel h3 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.catalogue-panel h4 {
+  font-size: 15px;
+  margin-top: 12px;
+}
+.catalogue-panel p {
+  margin: 8px 0;
+}
+.catalogue-layers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+.catalogue-layers > div {
+  flex: 1 1 210px;
+}
+.catalogue-layers label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.catalogue-layers input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.catalogue-symbol {
+  flex: none;
+}
+.catalogue-status,
+.catalogue-note {
+  color: var(--secondary-text);
+}
+.catalogue-picker {
+  display: block;
+  margin-top: 12px;
+}
+.catalogue-picker select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 42px;
+  margin-top: 6px;
+  background: #170f27;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+}
+.catalogue-detail {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.catalogue-detail dt {
+  color: var(--secondary-text);
+  margin-top: 8px;
+}
+.catalogue-detail dd {
+  margin: 0;
+}
 .split .image-port + .image-port {
   border-left: 1px solid rgba(155, 114, 242, 0.2);
 }

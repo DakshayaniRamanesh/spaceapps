@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Maximize, Plus, Minus, Crosshair, Move } from "lucide-react";
 import { ObservationSet, Mode, dateLabel } from "@/lib/types";
+import RegisteredImage from "./RegisteredImage";
+import type { Hit, Overlay } from "@/lib/catalogues";
 export default function SkyViewer({
   data,
   index,
@@ -10,6 +12,8 @@ export default function SkyViewer({
   b,
   blinkIndex,
   loading,
+  overlays = [],
+  onSelect = () => {},
 }: {
   data: ObservationSet;
   index: number;
@@ -18,6 +22,8 @@ export default function SkyViewer({
   b: number;
   blinkIndex: number;
   loading: boolean;
+  overlays?: Overlay[];
+  onSelect?: (hit: Hit) => void;
 }) {
   const [zoom, setZoom] = useState(1),
     [pan, setPan] = useState({ x: 0, y: 0 }),
@@ -37,12 +43,21 @@ export default function SkyViewer({
   const images =
     mode === "split"
       ? [
-          { src: fa.image_url, label: `A · ${dateLabel(fa.timestamp)}` },
-          { src: fb.image_url, label: `B · ${dateLabel(fb.timestamp)}` },
+          {
+            src: fa.image_url,
+            label: `A · ${dateLabel(fa.timestamp)}`,
+            frameId: fa.id,
+          },
+          {
+            src: fb.image_url,
+            label: `B · ${dateLabel(fb.timestamp)}`,
+            frameId: fb.id,
+          },
         ]
       : [
           {
             src: mode === "difference" ? diff : current.image_url,
+            frameId: current.id,
             label:
               mode === "difference"
                 ? "B − A · intensity residual"
@@ -150,30 +165,37 @@ export default function SkyViewer({
               drag.current = null;
             }}
           >
-            <img
-              key={img.src}
-              className={`observation-image ${mode === "single" && !loading ? "frame-enter" : ""}`}
-              draggable={false}
-              src={
-                retry
-                  ? `${img.src}${img.src.includes("?") ? "&" : "?"}retry=${retry}`
-                  : img.src
-              }
-              alt={
-                mode === "difference"
-                  ? "Calculated B minus A difference: amber positive, violet negative"
-                  : `${data.source_type === "synthetic" ? "Synthetic" : "SPHEREx infrared"} astronomical field, ${img.label}`
-              }
-              style={{
-                transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
-              }}
-              onError={() =>
-                setImageStatus((s) => ({ ...s, [img.src]: "failed" }))
-              }
-              onLoad={() =>
-                setImageStatus((s) => ({ ...s, [img.src]: "loaded" }))
-              }
-            />
+            <RegisteredImage
+              width={data.width}
+              height={data.height}
+              zoom={zoom}
+              pan={pan}
+              frameId={img.frameId}
+              overlays={imageStatus[img.src] === "loaded" ? overlays : []}
+              onSelect={onSelect}
+            >
+              <img
+                key={img.src}
+                className={`observation-image ${mode === "single" && !loading ? "frame-enter" : ""}`}
+                draggable={false}
+                src={
+                  retry
+                    ? `${img.src}${img.src.includes("?") ? "&" : "?"}retry=${retry}`
+                    : img.src
+                }
+                alt={
+                  mode === "difference"
+                    ? "Calculated B minus A difference: amber positive, violet negative"
+                    : `${data.source_type === "synthetic" ? "Synthetic" : "SPHEREx infrared"} astronomical field, ${img.label}`
+                }
+                onError={() =>
+                  setImageStatus((s) => ({ ...s, [img.src]: "failed" }))
+                }
+                onLoad={() =>
+                  setImageStatus((s) => ({ ...s, [img.src]: "loaded" }))
+                }
+              />
+            </RegisteredImage>
             <div className="image-date mono">{img.label}</div>
             {crosshair && <div className="crosshair" aria-hidden="true" />}
             <div className="orientation mono" aria-hidden="true">

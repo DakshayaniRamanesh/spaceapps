@@ -15,7 +15,7 @@ import {
   validateField,
 } from "@/lib/types";
 import ObservationControls from "./ObservationControls";
-import SkyViewer from "./SkyViewer";
+import CatalogueExplorer from "./CatalogueExplorer";
 import Timeline from "./Timeline";
 import MetadataPanel from "./MetadataPanel";
 import ComparisonModes from "./ComparisonModes";
@@ -351,7 +351,7 @@ export default function Explorer() {
                   </button>
                 </div>
               )}
-              <SkyViewer
+              <CatalogueExplorer
                 data={data}
                 index={index}
                 mode={mode}
