@@ -70,6 +70,8 @@ Bundled preview counts: Barnard’s Star field 6, Epsilon Indi B field 2, WISE 0
 - Shared numeric science/display pipeline for featured and custom fields; one reproducible display stretch per set.
 - Asynchronous, deduplicated SQLite jobs; one processing worker; queue, time, byte, FOV, cache and admission limits.
 - Playback, blink, side-by-side, loading/error/no-coverage/incomplete states, coordinate URLs, metadata and downloadable provenance.
+- Date/epoch sampling, field-center wavelength windows, lazy thumbnails, lasso selection, conservative mask display and frame-bound manual displacement estimates.
+- Independent Gaia DR3 / AllWISE overlays with registered positions, typed source details, bounded caching and honest service-failure states.
 - Server-side blocking of real subtraction. The preserved opt-in simulator still demonstrates float-array B − A.
 
 ![Real SPHEREx Explorer, captured from the production container](docs/evidence/explorer-desktop.png)

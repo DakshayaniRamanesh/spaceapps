@@ -41,11 +41,21 @@ Each pair records its frame IDs, `comparison_status`, `difference_allowed`, reas
 
 One worker processes at most one job; at most six jobs are queued/running in total. Uncached job submissions are limited to 12/minute per direct API client address; no client-provided forwarded IP is trusted. A same-host reverse proxy shares this admission budget. Cached featured results do not consume the archive-admission budget. Queue pressure returns 429 with Retry-After.
 
-Each job has a 240-second archive time budget, 120 MiB total download budget, 20 MiB per cutout, 5 MiB per metadata response, at most 12 shortlisted downloads, and 2–30 arcminute FOV. Search metadata and scientific preparation can be incomplete even if some PNGs are ready. Requests use an explicit IRSA host/path allowlist and reject redirects.
+Each job has a 240-second archive time budget, 120 MiB total download budget, 20 MiB per cutout, 5 MiB per metadata response, a requested 2–50 shortlisted-download cap (default 12), and 2–30 arcminute FOV. Search metadata and scientific preparation can be incomplete even if some PNGs are ready. Requests use an explicit IRSA host/path allowlist and reject redirects.
 
 Runtime positive cache TTL is 24 hours; negative cache TTL is one hour. About 1 GiB of completed runtime datasets is retained, plus the active job. Pruning can expire old URLs. Featured snapshots are immutable and have no runtime TTL. Use one process/replica per data directory; SQLite job recovery marks interrupted work failed after restart. The first version is not a distributed task service.
 
 ## Catalogue overlays
+
+### Combined Explorer selections
+
+Both observation GET parameters and POST job bodies accept `limit` (2–50, default 12), `spread` (default false), ISO `start_date` / `end_date`, and optional positive finite `min_wavelength_um` / `max_wavelength_um`. Dates are ordered and include the entire UTC end date; wavelength bounds are inclusive and ordered. Synthetic data rejects wavelength filters. Real custom searches remain asynchronous through `/api/observation-jobs`; the GET endpoint reads prepared results. The field-center WCS-WAVE measurement supplies both `lambda_um` and the compatible `wavelength_um` alias; unknown values stay null.
+
+Date and wavelength selections, monthly sampling and the cap can filter an existing cached preview without contacting IRSA. Such a derived manifest explicitly says it is a **cached preview subset**, sets `search_complete=false`, keeps the exact source frame URLs and WCS, and does not claim a new full archive search. Requests above the default 12-epoch cap require a new bounded archive job. Custom jobs honor the selection while retaining the 240-second / 120 MiB budgets, so a requested 50 epochs is a maximum, not a guaranteed count. Monthly spacing is a SkyTrace heuristic (30-day bins with at least 29 days between selected epochs).
+
+`GET /api/frames/{frame_id}.png?overlay=mask` highlights excluded/missing pixels in amber using the exact stored science mask and PNG vertical orientation; good image pixels retain the shared stretch unchanged. Real-image `/api/difference` remains blocked, including significance-view requests. The former coordinate-only `/api/catalog/gaia` path is replaced by the dataset-aware endpoint below.
+
+### Catalogue contract
 
 `GET /api/observation-sets/{dataset_id}/catalogues/{catalogue}?limit=500`
 

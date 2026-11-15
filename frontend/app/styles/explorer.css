@@ -28,9 +28,14 @@
   grid-template-columns: 310px minmax(0, 1fr) 310px;
   gap: 24px;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 .observatory-center {
   min-width: 0;
+  max-width: 100%;
+  width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 18px;
@@ -45,6 +50,8 @@ html:has(.explorer) {
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   padding: 24px 22px;
   border-radius: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 .controls summary,
 .intelligence summary {
@@ -107,6 +114,34 @@ html:has(.explorer) {
   outline: none;
   background: #1c1130;
 }
+.controls label.checkbox-label {
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 8px 0 16px;
+  line-height: 1.45;
+}
+.controls label.checkbox-label input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+.epoch-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.epoch-dates > div {
+  min-width: 0;
+}
+.epoch-dates input[type="date"] {
+  min-width: 0;
+  padding-inline: 8px;
+  font-size: 13px;
+}
 .controls form > input,
 .controls form > select {
   margin-bottom: 20px;
@@ -145,6 +180,11 @@ html:has(.explorer) {
   font-weight: 500;
   color: var(--secondary-text);
   transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
 }
 .detector-grid button:hover {
   background: #2d1c49;
@@ -156,6 +196,86 @@ html:has(.explorer) {
   border-color: var(--accent);
   color: white;
   box-shadow: 0 0 16px rgba(116, 41, 223, 0.35);
+}
+.detector-grid button.current-detector {
+  border-color: rgba(69, 219, 142, 0.6);
+}
+.detector-grid button.current-detector:not(.selected) {
+  background: #141f2a;
+  color: #c0edd6;
+}
+.detector-badge {
+  font: 700 9px/1 var(--mono);
+  letter-spacing: 0.05em;
+  padding: 2px 4px;
+  border-radius: 2px;
+  background: rgba(69, 219, 142, 0.22);
+  color: #73f0ab;
+}
+.detector-grid button.selected .detector-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+.spectral-controls fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.spectral-controls legend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.spectral-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.spectral-tabs button {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #1d1230;
+  color: var(--secondary-text);
+  padding: 9px 4px;
+  font-size: 12px;
+}
+.spectral-tabs button[aria-pressed="true"] {
+  background: var(--brand);
+  color: white;
+  border-color: var(--accent);
+}
+.spectral-controls fieldset:disabled {
+  opacity: 0.55;
+}
+.spectral-bounds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.spectral-bounds > div {
+  min-width: 0;
+}
+.spectral-bounds label {
+  font-size: 12px;
+}
+.spectral-indicator {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  margin: 0 0 20px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.spectral-indicator span {
+  font-family: var(--mono);
+}
+.spectral-indicator small {
+  color: var(--secondary-text);
+  line-height: 1.5;
 }
 .hint {
   font-size: 13px;
@@ -210,13 +330,17 @@ html:has(.explorer) {
   padding: 5px;
   border-radius: 6px;
   min-height: 52px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .mode-tabs button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 42px;
   font-size: 14px;
   font-weight: 500;
@@ -235,11 +359,19 @@ html:has(.explorer) {
   background: #211538;
   color: var(--text);
 }
+.comparison {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
 .comparison-options {
   display: flex;
   align-items: end;
   gap: 13px;
   padding: 19px 0 4px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .comparison-options label {
   font-size: 14px;
@@ -262,6 +394,10 @@ html:has(.explorer) {
   border-radius: 6px;
   border: 1px solid rgba(155, 114, 242, 0.16);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  isolation: isolate;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .viewer-heading {
   display: flex;
@@ -276,6 +412,10 @@ html:has(.explorer) {
   color: var(--text);
   background: #10091d;
   border-bottom: 1px solid rgba(155, 114, 242, 0.12);
+  position: relative;
+  z-index: 30;
+  min-width: 0;
+  max-width: 100%;
 }
 .viewer-heading .mono {
   font-size: 13px;
@@ -298,6 +438,12 @@ html:has(.explorer) {
   max-height: 840px;
   background: #020106;
   overflow: hidden;
+  isolation: isolate;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .image-port {
   position: relative;
@@ -307,6 +453,124 @@ html:has(.explorer) {
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  container-type: size;
+}
+/* Square box matching the registered grid; carries zoom/pan so the image and
+   the lasso overlay always move together. */
+.image-canvas {
+  position: relative;
+  flex: none;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+  transform-origin: center;
+  z-index: 1;
+}
+.region-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+.region-shade {
+  fill: #020106;
+  transition: opacity 0.18s;
+}
+.region-outline {
+  fill: none;
+  stroke: #f5c77d;
+  stroke-width: 1.6px;
+  stroke-dasharray: 6 4;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
+}
+.region-draft {
+  fill: rgba(155, 114, 242, 0.12);
+  stroke: #c9b4ff;
+  stroke-width: 1.6px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.lasso-hint {
+  color: #c9b4ff;
+}
+.region-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 18px;
+  padding: 12px 20px;
+  background: #0d0718;
+  border-top: 1px solid rgba(245, 199, 125, 0.18);
+  position: relative;
+  z-index: 30;
+}
+.region-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  color: var(--secondary-text);
+}
+.region-tag {
+  color: #f5c77d;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.region-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.region-actions .button {
+  min-height: 38px;
+  padding: 8px 14px;
+  gap: 8px;
+  font-size: 13px;
+}
+.region-actions .button svg {
+  width: 15px;
+  height: 15px;
+}
+.region-actions .button[aria-pressed="true"] {
+  background: #2c1a47;
+}
+.motion-vector {
+  stroke: #6ee7ff;
+  stroke-width: 2px;
+  stroke-dasharray: 4 3;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
+}
+.motion-pin {
+  fill: rgba(8, 6, 16, 0.75);
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.9));
+}
+.motion-pin.pin-a {
+  stroke: #6ee7ff;
+}
+.motion-pin.pin-b {
+  stroke: #f5c77d;
+}
+.motion-pin-label {
+  fill: #ffffff;
+  font: 700 0.034px var(--mono);
+  paint-order: stroke;
+  stroke: #020106;
+  stroke-width: 0.008px;
+}
+.motion-bar {
+  border-top-color: rgba(110, 231, 255, 0.22);
+}
+.motion-bar .region-tag {
+  color: #6ee7ff;
 }
 .observation-image {
   width: 100%;
@@ -314,7 +578,11 @@ html:has(.explorer) {
   object-fit: contain;
   max-width: none;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
   image-rendering: auto;
+  position: relative;
+  z-index: 1;
 }
 .registered-port {
   position: absolute;
@@ -328,6 +596,7 @@ html:has(.explorer) {
   flex: none;
 }
 .catalogue-markers {
+  z-index: 3;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -467,7 +736,9 @@ html:has(.explorer) {
   border: 1px solid rgba(155, 114, 242, 0.2);
   border-radius: 4px;
   color: var(--text);
-  z-index: 5;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
 }
 .crosshair {
   position: absolute;
@@ -478,6 +749,8 @@ html:has(.explorer) {
   transform: translate(-50%, -50%);
   pointer-events: none;
   opacity: 0.7;
+  z-index: 5;
+  user-select: none;
 }
 .crosshair:before,
 .crosshair:after {
@@ -506,6 +779,8 @@ html:has(.explorer) {
   color: #e5d9f6;
   text-shadow: 0 1px 6px black;
   z-index: 5;
+  pointer-events: none;
+  user-select: none;
 }
 .coordinate-overlay {
   position: absolute;
@@ -520,7 +795,8 @@ html:has(.explorer) {
   padding: 5px 10px;
   pointer-events: none;
   color: var(--secondary-text);
-  z-index: 5;
+  z-index: 10;
+  user-select: none;
 }
 .synthetic-watermark {
   position: absolute;
@@ -533,10 +809,29 @@ html:has(.explorer) {
   color: rgba(219, 203, 245, 0.65);
   background: rgba(8, 6, 16, 0.7);
   padding: 3px 0;
-  z-index: 5;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+}
+.archive-watermark {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  color: #f5c77d;
+  background: rgba(8, 6, 16, 0.75);
+  padding: 3px 0;
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
 }
 .viewer-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 14px;
@@ -544,9 +839,13 @@ html:has(.explorer) {
   background: #10091d;
   border-top: 1px solid rgba(155, 114, 242, 0.12);
   min-height: 64px;
+  position: relative;
+  z-index: 30;
 }
 .zoom-controls {
   display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
   align-items: center;
   gap: 8px;
 }
@@ -606,8 +905,20 @@ html:has(.explorer) {
   gap: 20px;
   align-items: center;
   justify-content: center;
-  background: #080610cc;
+  background: rgba(8, 6, 16, 0.88);
+  backdrop-filter: blur(4px);
   font-size: 16px;
+  z-index: 20;
+  pointer-events: auto;
+  user-select: none;
+}
+.viewer-loading.error {
+  background: rgba(16, 7, 18, 0.92);
+}
+.viewer-loading .button {
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 25;
 }
 .spinner {
   width: 28px;
@@ -633,6 +944,9 @@ html:has(.explorer) {
 }
 .timeline {
   padding: 22px 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .timeline-top {
   display: flex;
@@ -640,6 +954,9 @@ html:has(.explorer) {
   gap: 16px;
   flex-wrap: wrap;
   justify-content: space-between;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .playback {
   display: flex;
@@ -674,6 +991,7 @@ html:has(.explorer) {
 }
 .scrubber {
   width: 100%;
+  max-width: 100%;
   margin: 24px 0 20px;
   accent-color: var(--accent);
   height: 18px;
@@ -690,6 +1008,9 @@ html:has(.explorer) {
   padding: 6px 3px 14px;
   scrollbar-color: #604085 transparent;
   scrollbar-width: thin;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .frame-thumb {
   flex: 0 0 98px;
@@ -716,6 +1037,30 @@ html:has(.explorer) {
   aspect-ratio: 1;
   object-fit: contain;
   border-radius: 3px;
+  display: block;
+}
+.thumb-fallback {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #170d28;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-text);
+  font-size: 11px;
+  text-align: center;
+  border: 1px dashed rgba(155, 114, 242, 0.25);
+}
+.thumb-fallback span {
+  font: 600 12px var(--mono);
+  color: var(--accent);
+}
+.thumb-fallback small {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
 }
 .frame-number {
   position: absolute;
@@ -746,6 +1091,9 @@ html:has(.explorer) {
   font-size: 13px;
   color: var(--secondary-text);
   margin-top: 12px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 .metadata-body h3 {
   font-size: 26px;
@@ -970,8 +1318,11 @@ html:has(.explorer) {
 }
 @media (min-width: 1600px) {
   .observatory {
-    grid-template-columns: 300px minmax(0, 1fr) 300px;
+    grid-template-columns: 310px minmax(0, 1fr) 310px;
     gap: 36px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .controls,
   .intelligence {
@@ -1006,13 +1357,16 @@ html:has(.explorer) {
   .observatory {
     grid-template-columns: 260px minmax(0, 1fr);
     gap: 25px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .intelligence {
     grid-column: 1/-1;
   }
   .metadata-body {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 25px;
   }
   .metadata-body > header {
@@ -1027,6 +1381,7 @@ html:has(.explorer) {
     margin: 0;
     border: 0;
     padding: 0;
+    grid-column: 1 / -1;
   }
   .empty-inspector {
     display: grid;
@@ -1074,6 +1429,9 @@ html:has(.explorer) {
   .observatory {
     grid-template-columns: 230px minmax(0, 1fr);
     gap: 20px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .controls {
     padding: 20px 17px;
@@ -1130,13 +1488,24 @@ html:has(.explorer) {
     font-size: 11px;
     top: 10px;
     left: 8px;
+    padding: 4px 8px;
   }
   .coordinate-overlay {
     font-size: 11px;
-    left: 10px;
+    left: 8px;
+    bottom: 34px;
+    padding: 4px 8px;
   }
   .orientation {
-    right: 10px;
+    right: 12px;
+    bottom: 34px;
+    font-size: 11px;
+  }
+  .synthetic-watermark,
+  .archive-watermark {
+    font-size: 11px;
+    bottom: 6px;
+    padding: 2px 4px;
   }
 }
 @media (max-width: 680px) {
@@ -1162,6 +1531,9 @@ html:has(.explorer) {
     display: flex;
     flex-direction: column;
     gap: 22px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
   .controls,
   .intelligence,
@@ -1239,14 +1611,35 @@ html:has(.explorer) {
   .split {
     aspect-ratio: 1.1;
   }
-  .split .image-date {
+  .image-date {
     font-size: 10px;
-    max-width: 95%;
-    left: 3px;
-    padding: 4px;
+    top: 8px;
+    left: 8px;
+    padding: 3px 6px;
   }
-  .synthetic-watermark {
+  .coordinate-overlay {
     font-size: 10px;
+    left: 8px;
+    bottom: 30px;
+    padding: 3px 6px;
+  }
+  .orientation {
+    right: 8px;
+    bottom: 30px;
+    font-size: 10px;
+  }
+  .split .image-date {
+    font-size: 9px;
+    max-width: 90%;
+    left: 4px;
+    top: 6px;
+    padding: 2px 4px;
+  }
+  .synthetic-watermark,
+  .archive-watermark {
+    font-size: 9px;
+    bottom: 4px;
+    padding: 2px 4px;
   }
   .timeline {
     padding-top: 12px;

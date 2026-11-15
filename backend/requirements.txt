@@ -7,3 +7,5 @@ httpx>=0.27,<1
 pytest>=8,<10
 astropy>=7,<9
 scipy>=1.14,<2
+astroquery>=0.4.7,<1
+reproject>=0.13,<1

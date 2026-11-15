@@ -184,7 +184,7 @@ def footprint(data):
         raise OverlayUnavailable('This manifest has no supported common celestial WCS grid.')
     if not (('CDELT1' in g and 'CDELT2' in g) or all(k in g for k in ('CD1_1', 'CD1_2', 'CD2_1', 'CD2_2'))):
         raise OverlayUnavailable('The common WCS grid is incomplete.')
-    if not 1 <= data.width <= 2048 or not 1 <= data.height <= 2048 or len(data.frames) > 24:
+    if not 1 <= data.width <= 2048 or not 1 <= data.height <= 2048 or len(data.frames) > 50:
         raise OverlayUnavailable('Unsupported image dimensions or frame count.')
     try:
         for f in data.frames:

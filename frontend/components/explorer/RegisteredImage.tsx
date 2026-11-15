@@ -11,6 +11,7 @@ export default function RegisteredImage({
   overlays,
   onSelect,
   children,
+  onFit,
 }: {
   width: number;
   height: number;
@@ -20,29 +21,30 @@ export default function RegisteredImage({
   overlays: Overlay[];
   onSelect: (hit: Hit) => void;
   children: ReactNode;
+  onFit?: (size: { width: number; height: number }) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const resize = new ResizeObserver(([entry]) =>
-      setSize(
-        imageFit(
-          entry.contentRect.width,
-          entry.contentRect.height,
-          width,
-          height,
-        ),
-      ),
-    );
+    const resize = new ResizeObserver(([entry]) => {
+      const fitted = imageFit(
+        entry.contentRect.width,
+        entry.contentRect.height,
+        width,
+        height,
+      );
+      setSize(fitted);
+      onFit?.(fitted);
+    });
     resize.observe(el);
     return () => resize.disconnect();
   }, [width, height]);
   return (
     <div className="registered-port" ref={ref}>
       <div
-        className="registered-image"
+        className="registered-image image-canvas"
         style={{
           width: size.width,
           height: size.height,

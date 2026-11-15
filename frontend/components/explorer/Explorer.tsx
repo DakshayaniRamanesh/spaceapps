@@ -93,7 +93,15 @@ export default function Explorer() {
         dec: String(f.dec),
         fov_arcmin: String(f.fov_arcmin),
         detector: f.detector,
+        limit: String(f.limit ?? 12),
       });
+      if (f.spread) q.set("spread", "true");
+      if (f.start_date) q.set("start_date", f.start_date);
+      if (f.end_date) q.set("end_date", f.end_date);
+      if (f.min_wavelength_um != null)
+        q.set("min_wavelength_um", String(f.min_wavelength_um));
+      if (f.max_wavelength_um != null)
+        q.set("max_wavelength_um", String(f.max_wavelength_um));
       let result: ObservationSet;
       if (health.real_data_enabled) {
         let job = await checkedJson<Job>(
@@ -174,6 +182,16 @@ export default function Explorer() {
         dec: num("dec", defaults.dec),
         fov_arcmin: num("fov", 12),
         detector: (q.get("detector") || defaults.detector) as Detector,
+        limit: num("limit", 12),
+        spread: q.get("spread") === "1",
+        start_date: q.get("start") || undefined,
+        end_date: q.get("end") || undefined,
+        min_wavelength_um: q.has("min_wavelength_um")
+          ? num("min_wavelength_um", NaN)
+          : undefined,
+        max_wavelength_um: q.has("max_wavelength_um")
+          ? num("max_wavelength_um", NaN)
+          : undefined,
       };
       void load(f);
     }
@@ -316,6 +334,17 @@ export default function Explorer() {
           onLoad={load}
           loading={loading}
           demoEnabled={developmentDemoEnabled}
+          activeFrame={
+            data?.frames[
+              mode === "blink"
+                ? blinkIndex
+                  ? b
+                  : a
+                : mode === "split" || mode === "difference"
+                  ? b
+                  : index
+            ]
+          }
         />
         <div className="observatory-center">
           {data ? (
@@ -369,6 +398,7 @@ export default function Explorer() {
                 speed={speed}
                 onSpeed={setSpeed}
                 disabled={mode !== "single" || loading}
+                totalCandidates={data.total_candidates ?? data.archive_records}
               />
             </>
           ) : (

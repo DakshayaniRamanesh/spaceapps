@@ -17,6 +17,10 @@ from .providers import SyntheticObservationProvider, decode_frame, render_frame,
 from .irsa import IRSAProcessor, ManifestStore
 from .jobs import JobManager, QueueFull
 from .catalogues import Catalogue, Overlay, CatalogueService, CatalogueUnavailable, OverlayUnavailable
+from pydantic import ValidationError
+from PIL import Image
+import io
+import numpy as np
 
 catalogues = CatalogueService()
 
@@ -108,10 +112,22 @@ def job_status(job_id: str, response: Response):
 @app.get('/api/observations', response_model=ObservationSet)
 def observations(ra: float = Query(ge=0, lt=360, allow_inf_nan=False),
                  dec: float = Query(ge=-90, le=90, allow_inf_nan=False),
-                 fov_arcmin: float = Query(12, ge=2, le=60, allow_inf_nan=False), detector: Detector = 'D1'):
-    req = FieldRequest(ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector)
+                 fov_arcmin: float = Query(12, ge=2, le=60, allow_inf_nan=False), detector: Detector = 'D1',
+                 limit: int = Query(12, ge=2, le=50), spread: bool = False,
+                 start_date: str | None = None, end_date: str | None = None,
+                 min_wavelength_um: float | None = Query(None, gt=0, allow_inf_nan=False),
+                 max_wavelength_um: float | None = Query(None, gt=0, allow_inf_nan=False)):
+    try:
+        req = FieldRequest(ra=ra, dec=dec, fov_arcmin=fov_arcmin, detector=detector,
+                           limit=limit, spread=spread, start_date=start_date, end_date=end_date,
+                           min_wavelength_um=min_wavelength_um, max_wavelength_um=max_wavelength_um)
+    except ValidationError as exc:
+        raise HTTPException(422, str(exc))
     if source == 'synthetic':
-        return provider.observations(req)
+        if isinstance(provider, SyntheticObservationProvider) and (min_wavelength_um is not None or max_wavelength_um is not None):
+            raise HTTPException(422, 'Wavelength filtering requires real SPHEREx WCS-WAVE data')
+        return provider.observations(req, limit=limit, spread=spread, start_mjd=req.start_mjd,
+                                     end_mjd=np.nextafter(req.end_mjd, -np.inf) if req.end_mjd is not None else None)
     if fov_arcmin > 30:
         raise HTTPException(422, 'Real-data requests support fields from 2 to 30 arcminutes.')
     data = store.cached(req)
@@ -158,10 +174,25 @@ def frame_bytes(frame_id: str):
     return render_frame(provider.array(frame_id))
 
 
+@lru_cache(maxsize=64)
+def masked_frame(frame_id):
+    # Reuse the exact preview RGBA and its display mask. No new photometric stretch.
+    with np.load(store.frame_path(frame_id, 'npz'), allow_pickle=False) as science:
+        bad = np.flipud(science['mask'])
+    rgba = np.array(Image.open(store.frame_path(frame_id)).convert('RGBA'))
+    rgba[bad] = [245, 199, 125, 150]
+    buffer = io.BytesIO()
+    Image.fromarray(rgba).save(buffer, format='PNG')
+    return buffer.getvalue()
+
+
 @app.get('/api/frames/{frame_id}.png')
-def frame(frame_id: str):
+def frame(frame_id: str, overlay: str | None = Query(None, pattern='^mask$')):
     try:
         if frame_id.startswith('irsa-'):
+            if overlay == 'mask':
+                return Response(masked_frame(frame_id), media_type='image/png',
+                                headers={'X-Data-Source': 'spherex-irsa', 'X-Quality-Overlay': 'mask'})
             return FileResponse(store.frame_path(frame_id), media_type='image/png',
                                 headers={'Cache-Control': 'public, max-age=86400', 'X-Data-Source': 'spherex-irsa'})
         if source != 'synthetic':

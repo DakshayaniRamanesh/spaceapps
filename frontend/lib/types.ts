@@ -1,3 +1,5 @@
+export const DEFAULT_LIMIT = 12;
+export const EPOCH_LIMITS = [12, 24, 36, 50] as const;
 export type Detector = "D1" | "D2" | "D3" | "D4" | "D5" | "D6";
 export const detectors: Detector[] = ["D1", "D2", "D3", "D4", "D5", "D6"];
 export const ranges = [
@@ -13,6 +15,12 @@ export type Field = {
   dec: number;
   fov_arcmin: number;
   detector: Detector;
+  min_wavelength_um?: number | null;
+  max_wavelength_um?: number | null;
+  limit?: number;
+  spread?: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
 };
 export type Frame = {
   id: string;
@@ -41,6 +49,10 @@ export type Frame = {
   lambda_um?: number | null;
   bandwidth_um?: number | null;
   wavelength_origin?: string | null;
+  product_id?: string | null;
+  provenance_url?: string | null;
+  wavelength_um?: number | null;
+  wavelength_source?: string | null;
 };
 export type Pair = {
   a: string;
@@ -86,6 +98,14 @@ export type ObservationSet = {
   created_at?: string | null;
   warnings?: string[];
   pairs?: Pair[];
+  total_candidates?: number | null;
+  epoch_selection?: {
+    limit: number;
+    spread: boolean;
+    start_mjd?: number | null;
+    end_mjd?: number | null;
+  };
+  release?: string | null;
   grid?: Record<string, string | number>;
 };
 export const FEATURED_FIELD: Field = {
@@ -102,12 +122,22 @@ export const DEFAULT_FIELD: Field = {
   detector: "D1",
 };
 export function fieldQuery(f: Field) {
-  return new URLSearchParams({
+  const p = new URLSearchParams({
     ra: String(f.ra),
     dec: String(f.dec),
     fov: String(f.fov_arcmin),
     detector: f.detector,
-  }).toString();
+  });
+  if (f.limit !== undefined && f.limit !== DEFAULT_LIMIT)
+    p.set("limit", String(f.limit));
+  if (f.spread) p.set("spread", "1");
+  if (f.start_date) p.set("start", f.start_date);
+  if (f.end_date) p.set("end", f.end_date);
+  if (f.min_wavelength_um != null)
+    p.set("min_wavelength_um", String(f.min_wavelength_um));
+  if (f.max_wavelength_um != null)
+    p.set("max_wavelength_um", String(f.max_wavelength_um));
+  return p.toString();
 }
 export function dateLabel(t: string) {
   return new Date(t).toLocaleDateString("en-GB", {
@@ -117,6 +147,7 @@ export function dateLabel(t: string) {
     timeZone: "UTC",
   });
 }
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export function validateField(f: Field, maxFov = 60): string | undefined {
   if (!Number.isFinite(f.ra) || f.ra < 0 || f.ra >= 360)
     return "Right ascension must be 0° to less than 360°.";
@@ -130,4 +161,31 @@ export function validateField(f: Field, maxFov = 60): string | undefined {
     return `Field of view must be between 2 and ${maxFov} arcminutes.`;
   if (!detectors.includes(f.detector))
     return "Choose a detector from D1 to D6.";
+  for (const wavelength of [f.min_wavelength_um, f.max_wavelength_um]) {
+    if (wavelength != null && (!Number.isFinite(wavelength) || wavelength <= 0))
+      return "Wavelength bounds must be positive, finite values in µm.";
+  }
+  if (
+    f.min_wavelength_um != null &&
+    f.max_wavelength_um != null &&
+    f.min_wavelength_um > f.max_wavelength_um
+  )
+    return "Minimum wavelength must not exceed maximum wavelength.";
+  if (
+    f.limit !== undefined &&
+    (!Number.isInteger(f.limit) || f.limit < 2 || f.limit > 50)
+  )
+    return "Epoch limit must be a whole number between 2 and 50.";
+  for (const d of [f.start_date, f.end_date]) {
+    if (d == null || d === "") continue;
+    if (!ISO_DATE.test(d)) return "Dates must be valid ISO dates (YYYY-MM-DD).";
+    const parsed = new Date(`${d}T00:00:00.000Z`);
+    if (
+      !Number.isFinite(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== d
+    )
+      return "Dates must be valid ISO dates (YYYY-MM-DD).";
+  }
+  if (f.start_date && f.end_date && f.start_date >= f.end_date)
+    return "Start date must be before end date.";
 }

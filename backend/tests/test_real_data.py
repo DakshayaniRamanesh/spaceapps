@@ -11,11 +11,11 @@ from astropy.io import fits
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.archive import ArchiveClient, ArchiveUnavailable, BudgetExceeded, validate_archive_url, shortlist
+from app.archive.bounded import ArchiveClient, ArchiveUnavailable, BudgetExceeded, validate_archive_url, shortlist
 from app.irsa import ManifestStore, IRSAProcessor, request_key
 from app.jobs import JobManager, QueueFull
 from app.models import FieldRequest, ObservationSet, Quality
-from app.science import Prepared, bilinear, flags_mask, prepare_fits, target_grid, real_png, pair_report
+from app.science.preview import Prepared, bilinear, flags_mask, prepare_fits, target_grid, real_png, pair_report
 from app import main
 
 REQ = FieldRequest(ra=30, dec=10, fov_arcmin=2, detector='D3')
@@ -218,7 +218,7 @@ def test_real_api_frame_source_and_server_enforced_difference(tmp_path, monkeypa
     assert client.get(f'/api/observation-sets/{data.dataset_id}/manifest.json').status_code == 200
     assert client.get('/api/difference', params={'frame_a': frame.id, 'frame_b': frame.id}).status_code in (404, 422)
     assert client.post('/api/observation-jobs', json={**REQ.model_dump(), 'fov_arcmin': 60}).status_code == 422
-    assert client.get('/api/observations', params={**REQ.model_dump(), 'ra': 31}).status_code == 409
+    assert client.get('/api/observations', params={**REQ.model_dump(exclude_none=True), 'ra': 31}).status_code == 409
     job = client.post('/api/observation-jobs', json=REQ.model_dump()).json()
     assert job['cache_hit'] and job['status'] == 'ready'
     assert client.get(f"/api/jobs/{job['job_id']}").json()['status'] == 'ready'

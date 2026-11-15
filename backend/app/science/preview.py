@@ -17,8 +17,8 @@ from astropy.wcs import WCS
 from scipy.ndimage import maximum_filter
 from scipy.spatial import cKDTree
 
-from .models import Check, FieldRequest, Pair, Quality
-from .providers import png
+from ..models import Check, FieldRequest, Pair, Quality
+from ..providers import png
 
 VERSION = 'irsa-preview-v2.2'
 # SOURCE and FULLSAMPLE describe status, not unusable measurements. All other

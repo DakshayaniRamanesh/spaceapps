@@ -7,7 +7,7 @@ from urllib.parse import urlsplit, urlencode
 import httpx
 import numpy as np
 
-from .models import FieldRequest
+from ..models import FieldRequest
 
 COLLECTIONS = ('spherex_dr1', 'spherex_qr3')
 
@@ -89,6 +89,10 @@ class ArchiveClient:
                         epoch = float(row['t_min'])
                         if not (50000 < epoch < 100000):
                             continue
+                        if req.start_mjd is not None and epoch < req.start_mjd:
+                            continue
+                        if req.end_mjd is not None and epoch >= req.end_mjd:
+                            continue
                     except (ValueError, TypeError):
                         continue
                     key = (row['obs_id'], req.detector)
@@ -140,6 +144,17 @@ def footprint_position(row, req):
 
 def shortlist(rows, req=None, limit=12):
     """Rank similar detector positions/orientations, then spread across epochs."""
+    if req is not None:
+        limit = req.limit
+        if req.spread:
+            spread, bins, last = [], set(), None
+            for row in rows:
+                bucket = int(row['mjd']//30)
+                if bucket not in bins and (last is None or row['mjd']-last >= 29):
+                    spread.append(row)
+                    bins.add(bucket)
+                    last = row['mjd']
+            return spread[:limit]
     all_rows = rows
     ranked = []
     if req is not None:

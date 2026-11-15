@@ -2,12 +2,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, RotateCcw, ArrowRight } from "lucide-react";
 import presets from "@/lib/presets.json";
+import SpectralControls from "./SpectralControls";
 import {
   detectors,
   Field,
+  Frame,
   Detector,
   DEFAULT_FIELD,
   FEATURED_FIELD,
+  EPOCH_LIMITS,
   validateField,
 } from "@/lib/types";
 export default function ObservationControls({
@@ -15,11 +18,15 @@ export default function ObservationControls({
   onLoad,
   loading,
   demoEnabled = false,
+  statusMessage,
+  activeFrame,
 }: {
   field: Field;
   onLoad: (f: Field) => void;
   loading: boolean;
   demoEnabled?: boolean;
+  statusMessage?: string;
+  activeFrame?: Frame;
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -30,24 +37,61 @@ export default function ObservationControls({
     [dec, setDec] = useState(String(field.dec)),
     [fov, setFov] = useState(String(field.fov_arcmin)),
     [detector, setDetector] = useState<Detector>(field.detector),
+    [limit, setLimit] = useState(String(field.limit ?? 12)),
+    [spread, setSpread] = useState(Boolean(field.spread)),
+    [startDate, setStartDate] = useState(field.start_date ?? ""),
+    [endDate, setEndDate] = useState(field.end_date ?? ""),
+    [minWave, setMinWave] = useState(
+      field.min_wavelength_um == null ? "" : String(field.min_wavelength_um),
+    ),
+    [maxWave, setMaxWave] = useState(
+      field.max_wavelength_um == null ? "" : String(field.max_wavelength_um),
+    ),
     [error, setError] = useState("");
   useEffect(() => {
     setRa(String(field.ra));
     setDec(String(field.dec));
     setFov(String(field.fov_arcmin));
     setDetector(field.detector);
+    setLimit(String(field.limit ?? 12));
+    setSpread(Boolean(field.spread));
+    setStartDate(field.start_date ?? "");
+    setEndDate(field.end_date ?? "");
+    setMinWave(
+      field.min_wavelength_um == null ? "" : String(field.min_wavelength_um),
+    );
+    setMaxWave(
+      field.max_wavelength_um == null ? "" : String(field.max_wavelength_um),
+    );
   }, [field]);
   const selected = presets.find(
     (p) =>
       Math.abs(p.ra - Number(ra)) < 0.00001 &&
       Math.abs(p.dec - Number(dec)) < 0.00001,
   );
+  const selectedLimit = Number(limit);
+  const epochOptions = [
+    ...new Set([
+      ...EPOCH_LIMITS,
+      ...(Number.isInteger(selectedLimit) &&
+      selectedLimit >= 2 &&
+      selectedLimit <= 50
+        ? [selectedLimit]
+        : []),
+    ]),
+  ].sort((a, b) => a - b);
   function submit() {
     const f = {
       ra: ra.trim() ? Number(ra) : NaN,
       dec: dec.trim() ? Number(dec) : NaN,
       fov_arcmin: fov.trim() ? Number(fov) : NaN,
       detector,
+      limit: Number(limit),
+      spread,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined,
+      min_wavelength_um: minWave.trim() ? Number(minWave) : undefined,
+      max_wavelength_um: maxWave.trim() ? Number(maxWave) : undefined,
     };
     const err = validateField(f, demoEnabled ? 60 : 30);
     setError(err || "");
@@ -72,10 +116,18 @@ export default function ObservationControls({
                   ra: p.ra,
                   dec: p.dec,
                   fov_arcmin:
-                    Number(fov) >= 2 && Number(fov) <= (demoEnabled ? 60 : 30)
-                      ? Number(fov)
-                      : 12,
+                    Number(fov) >= 2 && Number(fov) <= 60 ? Number(fov) : 12,
                   detector,
+                  limit: Number(limit),
+                  spread,
+                  start_date: startDate || undefined,
+                  end_date: endDate || undefined,
+                  min_wavelength_um: minWave.trim()
+                    ? Number(minWave)
+                    : undefined,
+                  max_wavelength_um: maxWave.trim()
+                    ? Number(maxWave)
+                    : undefined,
                 });
               }
             }}
@@ -165,27 +217,115 @@ export default function ObservationControls({
                   </option>
                 ))}
             </select>
+            <label htmlFor="limit">
+              Max epochs <span>2–50</span>
+            </label>
+            <select
+              id="limit"
+              value={limit}
+              onChange={(e) => setLimit(e.target.value)}
+            >
+              {epochOptions.map((n) => (
+                <option key={n} value={n}>
+                  {n} exposures
+                </option>
+              ))}
+            </select>
+            <label htmlFor="spread" className="checkbox-label">
+              <input
+                id="spread"
+                type="checkbox"
+                checked={spread}
+                onChange={(e) => setSpread(e.target.checked)}
+              />
+              Spread epochs across the survey (~monthly)
+            </label>
+            <div className="epoch-dates">
+              <div>
+                <label htmlFor="start">
+                  From <span>optional</span>
+                </label>
+                <input
+                  id="start"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="end">
+                  To <span>optional</span>
+                </label>
+                <input
+                  id="end"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="hint">
+              More epochs lengthen the first load; cached frames return
+              instantly. Monthly sampling is a SkyTrace heuristic, not a mission
+              standard.
+            </p>
             <div className="field-heading">
               Detector array<span>02</span>
             </div>
             <div className="detector-grid">
-              {detectors.map((d) => (
-                <button
-                  type="button"
-                  key={d}
-                  className={detector === d ? "selected" : ""}
-                  aria-pressed={detector === d}
-                  onClick={() => setDetector(d)}
-                >
-                  {d}
-                </button>
-              ))}
+              {detectors.map((d) => {
+                const isSelected = detector === d;
+                const isCurrent = field.detector === d;
+                return (
+                  <button
+                    type="button"
+                    key={d}
+                    className={`${isSelected ? "selected" : ""} ${isCurrent ? "current-detector" : ""}`}
+                    aria-pressed={isSelected}
+                    aria-label={d}
+                    title={
+                      isCurrent && !isSelected
+                        ? `${d}: Currently displayed (unsubmitted selection is ${detector})`
+                        : isCurrent
+                          ? `${d}: Currently displayed detector`
+                          : isSelected
+                            ? `${d}: Selected (not yet submitted)`
+                            : d
+                    }
+                    onClick={() => {
+                      if (d !== detector) {
+                        setMinWave("");
+                        setMaxWave("");
+                      }
+                      setDetector(d);
+                    }}
+                  >
+                    <span>{d}</span>
+                    {isCurrent && (
+                      <span className="detector-badge">ACTIVE</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <p className="hint">
-              {demoEnabled
-                ? "Simulated array responses. Assigned colors are not visible light."
-                : "Select the array for your observation request."}
+              {detector !== field.detector
+                ? `Detector ${detector} selected (unsubmitted) — click ${demoEnabled ? "Load observations" : "Check for observations"} to switch.`
+                : demoEnabled
+                  ? "Simulated array responses. Assigned colors are not visible light."
+                  : "Select a SPHEREx detector array (D1–D6) to query observations."}
             </p>
+            <SpectralControls
+              detector={detector}
+              min={minWave}
+              max={maxWave}
+              onChange={(min, max) => {
+                setMinWave(min);
+                setMaxWave(max);
+              }}
+              disabled={demoEnabled}
+              activeFrame={activeFrame}
+            />
             {error && (
               <p className="error" id="field-error" role="alert">
                 {error}
@@ -217,9 +357,12 @@ export default function ObservationControls({
           <div className="simulation-note">
             <span className="eyebrow">A NOTE ON THE DATA</span>
             <p>
-              {demoEnabled
-                ? "Development mode uses generated starfields, not observations of the selected target."
-                : "Queries use real SPHEREx DR1/QR3 exposures. Initial searches may take several minutes. Detector wavelengths vary across each image; comparisons remain previews until validated."}
+              {statusMessage ||
+                (loading
+                  ? "Querying SPHEREx observation records from NASA / IPAC IRSA archive…"
+                  : demoEnabled
+                    ? "Development mode uses generated starfields, not observations of the selected target."
+                    : "Real SPHEREx DR1/QR3 previews. Custom fields use a bounded archive worker; initial searches can take several minutes.")}
             </p>
           </div>
         </div>

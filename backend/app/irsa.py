@@ -14,10 +14,10 @@ import time
 
 import numpy as np
 
-from .archive import ArchiveClient, ArchiveUnavailable, BudgetExceeded, COLLECTIONS, shortlist
-from .models import FieldRequest, Frame, ObservationSet
-from .providers import RANGES, canonical
-from .science import VERSION, display_stretch, pair_report, prepare_fits, real_png, target_grid
+from .archive.bounded import ArchiveClient, ArchiveUnavailable, BudgetExceeded, COLLECTIONS, shortlist
+from .models import FieldRequest, Frame, ObservationSet, EpochSelection
+from .providers import RANGES, canonical, request_payload
+from .science.preview import VERSION, display_stretch, pair_report, prepare_fits, real_png, target_grid
 
 LOG = logging.getLogger(__name__)
 SEEDS = Path(__file__).resolve().parents[1] / 'data' / 'featured'
@@ -28,7 +28,7 @@ def utcnow():
 
 
 def request_key(req):
-    value = {'request': canonical(req).model_dump(), 'processing': VERSION,
+    value = {'request': request_payload(req), 'processing': VERSION,
              'collections': COLLECTIONS, 'selection': 'footprint-ranked12-spectral-group6'}
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()[:24]
 
@@ -66,6 +66,48 @@ class ManifestStore:
                     return data
             except (ValueError, KeyError, OSError):
                 continue
+        # Filter an existing bounded preview without touching immutable featured
+        # FITS. This is explicitly a subset view, never a new complete archive search.
+        filtering = req.start_date is not None or req.end_date is not None or req.spread or req.min_wavelength_um is not None or req.max_wavelength_um is not None
+        if filtering and req.limit <= 12:
+            base_req = req.model_copy(update={'start_date': None, 'end_date': None, 'spread': False,
+                                              'limit': 12, 'min_wavelength_um': None, 'max_wavelength_um': None})
+            base = self.cached(base_req)
+            if base is not None:
+                from astropy.time import Time
+                frames, last, bins = [], None, set()
+                for frame in base.frames:
+                    epoch = float(Time(frame.timestamp).mjd)
+                    if req.start_mjd is not None and epoch < req.start_mjd:
+                        continue
+                    if req.end_mjd is not None and epoch >= req.end_mjd:
+                        continue
+                    if req.min_wavelength_um is not None or req.max_wavelength_um is not None:
+                        wave = frame.lambda_um
+                        if wave is None or (req.min_wavelength_um is not None and wave < req.min_wavelength_um) or (req.max_wavelength_um is not None and wave > req.max_wavelength_um):
+                            continue
+                    bucket = int(epoch//30)
+                    if req.spread and (bucket in bins or (last is not None and epoch-last < 29)):
+                        continue
+                    bins.add(bucket)
+                    last = epoch
+                    frames.append(frame)
+                frames = frames[:req.limit]
+                view_id = 'irsa-'+hashlib.sha256(json.dumps([base.dataset_id, request_payload(req)], sort_keys=True).encode()).hexdigest()[:24]
+                ids = {f.id for f in frames}
+                data = base.model_copy(deep=True, update={
+                    'dataset_id': view_id, 'request': req, 'frames': frames,
+                    'pairs': [p for p in base.pairs if p.a in ids and p.b in ids],
+                    'search_complete': False, 'availability': 'search_incomplete',
+                    'epoch_selection': EpochSelection(limit=req.limit, spread=req.spread, start_mjd=req.start_mjd, end_mjd=req.end_mjd),
+                    'notice': 'Filtered cached SPHEREx preview. No additional archive exposures were searched.',
+                    'warnings': [*base.warnings, 'Selection applies only to this cached preview subset, not the complete archive inventory.']})
+                destination = self.root/view_id
+                destination.mkdir(exist_ok=True)
+                temporary = destination/f'.manifest-{time.time_ns()}.tmp'
+                temporary.write_text(data.model_dump_json(indent=2))
+                temporary.replace(destination/'manifest.json')
+                return data
         return None
 
     def frame_path(self, frame_id, suffix='png'):
@@ -152,6 +194,14 @@ class IRSAProcessor:
                     LOG.warning('Exposure rejected: %s (%s)', row['obs_id'], exc)
             if rows and not prepared:
                 raise ArchiveUnavailable('Archive records exist, but none of the bounded cutouts could be prepared. Retry or choose another field.')
+            assessed = len(prepared)
+            spectral_filter = req.min_wavelength_um is not None or req.max_wavelength_um is not None
+            if spectral_filter:
+                prepared = [p for p in prepared if p[1].lambda_um is not None and
+                            (req.min_wavelength_um is None or p[1].lambda_um >= req.min_wavelength_um) and
+                            (req.max_wavelength_um is None or p[1].lambda_um <= req.max_wavelength_um)]
+                warnings.append(f'Wavelength window matched {len(prepared)} of {assessed} prepared epochs at the field center. '
+                                'Epochs without measured wavelength are excluded; a match does not validate spectral response.')
             progress('Assessing spectral overlap and registration')
             prepared.sort(key=lambda p: p[1].timestamp)
             # Prefer a coherent spectral preview group. Membership must pass against
@@ -174,10 +224,11 @@ class IRSAProcessor:
                 group = list(range(min(6, len(prepared))))
                 if len(group) > 1:
                     warnings.append('No coherent spectral group found in the assessed sample. Wavelength changes can mimic variability.')
-            selected = [prepared[i] for i in group[:6]]
-            complete = metadata_complete and len(prepared) == len(rows)
+            explicit = req.limit != 12 or req.spread or req.start_date is not None or req.end_date is not None or spectral_filter
+            selected = prepared[:req.limit] if explicit else [prepared[i] for i in group[:6]]
+            complete = metadata_complete and assessed == len(rows)
             if not complete:
-                warnings.append(f'Assessed {len(prepared)} of {len(rows)} archive records. This bounded search cannot rule out other compatible epochs.')
+                warnings.append(f'Assessed {assessed} of {len(rows)} archive records. This bounded search cannot rule out other compatible epochs.')
             identity = {'request': req.model_dump(), 'version': VERSION,
                         'products': [p[1].sha256 for p in selected]}
             dataset_id = 'irsa-'+hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:24]
@@ -201,18 +252,25 @@ class IRSAProcessor:
             availability = ('no_coverage' if not rows else 'single_epoch' if len(frames) == 1 else 'preview')
             if not complete:
                 availability = 'search_incomplete'
+            if rows and not selected:
+                availability = 'search_incomplete'
+                complete = False
             notice = ('Real SPHEREx spectral images from NASA/IPAC IRSA. Celestial WCS alignment and a shared display stretch; '
                       'zodiacal model subtracted once. Wavelengths may differ. Preview comparisons do not establish variability or motion. '
                       'Scientific subtraction is unavailable until spectral-response, PSF and background validation is complete.')
             if not rows:
                 notice = 'No archive exposures cover the requested field center for the selected detector in the searched DR1/QR3 wide-survey collections.'
+            elif not selected:
+                notice = 'No prepared exposures matched the selected wavelength window. Unknown wavelengths are excluded; this is not evidence of absent sky coverage.'
             data = ObservationSet(source_type='spherex-irsa', dataset_id=dataset_id, request=req,
                                   frames=frames, pairs=pairs, width=size, height=size,
                                   coordinate_system='ICRS; north up, east left; common TAN grid',
                                   intensity_unit='MJy/sr', wavelength_range_um=RANGES[int(req.detector[1])-1],
                                   wavelength_model='Per-pixel LVF WCS-WAVE lookup; not a single broadband detector image',
                                   notice=notice, availability=availability, search_complete=complete,
-                                  archive_records=len(rows), assessed_records=len(prepared), processing_version=VERSION,
+                                  archive_records=len(rows), assessed_records=assessed, processing_version=VERSION,
+                                  release='DR1+QR3', total_candidates=len(rows),
+                                  epoch_selection=EpochSelection(limit=req.limit, spread=req.spread, start_mjd=req.start_mjd, end_mjd=req.end_mjd),
                                   created_at=utcnow(), display_stretch=stretch, warnings=warnings,
                                   grid=dict(grid.to_header()))
             (staging / 'manifest.json').write_text(data.model_dump_json(indent=2))

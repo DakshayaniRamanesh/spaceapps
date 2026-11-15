@@ -7,7 +7,7 @@ import threading
 import time
 import uuid
 
-from .archive import ArchiveUnavailable, BudgetExceeded
+from .archive.bounded import ArchiveUnavailable, BudgetExceeded
 from .irsa import request_key
 from .models import FieldRequest, Job
 
