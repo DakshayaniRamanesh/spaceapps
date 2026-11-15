@@ -2,6 +2,13 @@ import { test, expect } from "@playwright/test";
 test.beforeEach(() =>
   test.skip(!!process.env.SKYTRACE_TEST_DEMO, "Default production state only"),
 );
+test("observation submit action stays visible on mobile", async ({ page }) => {
+  test.skip(test.info().project.name !== "mobile");
+  await page.goto("/explore");
+  await expect(
+    page.getByRole("button", { name: "Check for observations", exact: true }),
+  ).toBeVisible();
+});
 test("default explorer never requests synthetic observations and shares field settings", async ({
   page,
 }) => {
