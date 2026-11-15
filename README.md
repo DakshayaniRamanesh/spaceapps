@@ -123,3 +123,12 @@ Both flags are required to view generated observations. Synthetic dates, motion,
 This publication makes use of data products from the Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer (SPHEREx), which is a joint project of the Jet Propulsion Laboratory and the California Institute of Technology, and is funded by the National Aeronautics and Space Administration.
 
 Data and methods: [IRSA access](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-access/), [data products](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products/), [spectral-image tutorial](https://caltech-ipac.github.io/irsa-tutorials/spherex-intro/), [cutout tutorial](https://caltech-ipac.github.io/irsa-tutorials/spherex-cutouts/). Editorial image credits remain in the About page and `frontend/public/images/credits.json`.
+
+## Custom sky regions
+
+Choose **Custom sky region** under Target preset, enter RA in decimal degrees
+[0, 360), Dec in [-90, 90], and a square field width from 2 to 30 arcminutes
+(fractional sizes are supported). Choose a detector and click **Check for observations**.
+Selecting custom mode preserves the current coordinates without starting a search.
+Share field preserves submitted coordinates and filters. Uncached fields need live
+IRSA access and can take several minutes; an outage is not a successful empty search.
