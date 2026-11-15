@@ -15,6 +15,7 @@ export default function ComparisonModes({
   onPair,
   blinkSpeed,
   onBlinkSpeed,
+  allowDifference = true,
 }: {
   mode: Mode;
   onMode: (m: Mode) => void;
@@ -24,6 +25,7 @@ export default function ComparisonModes({
   onPair: (a: number, b: number) => void;
   blinkSpeed: number;
   onBlinkSpeed: (n: number) => void;
+  allowDifference?: boolean;
 }) {
   return (
     <div className="comparison">
@@ -31,6 +33,15 @@ export default function ComparisonModes({
         {modes.map((m) => (
           <button
             key={m.id}
+            disabled={
+              (m.id === "difference" && !allowDifference) ||
+              (m.id !== "single" && frames.length < 2)
+            }
+            title={
+              m.id === "difference" && !allowDifference
+                ? "Scientific subtraction is blocked; inspect comparison evidence."
+                : undefined
+            }
             onClick={() => onMode(m.id)}
             aria-pressed={mode === m.id}
             className={mode === m.id ? "active" : ""}

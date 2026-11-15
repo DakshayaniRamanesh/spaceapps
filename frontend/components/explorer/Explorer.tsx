@@ -9,15 +9,19 @@ import {
   ObservationSet,
   Mode,
   DEFAULT_FIELD,
+  FEATURED_FIELD,
+  Job,
   fieldQuery,
   validateField,
 } from "@/lib/types";
 import ObservationControls from "./ObservationControls";
-import SkyViewer from "./SkyViewer";
+import CatalogueExplorer from "./CatalogueExplorer";
 import Timeline from "./Timeline";
 import MetadataPanel from "./MetadataPanel";
 import ComparisonModes from "./ComparisonModes";
 import EmptyObservatory from "./EmptyObservatory";
+import PairEvidence from "./PairEvidence";
+import { checkedJson, pause, differenceAllowed } from "@/lib/observations";
 import {
   developmentDemoEnabled,
   mayRequestObservations,
@@ -25,10 +29,14 @@ import {
   ProviderHealth,
 } from "@/lib/source-policy";
 export default function Explorer() {
-  const [field, setField] = useState<Field>(DEFAULT_FIELD),
+  const [field, setField] = useState<Field>(
+      developmentDemoEnabled ? DEFAULT_FIELD : FEATURED_FIELD,
+    ),
     [data, setData] = useState<ObservationSet | null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
+    [progress, setProgress] = useState("Checking the observation service…"),
+    [emptyNotice, setEmptyNotice] = useState(""),
     [index, setIndex] = useState(0),
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(1),
@@ -42,7 +50,7 @@ export default function Explorer() {
   const controller = useRef<AbortController | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const load = useCallback(async (f: Field, writeUrl = true) => {
-    const invalid = validateField(f);
+    const invalid = validateField(f, developmentDemoEnabled ? 60 : 30);
     if (invalid) {
       setError(invalid);
       setLoading(false);
@@ -52,6 +60,8 @@ export default function Explorer() {
     const c = new AbortController();
     controller.current = c;
     setLoading(true);
+    setEmptyNotice("");
+    setProgress("Checking the observation service…");
     setError("");
     setPlaying(false);
     setField(f);
@@ -68,7 +78,16 @@ export default function Explorer() {
           "The observation service is unavailable. Your field is saved; reconnect the service and retry.",
         );
       const health: ProviderHealth = await healthResponse.json();
-      if (!mayRequestObservations(health, developmentDemoEnabled)) return;
+      if (!mayRequestObservations(health, developmentDemoEnabled)) {
+        setEmptyNotice(
+          "The observation source is unavailable. Synthetic data requires explicit development opt-in.",
+        );
+        return;
+      }
+      if (health.real_data_enabled && f.fov_arcmin > 30)
+        throw new Error(
+          "Real-data fields must be between 2 and 30 arcminutes.",
+        );
       const q = new URLSearchParams({
         ra: String(f.ra),
         dec: String(f.dec),
@@ -83,37 +102,64 @@ export default function Explorer() {
         q.set("min_wavelength_um", String(f.min_wavelength_um));
       if (f.max_wavelength_um != null)
         q.set("max_wavelength_um", String(f.max_wavelength_um));
-      const res = await fetch(`/api/observations?${q}`, { signal: c.signal });
-      if (!res.ok)
-        throw new Error(
-          res.status === 503
-            ? "The selected observation provider is unavailable. Connect a validated provider and retry."
-            : `Observation request failed (${res.status}). Check the Python API and try again.`,
+      let result: ObservationSet;
+      if (health.real_data_enabled) {
+        let job = await checkedJson<Job>(
+          await fetch("/api/observation-jobs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(f),
+            signal: c.signal,
+          }),
         );
-      const result: ObservationSet = await res.json();
+        const deadline = Date.now() + 300_000;
+        while (job.status === "queued" || job.status === "running") {
+          setProgress(`${job.stage}. First searches can take several minutes.`);
+          await pause(2000, c.signal);
+          if (Date.now() > deadline)
+            throw new Error(
+              "The search is still running. Retry to reconnect to the same job; no duplicate work will be started.",
+            );
+          job = await checkedJson<Job>(
+            await fetch(`/api/jobs/${job.job_id}`, {
+              signal: c.signal,
+              cache: "no-store",
+            }),
+          );
+        }
+        if (job.status === "failed")
+          throw new Error(
+            job.message || "The archive search failed. Please retry.",
+          );
+        if (!job.result_url)
+          throw new Error("The observation job returned no result.");
+        result = await checkedJson<ObservationSet>(
+          await fetch(job.result_url, { signal: c.signal }),
+        );
+      } else {
+        result = await checkedJson<ObservationSet>(
+          await fetch(`/api/observations?${q}`, { signal: c.signal }),
+        );
+      }
       if (c.signal.aborted) return;
       if (!mayDisplaySource(result.source_type, developmentDemoEnabled)) return;
-      const merged: Field = {
-        ...result.request,
-        limit: f.limit,
-        spread: f.spread,
-        start_date: f.start_date,
-        end_date: f.end_date,
-      };
       if (!result.frames.length) {
-        setField(merged);
-        setError(result.notice || "No observations matched this selection.");
+        setEmptyNotice(`${result.notice} ${result.warnings?.join(" ") || ""}`);
         return;
       }
       setData(result);
-      setField(merged);
+      setField(result.request);
       setIndex(0);
       setA(0);
       setB(result.frames.length - 1);
       setMode("single");
       setBlinkIndex(0);
       if (writeUrl)
-        window.history.replaceState(null, "", `/explore?${fieldQuery(merged)}`);
+        window.history.replaceState(
+          null,
+          "",
+          `/explore?${fieldQuery(result.request)}`,
+        );
     } catch (err) {
       if (!c.signal.aborted)
         setError(
@@ -130,11 +176,12 @@ export default function Explorer() {
       const q = new URLSearchParams(window.location.search);
       const num = (k: string, d: number) =>
         q.has(k) ? (q.get(k)?.trim() ? Number(q.get(k)) : NaN) : d;
+      const defaults = developmentDemoEnabled ? DEFAULT_FIELD : FEATURED_FIELD;
       const f: Field = {
-        ra: num("ra", DEFAULT_FIELD.ra),
-        dec: num("dec", DEFAULT_FIELD.dec),
+        ra: num("ra", defaults.ra),
+        dec: num("dec", defaults.dec),
         fov_arcmin: num("fov", 12),
-        detector: (q.get("detector") || "D1") as Detector,
+        detector: (q.get("detector") || defaults.detector) as Detector,
         limit: num("limit", 12),
         spread: q.get("spread") === "1",
         start_date: q.get("start") || undefined,
@@ -157,7 +204,14 @@ export default function Explorer() {
     };
   }, [load]);
   useEffect(() => {
-    if (!playing || !data || loading || mode !== "single") return;
+    if (
+      !playing ||
+      !data ||
+      data.frames.length < 2 ||
+      loading ||
+      mode !== "single"
+    )
+      return;
     const id = setInterval(
       () => setIndex((i) => (i + 1) % data.frames.length),
       1000 / speed,
@@ -188,6 +242,7 @@ export default function Explorer() {
     function key(e: KeyboardEvent) {
       if (
         !data ||
+        data.frames.length < 2 ||
         e.ctrlKey ||
         e.metaKey ||
         e.altKey ||
@@ -217,7 +272,7 @@ export default function Explorer() {
   }, [data, index, chooseIndex, mode]);
   async function share() {
     const selectedField = data?.request || field;
-    if (validateField(selectedField)) return;
+    if (validateField(selectedField, developmentDemoEnabled ? 60 : 30)) return;
     const url = `${window.location.origin}/explore?${fieldQuery(selectedField)}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -245,7 +300,7 @@ export default function Explorer() {
         </div>
         <button
           className="button secondary"
-          disabled={!!validateField(field)}
+          disabled={!!validateField(field, developmentDemoEnabled ? 60 : 30)}
           onClick={share}
         >
           <Copy size={15} />
@@ -285,29 +340,18 @@ export default function Explorer() {
                 ? blinkIndex
                   ? b
                   : a
-                : mode === "difference" || mode === "split"
+                : mode === "split" || mode === "difference"
                   ? b
                   : index
             ]
-          }
-          statusMessage={
-            loading
-              ? "Querying NASA / IPAC IRSA archive for SPHEREx exposures…"
-              : error
-                ? error
-                : data
-                  ? data.source_type === "spherex-irsa"
-                    ? (data.notice || "Connected to NASA / IPAC IRSA SPHEREx DR1+QR3 archive. Calibrated spectral observations loaded.")
-                    : "Development mode uses generated starfields, not observations of the selected target."
-                  : developmentDemoEnabled
-                    ? "Development mode uses generated starfields, not observations of the selected target."
-                    : "Connected to NASA / IPAC IRSA SPHEREx DR1+QR3 archive. Ready to query observations."
           }
         />
         <div className="observatory-center">
           {data ? (
             <>
+              <PairEvidence data={data} a={a} b={b} />
               <ComparisonModes
+                allowDifference={differenceAllowed(data, a, b)}
                 mode={mode}
                 onMode={(m) => {
                   setPlaying(false);
@@ -336,7 +380,7 @@ export default function Explorer() {
                   </button>
                 </div>
               )}
-              <SkyViewer
+              <CatalogueExplorer
                 data={data}
                 index={index}
                 mode={mode}
@@ -354,19 +398,13 @@ export default function Explorer() {
                 speed={speed}
                 onSpeed={setSpeed}
                 disabled={mode !== "single" || loading}
-                totalCandidates={data.total_candidates}
-                epochLabel={
-                  data.source_type === "spherex-irsa"
-                    ? "SPHEREx observation epochs · UTC"
-                    : "Illustrative epochs · UTC"
-                }
+                totalCandidates={data.total_candidates ?? data.archive_records}
               />
             </>
           ) : (
             <EmptyObservatory
               loading={loading}
-              error={error}
-              onRetry={() => load(field)}
+              message={loading ? progress : emptyNotice || error}
             />
           )}
         </div>
@@ -407,9 +445,7 @@ export default function Explorer() {
         <span>
           <i />{" "}
           {data
-            ? data.source_type === "spherex-irsa"
-              ? `NASA / IPAC IRSA SPHEREx DR1+QR3 · ${data.frames.length} exposures`
-              : `Synthetic development data · ${data.frames.length} epochs`
+            ? `${data.source_type === "synthetic" ? "Synthetic development data" : "NASA/IPAC IRSA · SPHEREx"} · ${data.frames.length} exposures`
             : "No observation data connected"}
         </span>
         <Link href="/about#methodology">

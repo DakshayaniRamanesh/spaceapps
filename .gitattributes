@@ -1,0 +1,4 @@
+# Preserve exact archive bytes and checksums on every platform.
+*.fits binary
+*.npz binary
+*.png binary

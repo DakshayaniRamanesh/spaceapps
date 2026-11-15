@@ -1,0 +1,1254 @@
+{
+  "schema_version": 2,
+  "source_type": "spherex-irsa",
+  "dataset_id": "irsa-b2e9a88c1488e3d03356dbe1",
+  "request": {
+    "ra": 76.956526,
+    "dec": 30.401438,
+    "fov_arcmin": 12.0,
+    "detector": "D3"
+  },
+  "coordinate_system": "ICRS; north up, east left; common TAN grid",
+  "width": 118,
+  "height": 118,
+  "intensity_unit": "MJy/sr",
+  "wavelength_range_um": [
+    1.63,
+    2.41
+  ],
+  "wavelength_model": "Per-pixel LVF WCS-WAVE lookup; not a single broadband detector image",
+  "frames": [
+    {
+      "id": "irsa-b2e9a88c1488e3d03356dbe1-00",
+      "timestamp": "2025-09-11T16:15:33.968Z",
+      "image_url": "/api/frames/irsa-b2e9a88c1488e3d03356dbe1-00.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.012254810892045498,
+        "masked_fraction": 0.10234128124102271,
+        "calibrated": true,
+        "valid_fraction": 0.8976587187589773,
+        "flag_counts": {
+          "TRANSIENT": 343,
+          "OVERFLOW": 5,
+          "SUR_ERROR": 264,
+          "NONFUNC": 79,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 11,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 91,
+          "OUTLIER": 209,
+          "CROSSTALK": 0,
+          "SOURCE": 25418,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 29,
+          "SNOWBALL": 0,
+          "HALO": 917
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.2048248052597046,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.16666666666666666
+      },
+      "obs_id": "2025W37_2A_0051_1",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W37_2A/l2b-v27-2026-236/3/level2_2025W37_2A_0051_1D3_spx_l2b-v27-2026-236.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W37_2A/l2b-v27-2026-236/3/level2_2025W37_2A_0051_1D3_spx_l2b-v27-2026-236.fits?center=76.956526%2C30.401438&size=0.29",
+      "sha256": "95d95931877c3c63d4f52974f3eab21f56f40752d576597fd8dc71236717512b",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:37:56.080240+00:00",
+      "lambda_um": 2.3539315663600378,
+      "bandwidth_um": 0.05869762774556299,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    },
+    {
+      "id": "irsa-b2e9a88c1488e3d03356dbe1-01",
+      "timestamp": "2025-09-17T22:09:44.622Z",
+      "image_url": "/api/frames/irsa-b2e9a88c1488e3d03356dbe1-01.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.013738907873630524,
+        "masked_fraction": 0.0754811835679402,
+        "calibrated": true,
+        "valid_fraction": 0.9245188164320598,
+        "flag_counts": {
+          "TRANSIENT": 150,
+          "OVERFLOW": 19,
+          "SUR_ERROR": 106,
+          "NONFUNC": 85,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 10,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 160,
+          "OUTLIER": 200,
+          "CROSSTALK": 0,
+          "SOURCE": 25497,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 43,
+          "SNOWBALL": 0,
+          "HALO": 278
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.2585182785987854,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.5
+      },
+      "obs_id": "2025W38_1A_0691_2",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_1A/l2b-v27-2026-237/3/level2_2025W38_1A_0691_2D3_spx_l2b-v27-2026-237.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_1A/l2b-v27-2026-237/3/level2_2025W38_1A_0691_2D3_spx_l2b-v27-2026-237.fits?center=76.956526%2C30.401438&size=0.29",
+      "sha256": "aa04d3b662ea39bbf48506752d44dccbbb9c31736b285d5bdcd2a73b1cf6c28e",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:37:56.104957+00:00",
+      "lambda_um": 1.775817436968596,
+      "bandwidth_um": 0.04351262581245885,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    },
+    {
+      "id": "irsa-b2e9a88c1488e3d03356dbe1-02",
+      "timestamp": "2025-09-18T04:39:04.122Z",
+      "image_url": "/api/frames/irsa-b2e9a88c1488e3d03356dbe1-02.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.01214116346091032,
+        "masked_fraction": 0.07892846883079574,
+        "calibrated": true,
+        "valid_fraction": 0.9210715311692043,
+        "flag_counts": {
+          "TRANSIENT": 189,
+          "OVERFLOW": 10,
+          "SUR_ERROR": 132,
+          "NONFUNC": 85,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 11,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 35,
+          "OUTLIER": 214,
+          "CROSSTALK": 0,
+          "SOURCE": 25470,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 49,
+          "SNOWBALL": 0,
+          "HALO": 400
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.208439439535141,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.25
+      },
+      "obs_id": "2025W38_1A_0738_1",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_1A/l2b-v27-2026-237/3/level2_2025W38_1A_0738_1D3_spx_l2b-v27-2026-237.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_1A/l2b-v27-2026-237/3/level2_2025W38_1A_0738_1D3_spx_l2b-v27-2026-237.fits?center=76.956526%2C30.401438&size=0.29",
+      "sha256": "d67125b91a44970db5a2bb37abcb4c75f18f93dd941adedaabf7b725c7f2a4e9",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:37:56.125722+00:00",
+      "lambda_um": 2.1488111233440526,
+      "bandwidth_um": 0.05361766556665134,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    },
+    {
+      "id": "irsa-b2e9a88c1488e3d03356dbe1-03",
+      "timestamp": "2025-09-18T04:43:21.984Z",
+      "image_url": "/api/frames/irsa-b2e9a88c1488e3d03356dbe1-03.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.01188186276704073,
+        "masked_fraction": 0.0858230393565067,
+        "calibrated": true,
+        "valid_fraction": 0.9141769606434933,
+        "flag_counts": {
+          "TRANSIENT": 206,
+          "OVERFLOW": 14,
+          "SUR_ERROR": 137,
+          "NONFUNC": 105,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 13,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 132,
+          "OUTLIER": 207,
+          "CROSSTALK": 0,
+          "SOURCE": 25388,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 43,
+          "SNOWBALL": 0,
+          "HALO": 447
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.19680577516555786,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.0
+      },
+      "obs_id": "2025W38_1A_0738_3",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_1A/l2b-v27-2026-237/3/level2_2025W38_1A_0738_3D3_spx_l2b-v27-2026-237.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_1A/l2b-v27-2026-237/3/level2_2025W38_1A_0738_3D3_spx_l2b-v27-2026-237.fits?center=76.956526%2C30.401438&size=0.29",
+      "sha256": "e82815425cec2e046cc1e87c03a5a62a18bc8515007192e60f444f4836a67970",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:37:56.149121+00:00",
+      "lambda_um": 2.249508200902402,
+      "bandwidth_um": 0.05605556663771718,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    },
+    {
+      "id": "irsa-b2e9a88c1488e3d03356dbe1-04",
+      "timestamp": "2025-09-18T14:28:43.349Z",
+      "image_url": "/api/frames/irsa-b2e9a88c1488e3d03356dbe1-04.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.012584088370203972,
+        "masked_fraction": 0.19606434932490668,
+        "calibrated": true,
+        "valid_fraction": 0.8039356506750933,
+        "flag_counts": {
+          "TRANSIENT": 942,
+          "OVERFLOW": 14,
+          "SUR_ERROR": 280,
+          "NONFUNC": 135,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 13,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 150,
+          "OUTLIER": 227,
+          "CROSSTALK": 0,
+          "SOURCE": 25422,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 55,
+          "SNOWBALL": 0,
+          "HALO": 2448
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.22252580523490906,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.0
+      },
+      "obs_id": "2025W38_2C_0023_4",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_2C/l2b-v27-2026-237/3/level2_2025W38_2C_0023_4D3_spx_l2b-v27-2026-237.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2025W38_2C/l2b-v27-2026-237/3/level2_2025W38_2C_0023_4D3_spx_l2b-v27-2026-237.fits?center=76.956526%2C30.401438&size=0.29",
+      "sha256": "f781275f95e4f214a24cd412745e1742f5e062d3d7449199cb51f477eaa1cbbf",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:37:56.172965+00:00",
+      "lambda_um": 2.0377578219144206,
+      "bandwidth_um": 0.05058639878116929,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    },
+    {
+      "id": "irsa-b2e9a88c1488e3d03356dbe1-05",
+      "timestamp": "2026-02-20T17:18:23.749Z",
+      "image_url": "/api/frames/irsa-b2e9a88c1488e3d03356dbe1-05.png",
+      "detector": "D3",
+      "source": "spherex-irsa",
+      "quality": {
+        "registration": "Celestial WCS reprojection; measured pair residual reported separately",
+        "noise_sigma": 0.012403259053826332,
+        "masked_fraction": 0.07454754380925022,
+        "calibrated": true,
+        "valid_fraction": 0.9254524561907498,
+        "flag_counts": {
+          "TRANSIENT": 161,
+          "OVERFLOW": 22,
+          "SUR_ERROR": 104,
+          "NONFUNC": 80,
+          "DICHROIC": 0,
+          "MISSING_DATA": 0,
+          "HOT": 0,
+          "COLD": 8,
+          "FULLSAMPLE": 0,
+          "PHANMISS": 0,
+          "NONLINEAR": 0,
+          "PERSIST": 128,
+          "OUTLIER": 211,
+          "CROSSTALK": 0,
+          "SOURCE": 25451,
+          "GHOST": 0,
+          "GHOST_FPA": 0,
+          "GHOST_EXT": 0,
+          "STREAK": 0,
+          "BLOOM": 44,
+          "SNOWBALL": 0,
+          "HALO": 322
+        },
+        "flag_policy": "Conservative: retain SOURCE/FULLSAMPLE; mask other and unknown set bits",
+        "background_mjy_sr": 0.22523289918899536,
+        "center_valid": false,
+        "center_region_valid_fraction": 0.0
+      },
+      "obs_id": "2026W08_2A_0233_2",
+      "collection": "spherex_dr1",
+      "access_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W08_2A/l2b-v27-2026-227/3/level2_2026W08_2A_0233_2D3_spx_l2b-v27-2026-227.fits",
+      "cutout_url": "https://irsa.ipac.caltech.edu/ibe/data/spherex/dr1/level2/2026W08_2A/l2b-v27-2026-227/3/level2_2026W08_2A_0233_2D3_spx_l2b-v27-2026-227.fits?center=76.956526%2C30.401438&size=0.29",
+      "sha256": "0bcf7b8ee254d1ff308f0e33ea86d80ac87b47f73d151c92c2cffb33434bc9ff",
+      "product_version": "7.0.5",
+      "downloaded_at": "2026-11-14T07:37:56.197013+00:00",
+      "lambda_um": 1.9809583321416442,
+      "bandwidth_um": 0.0480064482634968,
+      "wavelength_origin": "WCS-WAVE (visualization-grade)"
+    }
+  ],
+  "notice": "Real SPHEREx spectral images from NASA/IPAC IRSA. Celestial WCS alignment and a shared display stretch; zodiacal model subtracted once. Wavelengths may differ. Preview comparisons do not establish variability or motion. Scientific subtraction is unavailable until spectral-response, PSF and background validation is complete.",
+  "pairs": [
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-00",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-01",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8387675955185292
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "64 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.20078748859542203
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.16666666666666666
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8387675955185292
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-00",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-02",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.835966676242459
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "60 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.22160340881494725
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.16666666666666666
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.835966676242459
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-00",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-03",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8302212008043666
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "62 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.14598214664691553
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8302212008043666
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-00",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-04",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "blocked",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.7324044814708417
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "blocked",
+          "reason": "44 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.3414711759094532
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.7324044814708417
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-00",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-05",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.84099396725079
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "64 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.20308607598950018
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.84099396725079
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-01",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-02",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8623958632576846
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "61 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.2809469601559174
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.25
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8623958632576846
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-01",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-03",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8604567652973284
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "62 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.23025057278068642
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8604567652973284
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-01",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-04",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "blocked",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.7556018385521401
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "blocked",
+          "reason": "45 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.3524619391024934
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.7556018385521401
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-01",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-05",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8682849755817293
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "64 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.2042789921516943
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8682849755817293
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-02",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-03",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8511921861534042
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "63 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.22381287347038936
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8511921861534042
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-02",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-04",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "blocked",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.7517954610744039
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "46 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.24954305003321306
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.7517954610744039
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-02",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-05",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8642631427750647
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "63 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.18185227244694796
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8642631427750647
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-03",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-04",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "blocked",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.7480609020396438
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "49 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.15666565920390998
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.7480609020396438
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-03",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-05",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "pass",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.8613185866130423
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.0
+        },
+        {
+          "name": "Registration",
+          "status": "pass",
+          "reason": "69 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.1924346099292032
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.0,
+      "overlap_fraction": 0.8613185866130423
+    },
+    {
+      "a": "irsa-b2e9a88c1488e3d03356dbe1-04",
+      "b": "irsa-b2e9a88c1488e3d03356dbe1-05",
+      "comparison_status": "blocked",
+      "difference_allowed": false,
+      "reason": "Wavelength, overlap or registration screening failed. Compare as labeled previews only.",
+      "checks": [
+        {
+          "name": "Sky overlap",
+          "status": "blocked",
+          "reason": "Valid pixels shared on the same north-up ICRS grid",
+          "value": 0.7562482045389256
+        },
+        {
+          "name": "Spectral screening",
+          "status": "blocked",
+          "reason": "Fraction of overlapping pixels within 0.25 of the narrower bandwidth; screening heuristic only",
+          "value": 0.02497625830959164
+        },
+        {
+          "name": "Registration",
+          "status": "blocked",
+          "reason": "44 mutually matched field sources; empirical limit 0.3 native pixel",
+          "value": 0.3390198302930116
+        },
+        {
+          "name": "Spectral calibration",
+          "status": "review",
+          "reason": "WCS-WAVE is visualization-grade; response/calibration equivalence has not been established",
+          "value": null
+        },
+        {
+          "name": "PSF and background",
+          "status": "review",
+          "reason": "Zodiacal model subtracted once; PSF matching and residual-background validation remain unverified",
+          "value": null
+        },
+        {
+          "name": "Uncertainty",
+          "status": "review",
+          "reason": "Squared interpolation weights used; spatial covariance and model systematics are not calibrated",
+          "value": null
+        },
+        {
+          "name": "Distinct observation times",
+          "status": "pass",
+          "reason": "Timestamps come from FITS observation metadata, not download or release dates",
+          "value": null
+        },
+        {
+          "name": "Center-region coverage",
+          "status": "blocked",
+          "reason": "Valid fraction within two native pixels of the requested center; this is not a source detection",
+          "value": 0.0
+        }
+      ],
+      "spectral_overlap_fraction": 0.02497625830959164,
+      "overlap_fraction": 0.7562482045389256
+    }
+  ],
+  "availability": "search_incomplete",
+  "search_complete": false,
+  "archive_records": 56,
+  "assessed_records": 12,
+  "processing_version": "irsa-preview-v2.2",
+  "created_at": "2026-11-14T07:37:56.376150+00:00",
+  "display_stretch": {
+    "low": 0.012146804714575412,
+    "high": 6.517420091629069,
+    "asinh_softening": 0.08
+  },
+  "warnings": [
+    "No coherent spectral group found in the assessed sample. Wavelength changes can mimic variability.",
+    "Assessed 12 of 56 archive records. This bounded search cannot rule out other compatible epochs."
+  ],
+  "grid": {
+    "WCSAXES": 2,
+    "CRPIX1": 59.5,
+    "CRPIX2": 59.5,
+    "CDELT1": -0.0016949152542373,
+    "CDELT2": 0.0016949152542373,
+    "CUNIT1": "deg",
+    "CUNIT2": "deg",
+    "CTYPE1": "RA---TAN",
+    "CTYPE2": "DEC--TAN",
+    "CRVAL1": 76.956526,
+    "CRVAL2": 30.401438,
+    "LONPOLE": 180.0,
+    "LATPOLE": 30.401438,
+    "MJDREF": 0.0,
+    "RADESYS": "ICRS"
+  }
+}

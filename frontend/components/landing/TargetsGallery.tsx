@@ -53,7 +53,7 @@ export default function TargetsGallery() {
             <p>{p.description}</p>
             <Link
               className="text-link"
-              href={`/explore?ra=${p.ra}&dec=${p.dec}&fov=12&detector=D1`}
+              href={`/explore?ra=${p.ra}&dec=${p.dec}&fov=12&detector=D3`}
             >
               Explore {p.name} <ArrowUpRight />
             </Link>
@@ -83,7 +83,8 @@ export default function TargetsGallery() {
           <p className="caption">
             Verified SIMBAD reference positions for four targets. WISE 0855 uses
             the supplied coordinates; its epoch is unspecified. Selecting a
-            field does not imply real observations are connected.
+            field starts an archive search. Coverage and comparable epochs vary
+            by target.
           </p>
         </div>
       </div>

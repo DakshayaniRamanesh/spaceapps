@@ -14,6 +14,8 @@ import {
   ShieldAlert,
   Waypoints,
 } from "lucide-react";
+import RegisteredImage from "./RegisteredImage";
+import type { Hit, Overlay } from "@/lib/catalogues";
 import { ObservationSet, Mode, dateLabel } from "@/lib/types";
 import {
   RegionPoint,
@@ -33,6 +35,8 @@ export default function SkyViewer({
   b,
   blinkIndex,
   loading,
+  overlays = [],
+  onSelect = () => {},
 }: {
   data: ObservationSet;
   index: number;
@@ -41,6 +45,8 @@ export default function SkyViewer({
   b: number;
   blinkIndex: number;
   loading: boolean;
+  overlays?: Overlay[];
+  onSelect?: (hit: Hit) => void;
 }) {
   const [zoom, setZoom] = useState(1),
     [pan, setPan] = useState({ x: 0, y: 0 }),
@@ -55,10 +61,12 @@ export default function SkyViewer({
     [hideOutside, setHideOutside] = useState(false),
     [maskOverlay, setMaskOverlay] = useState(false),
     [pinA, setPinA] = useState<
-      (RegionPoint & { frameId: string; timestamp: string; label: string }) | null
+      | (RegionPoint & { frameId: string; timestamp: string; label: string })
+      | null
     >(null),
     [pinB, setPinB] = useState<
-      (RegionPoint & { frameId: string; timestamp: string; label: string }) | null
+      | (RegionPoint & { frameId: string; timestamp: string; label: string })
+      | null
     >(null);
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(
     null,
@@ -66,6 +74,14 @@ export default function SkyViewer({
   const lassoCanvas = useRef<HTMLElement | null>(null);
   const canvasSize = useRef(360);
   const maskId = useId().replace(/:/g, "");
+  const skyGeometry = {
+    ...data.request,
+    grid: data.grid,
+    width: data.width,
+    height: data.height,
+  };
+  const geometryAvailable =
+    data.source_type === "synthetic" || data.grid?.CTYPE1 === "RA---TAN";
   const geometryKey = `${data.request.ra}|${data.request.dec}|${data.request.fov_arcmin}`;
   const fa = data.frames[a],
     fb = data.frames[b];
@@ -79,15 +95,18 @@ export default function SkyViewer({
       ? [
           {
             src: withOverlay(fa.image_url),
+            frameId: fa.id,
             label: `A · ${dateLabel(fa.timestamp)}`,
           },
           {
             src: withOverlay(fb.image_url),
+            frameId: fb.id,
             label: `B · ${dateLabel(fb.timestamp)}`,
           },
         ]
       : [
           {
+            frameId: current.id,
             src:
               mode === "difference"
                 ? withOverlay(diff)
@@ -101,7 +120,6 @@ export default function SkyViewer({
   useEffect(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setImageStatus({});
     setRetry(0);
   }, [data.dataset_id]);
   // A region is defined on the registered grid, so it stays valid across
@@ -154,18 +172,18 @@ export default function SkyViewer({
     setDraft(null);
     fit();
   }
-  const summary = region ? regionSummary(region, data.request) : null;
+  const summary = region ? regionSummary(region, skyGeometry) : null;
   const motion =
     pinA && pinB && pinA.frameId !== pinB.frameId
       ? computeMotionMetrics(
           pinA,
           pinB,
-          data.request,
+          skyGeometry,
           pinA.timestamp,
           pinB.timestamp,
         )
       : pinA && pinB
-        ? computeMotionMetrics(pinA, pinB, data.request)
+        ? computeMotionMetrics(pinA, pinB, skyGeometry)
         : null;
   function fit() {
     setZoom(1);
@@ -207,12 +225,12 @@ export default function SkyViewer({
             zoomBy(-0.5);
           }
           if (e.key === "0") fit();
-          if (e.key === "l" || e.key === "L") {
+          if (geometryAvailable && (e.key === "l" || e.key === "L")) {
             e.preventDefault();
             setDraft(null);
             setTool((t) => (t === "lasso" ? "pan" : "lasso"));
           }
-          if (e.key === "t" || e.key === "T") {
+          if (geometryAvailable && (e.key === "t" || e.key === "T")) {
             e.preventDefault();
             setDraft(null);
             setTool((t) => (t === "track" ? "pan" : "track"));
@@ -261,9 +279,8 @@ export default function SkyViewer({
             }}
             onPointerDown={(e) => {
               if (tool === "track") {
-                const canvas = e.currentTarget.querySelector<HTMLElement>(
-                  ".image-canvas",
-                );
+                const canvas =
+                  e.currentTarget.querySelector<HTMLElement>(".image-canvas");
                 if (!canvas) return;
                 e.preventDefault();
                 const pt = toGrid(e, canvas);
@@ -280,11 +297,7 @@ export default function SkyViewer({
                 } else {
                   const placingA = !pinA || (pinA && pinB);
                   const pinFrame =
-                    mode === "difference"
-                      ? placingA
-                        ? fa
-                        : fb
-                      : current;
+                    mode === "difference" ? (placingA ? fa : fb) : current;
                   const pinned = {
                     ...pt,
                     frameId: pinFrame.id,
@@ -301,9 +314,8 @@ export default function SkyViewer({
                 return;
               }
               if (tool === "lasso") {
-                const canvas = e.currentTarget.querySelector<HTMLElement>(
-                  ".image-canvas",
-                );
+                const canvas =
+                  e.currentTarget.querySelector<HTMLElement>(".image-canvas");
                 if (!canvas) return;
                 e.preventDefault();
                 e.currentTarget.setPointerCapture(e.pointerId);
@@ -357,13 +369,16 @@ export default function SkyViewer({
               drag.current = null;
             }}
           >
-            <div
-              className="image-canvas"
-              ref={(el) => {
-                if (el && el.offsetWidth) canvasSize.current = el.offsetWidth;
-              }}
-              style={{
-                transform: `translate(${pan.x}px,${pan.y}px) scale(${zoom})`,
+            <RegisteredImage
+              width={data.width}
+              height={data.height}
+              zoom={zoom}
+              pan={pan}
+              frameId={img.frameId}
+              overlays={imageStatus[img.src] === "loaded" ? overlays : []}
+              onSelect={onSelect}
+              onFit={(size) => {
+                canvasSize.current = size.width;
               }}
             >
               <img
@@ -487,7 +502,8 @@ export default function SkyViewer({
                   )}
                 </svg>
               )}
-            </div>            <div className="image-date mono">{img.label}</div>
+            </RegisteredImage>{" "}
+            <div className="image-date mono">{img.label}</div>
             {crosshair && <div className="crosshair" aria-hidden="true" />}
             <div className="orientation mono" aria-hidden="true">
               <span>N</span>↑<br />E ←
@@ -499,8 +515,8 @@ export default function SkyViewer({
           DEC {data.request.dec.toFixed(4)}°
         </div>
         {data.source_type === "spherex-irsa" ? (
-          <span className="archive-watermark">
-            NASA / IPAC IRSA SPHEREx DR1+QR3 ARCHIVE
+          <span className="synthetic-watermark archive-watermark">
+            SPHEREx / NASA–IPAC IRSA · PREVIEW
           </span>
         ) : (
           <span className="synthetic-watermark">
@@ -575,6 +591,7 @@ export default function SkyViewer({
             }}
             title="Lasso: draw around a patch of sky to focus on it (L)"
             aria-label="Lasso select region"
+            disabled={!geometryAvailable}
           >
             <LassoSelect size={16} />
           </button>
@@ -594,6 +611,7 @@ export default function SkyViewer({
             }}
             title="Track celestial motion: click source in Epoch A then Epoch B (T)"
             aria-label="Track celestial motion"
+            disabled={!geometryAvailable}
           >
             <Waypoints size={16} />
           </button>
@@ -606,7 +624,7 @@ export default function SkyViewer({
         ) : tool === "track" ? (
           <span className="pan-hint lasso-hint">
             <Waypoints size={13} /> Click source position in Epoch A, then in
-            Epoch B to measure Δθ and proper motion μ
+            Epoch B to estimate angular displacement
           </span>
         ) : mode === "difference" ? (
           <span className="difference-legend">
@@ -630,8 +648,8 @@ export default function SkyViewer({
               {summary.centroid.dec.toFixed(4)}°
             </span>
             <span>
-              RA {summary.raRange[0].toFixed(4)}–{summary.raRange[1].toFixed(4)}°
-              · Dec {summary.decRange[0].toFixed(4)}–
+              RA {summary.raRange[0].toFixed(4)}–{summary.raRange[1].toFixed(4)}
+              ° · Dec {summary.decRange[0].toFixed(4)}–
               {summary.decRange[1].toFixed(4)}°
             </span>
             <span>
@@ -675,11 +693,11 @@ export default function SkyViewer({
           aria-label="Celestial motion tracker"
         >
           <div className="region-stats mono">
-            <span className="region-tag">Motion tracker</span>
+            <span className="region-tag">Manual displacement estimate</span>
             {pinA && !pinB ? (
               <span>
                 Pin A set ({pinA.label}) · Switch to Epoch B and click source to
-                compute Δθ and proper motion μ
+                estimate displacement (not confirmed source motion)
               </span>
             ) : motion && pinA && pinB ? (
               <>
@@ -707,6 +725,10 @@ export default function SkyViewer({
               </>
             ) : null}
           </div>
+          <p className="hint">
+            Manual clicks and WCS positions do not establish source identity or
+            confirmed motion.
+          </p>
           <div className="region-actions">
             <button
               className="button secondary"

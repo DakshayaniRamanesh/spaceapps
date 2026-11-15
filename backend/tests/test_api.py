@@ -92,14 +92,11 @@ def test_ids_survive_cache_eviction():
     np.testing.assert_array_equal(before,provider.array(frame.id))
     assert decode_frame(frame.id)[1]==0
 
-def test_presets_and_disabled_provider():
+def test_presets_and_synthetic_health():
     presets=client.get('/api/presets').json()
     assert len(presets)==5
     for preset in presets:
         FieldRequest(ra=preset['ra'],dec=preset['dec'])
-    real_obs = SpherexIRSAProvider(fixtures_mode=True).observations(FieldRequest(**PARAMS))
-    assert real_obs.source_type == 'spherex-irsa'
-    assert len(real_obs.frames) == 2
     assert client.get('/health').json()['real_data_enabled'] is False
 
 def test_fov_scales_angular_motion_instead_of_relabeling():

@@ -1,50 +1,13 @@
-# Real SPHEREx Data Integration
+# Real-data integration status
 
-## Implementation Status (Phase B Complete)
+The IRSA placeholder has been replaced by the shared processor in `backend/app/irsa.py`, bounded archive client in `archive.py`, science preparation in `science.py`, and persistent job manager in `jobs.py`. The default source is real IRSA. The provider adapter serves prepared data; uncached requests use the job API.
 
-Real data integration with NASA/IPAC IRSA SPHEREx DR1 and QR3 collections is implemented and validated.
+Implemented: real product discovery/download, provenance, FITS decoding, named flag masks, variance handling, one ZODI subtraction, celestial reprojection, per-pixel wavelength previews, metadata and numeric downloads, immutable featured data, bounded custom jobs, failure/empty/incomplete handling, and source-aware frontend labels.
 
-- **Data source:** Genuine public SPHEREx DR1 and QR3 Level 2 spectral image cutouts (DOI: 10.26131/IRSA678).
-- **Service endpoints:**
-  - Query discovery via IVOA Simple Image Access (SIA) protocol (`https://irsa.ipac.caltech.edu/SIA`) and Table Access Protocol (TAP) (`https://irsa.ipac.caltech.edu/TAP`).
-  - Spatial cutouts retrieved directly from IRSA Image Bridge Architecture (IBE) service (`https://irsa.ipac.caltech.edu/ibe/data/...`).
-- **FITS MEF Structure:**
-  - 7 HDUs parsed: `PRIMARY` (pipeline version), `IMAGE` (calibrated flux in `MJy / sr`), `FLAGS` (quality bitmask), `VARIANCE`, `ZODI` (zodiacal light model), `EPSF` (effective point-spread function table), `WCS-WAVE` (spectral wavelength lookup grid).
-- **WCS & Astrometric Registration:**
-  - Spatial WCS: `WCS(hdulist['IMAGE'].header)` with `RA---TAN-SIP` distortion.
-  - Common tangent-plane grid: Reprojected using Astropy and `reproject.reproject_interp` onto a shared sky grid centered at the target (RA, Dec) with dimensions 384×384.
-  - Spectral WCS: Position-dependent central wavelength and bandwidth computed via `WCS(hdulist['IMAGE'].header, fobj=hdulist, key="W")`.
-- **Display & Differencing:**
-  - `render_science_frame`: Robust astronomical arcsinh intensity stretch calibrated for `MJy / sr` units, mapping to the SkyTrace cool monochrome palette.
-  - `render_difference_frame`: Calibrated `D = B - A` float32 subtraction on the common sky grid with signed color mapping (Amber for flux gain, Violet for flux loss, Dark neutral for zero/uncovered footprint).
+Five bundled snapshots contain 22 real field exposures, including the default two-frame R Draconis view. Its exact FITS bytes and SHA-256 hashes are checked in. The offline verifier rebuilds science arrays and PNGs from those originals and recomputes pair assessments. Unit tests also use explicitly artificial fixtures to exercise failures without depending on IRSA uptime.
 
-## Switching Data Sources
+Remaining science work before real subtraction: analysis-grade spectral calibration/response equivalence, suitable PSF matching, residual-background checks, registration acceptance supported by source uncertainties, and correlated-noise validation. The API and UI deliberately block real differences until these are established. No runtime flag bypasses that decision.
 
-Configure via environment variable `OBSERVATION_SOURCE`:
+The current deployment is one Python-capable host with one worker and SQLite/disk cache. `Dockerfile`, `compose.yaml` and `render.yaml` are supplied. A hosting account/service must be provisioned to obtain a permanent public URL; the repository does not imply an existing production deployment.
 
-```bash
-# Enable real SPHEREx DR1+QR3 public archival data:
-export OBSERVATION_SOURCE=irsa
-
-# Enable synthetic demonstration data (illustrative simulation):
-export OBSERVATION_SOURCE=synthetic
-```
-
-When `OBSERVATION_SOURCE=irsa`:
-- `/health` reports `status: "ok"`, `source: "spherex-irsa"`, `real_data_enabled: true`.
-- `/api/observations` returns real timestamps, archive product IDs, provenance URLs, and `source_type: "spherex-irsa"`.
-- Empty coverage: If a requested valid celestial coordinate has no covering observations in DR1+QR3, the API returns HTTP 200 with `frames: []` and an explicit notice, safely handled by the frontend empty observatory view.
-
-## Offline Fixtures & CI Testing
-
-For deterministic offline testing without remote IRSA network dependency:
-- Set `SPHEREX_FIXTURES_MODE=1`.
-- Tests use realistic 7-HDU FITS cutouts in `backend/tests/fixtures/`.
-- Offline fixtures cover two genuine observation epochs with known stellar positions, moving source, variable source, bad pixel mask, and variance.
-
-## Verified Test Coverage
-
-- 34/34 backend tests pass across `test_api.py`, `test_api_real.py`, `test_fits_loader.py`, `test_registration.py`, and `test_difference.py`.
-- 8/8 frontend unit tests pass across coordinates and source policy guards.
-- Next.js typecheck (`next typegen && tsc --noEmit`) passes with 0 errors.
-- Production build (`npm run build`) builds all static routes cleanly.
+Potential later work: target coordinate propagation from trusted catalogs, deep collections, mosaics, full spectral exploration, photometry with pixel solid angles and correlated errors, Gaia/WISE support, and candidate ranking. These are not represented as completed features.

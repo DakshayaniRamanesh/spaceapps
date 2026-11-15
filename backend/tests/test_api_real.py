@@ -46,90 +46,31 @@ def test_spherex_irsa_provider_fixtures():
 
 
 def test_api_with_irsa_source(monkeypatch):
-    monkeypatch.setenv("OBSERVATION_SOURCE", "irsa")
-    monkeypatch.setenv("SPHEREX_FIXTURES_MODE", "1")
-
-    # Re-import main to pick up env vars
-    import importlib
-    import app.main
-    importlib.reload(app.main)
-
-    client = TestClient(app.main.app)
-
-    # Health check
+    # Production route uses the bounded job/store pipeline, not the legacy
+    # synchronous provider. No service calls or global module reloads in tests.
+    from app import main
+    monkeypatch.setattr(main, "source", "irsa")
+    from pathlib import Path
+    from app.models import ObservationSet
+    path = next((Path(__file__).parents[1]/"data"/"featured").glob("*/manifest.json"))
+    data = ObservationSet.model_validate_json(path.read_text())
+    client = TestClient(main.app)
     health = client.get("/health").json()
-    assert health["status"] == "ok"
-    assert health["source"] == "spherex-irsa"
-    assert health["real_data_enabled"] is True
-
-    # Observations
-    params = {"ra": 304.6935, "dec": 42.4436, "fov_arcmin": 12.0, "detector": "D1"}
-    resp = client.get("/api/observations", params=params)
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["source_type"] == "spherex-irsa"
-    assert len(data["frames"]) == 2
-
-    selection_params = {
-        **params,
-        "limit": 24,
-        "spread": "true",
-        "start_date": "2025-04-29",
-        "end_date": "2025-07-28",
-    }
-    selection_response = client.get("/api/observations", params=selection_params)
-    assert selection_response.status_code == 200
-    selection_data = selection_response.json()
-    assert selection_data["epoch_selection"]["limit"] == 24
-    assert selection_data["epoch_selection"]["spread"] is True
-    assert selection_data["total_candidates"] == 2
-    assert len(selection_data["frames"]) == 2
-
-    base_url = "/api/observations"
-    for invalid_limit in (1, 51, "abc"):
-        assert client.get(base_url, params={**params, "limit": invalid_limit}).status_code == 422
-    assert client.get(base_url, params={**params, "limit": 24}).status_code == 200
-    for date_params in (
-        {"start_date": "2025-13-99"},
-        {"start_date": "2026-01-01", "end_date": "2025-01-01"},
-        {"start_date": "2025-04-29", "end_date": "2025-04-29"},
-    ):
-        assert client.get(base_url, params={**params, **date_params}).status_code == 422
-
-    frame_0_id = data["frames"][0]["id"]
-    frame_1_id = data["frames"][1]["id"]
-
-    # Frame image endpoint
-    img_resp = client.get(f"/api/frames/{frame_0_id}.png")
-    assert img_resp.status_code == 200
-    assert img_resp.headers["x-data-source"] == "spherex-irsa"
-    img = Image.open(io.BytesIO(img_resp.content))
-    assert img.size == (384, 384)
-
-    # Difference image endpoint (diff mode)
-    diff_resp = client.get(f"/api/difference?frame_a={frame_0_id}&frame_b={frame_1_id}")
-    assert diff_resp.status_code == 200
-    assert diff_resp.headers["x-data-source"] == "spherex-irsa"
-    assert diff_resp.headers["x-difference-sign"] == "B-minus-A"
-    diff_img = Image.open(io.BytesIO(diff_resp.content))
-    assert diff_img.size == (384, 384)
-
-    # Difference image endpoint (significance mode)
-    sig_resp = client.get(f"/api/difference?frame_a={frame_0_id}&frame_b={frame_1_id}&view=significance")
-    assert sig_resp.status_code == 200
-    assert sig_resp.headers["x-data-source"] == "spherex-irsa"
-    assert sig_resp.headers["x-difference-view"] == "significance"
-    sig_img = Image.open(io.BytesIO(sig_resp.content))
-    assert sig_img.size == (384, 384)
-
-    # Gaia catalog endpoint test
-    gaia_resp = client.get("/api/catalog/gaia", params={"ra": 304.6935, "dec": 42.4436, "fov_arcmin": 12.0})
-    assert gaia_resp.status_code == 200
-    gaia_data = gaia_resp.json()
-    assert gaia_data["catalog"] == "Gaia DR3"
-    assert gaia_data["epoch"] == "J2016.0"
-    assert "sources" in gaia_data
-
-    # Reset monkeypatch and reload main
-    monkeypatch.undo()
-    importlib.reload(app.main)
+    assert health["real_data_enabled"] and not health["scientific_subtraction_enabled"]
+    job = client.post("/api/observation-jobs", json=data.request.model_dump())
+    assert job.status_code == 200 and job.json()["status"] == "ready"
+    loaded = client.get(job.json()["result_url"]).json()
+    assert loaded["source_type"] == "spherex-irsa"
+    first, last = loaded["frames"][0], loaded["frames"][-1]
+    for suffix in ("", "?overlay=mask"):
+        response = client.get(first["image_url"]+suffix)
+        assert response.status_code == 200
+        assert Image.open(io.BytesIO(response.content)).size == (data.width, data.height)
+    assert client.get(first["image_url"]+"?overlay=invalid").status_code == 422
+    for view in ("diff", "significance"):
+        response = client.get("/api/difference", params={"frame_a":first["id"], "frame_b":last["id"], "view":view})
+        assert response.status_code == 422
+    for limit in (1, 51, "abc"):
+        assert client.get("/api/observations", params={**data.request.model_dump(exclude_none=True), "limit":limit}).status_code == 422
+    for dates in ({"start_date":"2025-13-99"}, {"start_date":"2026-01-01", "end_date":"2025-01-01"}):
+        assert client.post("/api/observation-jobs", json={**data.request.model_dump(), **dates}).status_code == 422

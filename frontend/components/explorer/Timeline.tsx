@@ -195,7 +195,7 @@ export default function Timeline({
         <span>
           {frames.length
             ? frames[0]?.source === "spherex-irsa"
-              ? "Aligned celestial grid / per-frame arcsinh stretch"
+              ? "Aligned celestial grid / fixed shared intensity stretch"
               : "Aligned grid / fixed intensity stretch"
             : "Timeline available when data is connected"}
         </span>

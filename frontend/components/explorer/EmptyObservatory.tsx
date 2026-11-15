@@ -12,23 +12,11 @@ import {
 import Timeline from "./Timeline";
 export default function EmptyObservatory({
   loading,
-  error,
-  onRetry,
+  message,
 }: {
   loading: boolean;
-  error?: string;
-  onRetry?: () => void;
+  message?: string;
 }) {
-  const isNoResults =
-    error &&
-    (error.toLowerCase().includes("no observations") ||
-      error.toLowerCase().includes("no spherex archival"));
-  const isServiceOffline =
-    error &&
-    (error.toLowerCase().includes("unavailable") ||
-      error.toLowerCase().includes("cannot reach") ||
-      error.toLowerCase().includes("offline"));
-
   return (
     <>
       <div className="mode-tabs" role="group" aria-label="Comparison mode">
@@ -54,13 +42,7 @@ export default function EmptyObservatory({
       >
         <div className="viewer-heading">
           <span>Observation field</span>
-          <span>
-            {loading
-              ? "Querying archive…"
-              : error
-                ? "Request error"
-                : "No data connected"}
-          </span>
+          <span>{loading ? "Searching archive" : "No images loaded"}</span>
         </div>
         <div className="ready-stage">
           <div className="ready-orbit" aria-hidden="true">
@@ -68,71 +50,24 @@ export default function EmptyObservatory({
             <span />
             <Crosshair size={34} />
           </div>
-          <p className="eyebrow">
-            {loading
-              ? "Archival query in progress"
-              : error
-                ? "Observation status"
-                : "Your next discovery starts here."}
-          </p>
+          <p className="eyebrow">Your next discovery starts here.</p>
           <h2>
-            {loading ? (
-              <>
-                SEARCHING
-                <br />
-                ARCHIVE…
-              </>
-            ) : isNoResults ? (
-              <>
-                NO EXPOSURES
-                <br />
-                FOUND.
-              </>
-            ) : isServiceOffline ? (
-              <>
-                SERVICE
-                <br />
-                OFFLINE.
-              </>
-            ) : error ? (
-              <>
-                ARCHIVE
-                <br />
-                ERROR.
-              </>
-            ) : (
-              <>
-                OBSERVATORY
-                <br />
-                READY.
-              </>
-            )}
+            OBSERVATORY
+            <br />
+            READY.
           </h2>
           <p>
-            {loading
-              ? "Querying NASA / IPAC IRSA archive for calibrated SPHEREx exposures…"
-              : error
-                ? error
-                : "Connect SPHEREx observations to explore the infrared sky."}
+            Choose a featured field or search real SPHEREx exposures by
+            coordinates.
           </p>
-          {onRetry && error && !loading && (
-            <button
-              className="button secondary"
-              style={{ marginTop: 20 }}
-              onClick={onRetry}
-            >
-              Retry query
-            </button>
-          )}
           <Link className="text-link" href="/about#integration">
             About the data connection <ArrowUpRight size={19} />
           </Link>
           <p className="connection-status" role="status">
-            {loading
-              ? "Querying the SPHEREx DR1+QR3 observation archive…"
-              : error
-                ? "Update your coordinates or detector selection and retry."
-                : "Awaiting a validated observation source"}
+            {message ||
+              (loading
+                ? "Checking the observation provider…"
+                : "Choose another field or detector to search again.")}
           </p>
         </div>
         <div className="viewer-toolbar">

@@ -1,148 +1,125 @@
-# SkyTrace
+# SkyTrace — real SPHEREx sky previews
 
-**See the Sky in Motion.** A cinematic, interactive infrared-sky explorer with a Next.js frontend and a FastAPI scientific demonstration backend. Built as an independent NASA Space Apps Challenge 2026 concept inspired by SPHEREx.
+SkyTrace is a Next.js + FastAPI tool for inspecting real, dated SPHEREx infrared exposures from NASA/IPAC IRSA. Built for the 2026 NASA Space Apps “Planet X and SPHEREx” challenge.
 
-**The default Explorer is empty and ready for real data.** Synthetic observations require the explicit development opt-in below. No local SPHEREx FITS dataset is integrated. Reference target positions are real or supplied in the brief; simulated stars, dates, motion and brightness are not measurements of those targets. The IRSA adapter is explicitly disabled.
+**The default Explorer loads two genuine R Draconis field exposures without contacting IRSA.** Custom RA/Dec requests use a bounded archive worker and the same FITS processor. Original FITS cutouts, numeric arrays, masks, checksums and provenance are included for the featured demonstration. All five challenge presets have bundled D3 / 12-arcminute previews: 22 real exposures in total. This establishes image availability, not five validated scientific time-lapses.
 
-## Quick start
+**Scientific subtraction is disabled for real observations.** The default R Draconis pair has a masked center and its measured registration residual exceeds the conservative preview threshold; spectral-response equivalence, PSF matching and background validation are also unfinished. Blink and side-by-side are inspection previews. SkyTrace does not claim a discovery, measured proper motion, or calibrated variability detection.
 
-Requirements: **Node.js 22.18+ (24 recommended)**, npm, and **Python 3.11+**. No NASA account, external scientific service, or API key is required. Internet access is needed only to install dependencies. Fonts, artwork, and story frames are bundled locally.
+## Run with Docker
 
-From the `skytrace` directory:
-
-```bash
-python3 -m venv backend/.venv
-backend/.venv/bin/python -m pip install -r backend/requirements.txt
-npm --prefix frontend ci
-npm run dev
+```sh
+docker compose up --build
 ```
 
-Open **http://localhost:3000**. The single development command starts the Python API on port 8000 and Next.js on port 3000, and shuts both down on Ctrl+C. Set `PORT` or `API_PORT` if needed. On Windows, create the environment with `python -m venv backend/.venv`, install using `backend\.venv\Scripts\python -m pip ...`, then use the same npm commands.
+Open http://localhost:3000. One container serves Next.js and a local FastAPI worker; the named volume retains runtime jobs and downloaded data. No NASA API key is needed. The public hosting setup is separate; this repository does not claim an existing public deployment. See [deployment instructions](docs/DEPLOYMENT.md).
 
-### Start the servers separately
+## Run locally
 
-Terminal 1:
+Use Python 3.12 and Node.js 24.
 
-```bash
-cd backend
-.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-Terminal 2:
-
-```bash
+```sh
+python -m venv backend/.venv
+. backend/.venv/bin/activate
+pip install -r backend/requirements-tested.txt
 cd frontend
+npm ci
+cd ..
 npm run dev
 ```
 
-Next.js proxies `/api/*` and `/health` to the backend. If the API is elsewhere, copy `frontend/.env.example` to `frontend/.env.local`, change `API_INTERNAL_URL`, and restart Next.js. Backend `.env.example` documents environment variables; export them in your shell or deployment environment (the backend does not automatically load `.env`).
+Open http://localhost:3000/explore. The Python API is also available at http://127.0.0.1:8000/docs. The launcher uses `backend/.venv` when present. `API_INTERNAL_URL` configures the Next.js proxy when running services separately and must be supplied at **build time** for standalone production builds.
 
-## Development demonstration (optional)
+On Windows PowerShell, use the executable paths directly; activation is optional:
 
-To exercise the preserved synthetic backend, put `NEXT_PUBLIC_ENABLE_SYNTHETIC_DEMO=true` in `frontend/.env.local` and restart Next.js. For production builds, set the variable before `npm run build`. Leave it unset or `false` for the default ready state. This setting is explicitly a development demonstration, not a real-data connection. Changing `OBSERVATION_SOURCE` alone does not enable synthetic images in the frontend.
+```powershell
+python -m venv backend/.venv
+backend/.venv/Scripts/python.exe -m pip install -r backend/requirements-tested.txt
+npm.cmd --prefix frontend ci
+npm.cmd run dev
+```
 
-A real provider is not implemented in this release. See `docs/REAL_DATA_INTEGRATION.md` for the required FITS/WCS, calibration and contract work before activation.
+Once dependencies are installed, subsequent runs only need `npm.cmd run dev` from the repository root. Stop both services with Ctrl+C.
+
+## Catalogue overlays
+
+Open http://localhost:3000/explore and find **Catalogue overlays** below the image viewer. Enable **Gaia DR3**, **WISE · AllWISE Source Catalog**, or both. Select a marker with click/tap or keyboard, or use the source picker to inspect overlapping entries. Each layer has its own count, loading/error state and Retry action.
+
+The backend uses the stored image WCS and observation dates; Gaia positions use supplied proper motion when available, while AllWISE positions remain static. Markers are reference positions, not confirmed SPHEREx detections. Real catalogue overlays are disabled in synthetic mode. They require access to the public ESA/IRSA catalogue services; a timeout can leave images usable with a failed layer and Retry action. No fallback sources are invented.
+
+See [catalogue implementation and verification](docs/CATALOGUE_VERIFICATION.md) for tests, live-service limitations and the changed files, plus the [API contract](docs/API.md) and [coordinate methodology](docs/METHODOLOGY.md).
+
+## Demonstration
+
+The initial field is R Draconis, ICRS RA 248.167611°, Dec 66.754979°, 12 arcminutes, D3.
+
+- Observation A: `2025W21_1B_0329_1`, May 20, 2025 at 16:37:27.588 UTC.
+- Observation B: `2026W19_2A_0976_1`, May 9, 2026 at 23:44:07.234 UTC.
+- Field-center wavelengths: approximately 1.812419 and 1.812466 µm.
+- The evidence panel reports overlap, per-pixel wavelength screening, measured field-source registration, and unverified science checks.
+- The frame inspector links to each original NASA FITS product and exact cutout, with SHA-256, cached-original FITS and numeric-array downloads. The masked center is explicitly reported; do not infer target brightness from it.
+
+A coordinate preset identifies a field, not proof the named source is visible or detected. High-proper-motion sources can move substantially from reference coordinates. The five challenge presets remain available, but coverage, image quality and repeated passbands differ.
+
+Bundled preview counts: Barnard’s Star field 6, Epsilon Indi B field 2, WISE 0855 field 6, RW Aurigae field 6, R Draconis field 2. Other settings start a bounded live query.
 
 ## What is implemented
 
-- `/`: local NASA / Webb photography, oversized Archivo typography, deep-purple art direction, four distinct GSAP scroll sequences, manual story controls for mobile/reduced motion, six detector explanations, and an interactive five-target gallery.
-- `/explore`: readable instrument controls, an unpopulated “Observatory ready” workspace, decimal-coordinate validation, target presets, FOV and detector controls, URL restoration and copy-to-share. The eight-frame API workflow remains available in explicit development mode.
-- Single-frame, blink, side-by-side and **calculated B − A difference** modes. Pair selectors and adjustable blink interval. Changing modes pauses playback; use **Start blink** to alternate the selected pair.
-- Playback at 0.5×, 1×, 2× and 4×; previous/next; scrubber; frame thumbnails. Manual frame selection returns to single-frame mode.
-- Zoom from 100% to 800%, pointer/touch drag to pan, synchronized split views, fit/reset, crosshair toggle, image-loading/error/retry states.
-- `/about`: methodology, limitations, coordinate provenance, science sources and artwork credits.
-- Collapsible mobile panels, keyboard controls, reduced-motion styles, self-hosted fonts, focus indicators, skip link, SEO metadata and favicon.
-- An abstract observation provider, working deterministic synthetic provider, disabled IRSA adapter, bounded caches, validated API, and automated tests.
+- Real DR1/QR3 wide-survey discovery, product deduplication, footprint-assisted candidate ranking and bounded downloads.
+- Calibrated FITS IMAGE/VARIANCE/FLAGS/ZODI reading, conservative named-bit masking, one zodiacal-model subtraction, spectral-WCS lookup and common-grid reprojection.
+- Shared numeric science/display pipeline for featured and custom fields; one reproducible display stretch per set.
+- Asynchronous, deduplicated SQLite jobs; one processing worker; queue, time, byte, FOV, cache and admission limits.
+- Playback, blink, side-by-side, loading/error/no-coverage/incomplete states, coordinate URLs, metadata and downloadable provenance.
+- Date/epoch sampling, field-center wavelength windows, lazy thumbnails, lasso selection, conservative mask display and frame-bound manual displacement estimates.
+- Independent Gaia DR3 / AllWISE overlays with registered positions, typed source details, bounded caching and honest service-failure states.
+- Server-side blocking of real subtraction. The preserved opt-in simulator still demonstrates float-array B − A.
 
-### Keyboard controls
+![Real SPHEREx Explorer, captured from the production container](docs/evidence/explorer-desktop.png)
 
-When focus is outside a form, button or link: **Space** plays/pauses; **← / →** selects epochs. With the image viewport focused: **+ / −** zoom, **0** fits, **Shift + arrows** pans when zoomed. All controls remain available as buttons. Playback pauses in hidden tabs. Reduced-motion disables decorative animation and scroll pinning; user-triggered scientific playback remains available.
+## Validation
 
-## Test and build
-
-```bash
-cd backend
-.venv/bin/python -m pytest -q
-cd ../frontend
+```sh
+. backend/.venv/bin/activate
+python -m pytest -q backend/tests
+python backend/tools/verify_featured.py
+cd frontend
 npm test
 npm run typecheck
 npm run build
-```
-
-Optional browser smoke tests (run in an environment with browser support):
-
-```bash
-cd frontend
-npx playwright install chromium
+npx playwright install --with-deps chromium
 npm run test:e2e
-# Also check the explicitly enabled synthetic development workflow (POSIX shell):
 npm run test:e2e:demo
 ```
 
-The browser suite launches both servers and checks wide desktop (1920px), desktop (1440px), tablet (768px), and mobile (390px) layouts; navigation; URL restoration; validation; playback; zoom; comparison modes; reduced motion; horizontal overflow; and screenshots. Browser executables are not bundled.
+[Validation evidence](docs/VALIDATION.md) distinguishes executed checks from limitations. GitHub Actions runs numerical/API tests, offline FITS reproduction, frontend checks and both browser modes. Ordinary tests do not depend on live IRSA availability.
 
-See `docs/REDESIGN_V2.md` for the design system, animation map, changed-file list and preservation audit. See `docs/VALIDATION.md` for **actual checks executed and verification limits**. Browser tests are supplied but were not run in the authoring environment because its preview relay was unavailable.
+## Refresh featured data
 
-## Production
-
-```bash
-cd frontend
-npm ci
-npm run build
-npm start
+```sh
+python backend/tools/prepare_featured.py --target r-dra --output backend/data/new-snapshot
 ```
 
-Run Uvicorn separately on a Python-capable host. Configure `API_INTERNAL_URL` **before building**: the Next.js rewrite target is part of the built routing configuration. Keep the Python API private behind Next.js/reverse-proxy routing when possible. Default CORS permits only `http://localhost:3000`; configure `CORS_ORIGINS` for deployments making direct browser-to-API requests.
+Use `--target all` to attempt all five presets. A live query may fail or produce only previews. Review the manifest and raw FITS before promoting a new snapshot; the checked-in featured data never silently refreshes.
 
-This is a two-process application. Static-only hosting and Cloudflare JavaScript Workers alone cannot execute its required NumPy/Pillow FastAPI backend. No production deployment was created. Deploy Next.js and Python together or provide a separately hosted API. There are no stored user records or credentials. Add production request limits/monitoring at the reverse proxy before public traffic; cache sizes are bounded but generating many distinct fields still consumes CPU.
+## Synthetic development mode
 
-## Structure
-
-```text
-skytrace/
-  frontend/
-    app/                    Landing, explorer and methodology routes
-    components/landing/     Choreographed narrative sections
-    components/explorer/    Controls, viewer, comparisons and timeline
-    components/ui/          Shared navigation and footer
-    lib/                    Typed API model, validation, target configuration
-    public/                 Credited NASA/Webb imagery and labeled demo frames
-    tests/                  Node validation/URL tests
-    e2e/                    Playwright interaction and responsive tests
-  backend/
-    app/models.py           Validated request/response contract
-    app/providers.py        Synthetic generator, display mappings, provider interface
-    app/main.py             FastAPI endpoints and bounded display caches
-    app/presets.json         Coordinate provenance
-    tests/                  Numerical, API and validation tests
-  docs/                     API, methodology, integration and validation guides
-  scripts/                  Combined dev launcher, reproducible assets/presets
+```sh
+OBSERVATION_SOURCE=synthetic NEXT_PUBLIC_ENABLE_SYNTHETIC_DEMO=true npm run dev
 ```
 
-## Scientific assumptions
+Both flags are required to view generated observations. Synthetic dates, motion, brightness and units are illustrative and never relabeled as SPHEREx measurements. Landing-page artwork and animations remain labeled educational illustrations.
 
-Each normalized field has a deterministic local catalogue. FOV changes map angular offsets onto a fixed 384×384 raster, revealing more or less of the same field. Detector selection changes source intensities and illustrative PSF width; it does not model true wavelength-dependent detector calibration. One source moves along a fixed angular path and another varies sinusoidally. The same background grid is used at every epoch.
+## Documentation
 
-Noise is independent seeded Gaussian noise with σ = 2.5 arbitrary units. A fixed arcsinh stretch is applied across frames. Difference images are calculated from **unclipped float32 arrays**, then mapped to violet (negative), dark neutral (zero), and amber (positive). Do not use these values for astrophysical inference.
+- [Submission description and demonstration script](docs/SUBMISSION.md)
+- [API and job contract](docs/API.md)
+- [Processing methods and scientific limits](docs/METHODOLOGY.md)
+- [Real-data integration status](docs/REAL_DATA_INTEGRATION.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Validation](docs/VALIDATION.md)
 
-The eight timestamps start on 2025-01-15 and are spaced by 90 days. They are illustrative, **not the mission observing schedule**. Motion is exaggerated. Field coordinates are not propagated to these dates. WISE 0855's epoch is unspecified. Different coordinate centers define independent local catalogues, so overlapping requests do not form one globally consistent sky. See `docs/METHODOLOGY.md`.
+## Data acknowledgement
 
-## Reproduce local assets
+This publication makes use of data products from the Spectro-Photometer for the History of the Universe, Epoch of Reionization and Ices Explorer (SPHEREx), which is a joint project of the Jet Propulsion Laboratory and the California Institute of Technology, and is funded by the National Aeronautics and Space Administration.
 
-Bundled assets are ready to use. To regenerate them, install the optional build-time dependency `scipy>=1.14` into the backend environment, then run:
-
-```bash
-backend/.venv/bin/python scripts/generate_assets.py
-python3 scripts/make_presets.py
-```
-
-The asset script reproduces the retained v1 procedural nebula and educational frames, not the v2 NASA/Webb photographs. Source URLs and credits for those locally optimized images are in `frontend/public/images/credits.json` and `/about#credits`. The default Explorer checks `/health` and does not request synthetic observations. The development workflow requests images from the running backend. No official NASA logo is used.
-
-## References
-
-- [SPHEREx instrument, Caltech](https://spherex.caltech.edu/page/instrument)
-- [SPHEREx Data Explorer overview, NASA/IPAC IRSA](https://irsa.ipac.caltech.edu/onlinehelp/spherex/spherex/overview.html)
-- [SPHEREx archive data products, IPAC](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products/)
-- SIMBAD target references are recorded individually in `backend/app/presets.json` and the About page.
-
-Not affiliated with or endorsed by NASA, JPL, Caltech, or the Space Apps organizers.
+Data and methods: [IRSA access](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-access/), [data products](https://caltech-ipac.github.io/spherex-archive-documentation/spherex-data-products/), [spectral-image tutorial](https://caltech-ipac.github.io/irsa-tutorials/spherex-intro/), [cutout tutorial](https://caltech-ipac.github.io/irsa-tutorials/spherex-cutouts/). Editorial image credits remain in the About page and `frontend/public/images/credits.json`.

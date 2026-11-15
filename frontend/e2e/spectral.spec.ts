@@ -6,13 +6,21 @@ test.beforeEach(() =>
 
 async function mockArchive(page: Page, missingMetadata = false) {
   const queries: URLSearchParams[] = [];
+  let preparedResult = {};
+  await page.route("**/api/observation-sets/spectral-test", (route) =>
+    route.fulfill({ json: preparedResult }),
+  );
   await page.route("**/health", (route) =>
     route.fulfill({
       json: { status: "ok", source: "spherex-irsa", real_data_enabled: true },
     }),
   );
-  await page.route("**/api/observations?*", (route) => {
-    const q = new URL(route.request().url()).searchParams;
+  await page.route("**/api/observation-jobs", (route) => {
+    const q = new URLSearchParams(
+      Object.entries(route.request().postDataJSON())
+        .filter(([, value]) => value != null)
+        .map(([key, value]) => [key, String(value)]),
+    );
     queries.push(q);
     const min = q.has("min_wavelength_um")
       ? Number(q.get("min_wavelength_um"))
@@ -27,39 +35,48 @@ async function mockArchive(page: Page, missingMetadata = false) {
       detector: q.get("detector"),
       min_wavelength_um: min,
       max_wavelength_um: max,
+      limit: Number(q.get("limit") || 12),
+      spread: q.get("spread") === "true",
+      start_date: q.get("start_date") || undefined,
+      end_date: q.get("end_date") || undefined,
+    };
+    preparedResult = {
+      source_type: "spherex-irsa",
+      dataset_id: "spectral-test",
+      request,
+      width: 384,
+      height: 384,
+      wavelength_range_um: [0.75, 1.09],
+      intensity_unit: "MJy / sr",
+      notice: "Spectral browser test fixture",
+      frames: [0, 1].map((i) => ({
+        id: `spx.${request.detector}.test${i}`,
+        timestamp: `2025-05-0${i + 1}T00:00:00Z`,
+        image_url: `/api/frames/test${i}.png`,
+        detector: request.detector,
+        source: "spherex-irsa",
+        wavelength_um: missingMetadata
+          ? null
+          : min != null && max != null
+            ? min + (max - min) * (i ? 0.75 : 0.25)
+            : i
+              ? 0.95
+              : 0.81,
+        bandwidth_um: missingMetadata ? null : i ? 0.024 : 0.02,
+        wavelength_source: missingMetadata ? null : "wcs-wave",
+        quality: {
+          registration: "Test WCS grid",
+          noise_sigma: 0.5,
+          masked_fraction: 0,
+          calibrated: true,
+        },
+      })),
     };
     return route.fulfill({
       json: {
-        source_type: "spherex-irsa",
-        dataset_id: "spectral-test",
-        request,
-        width: 384,
-        height: 384,
-        wavelength_range_um: [0.75, 1.09],
-        intensity_unit: "MJy / sr",
-        notice: "Spectral browser test fixture",
-        frames: [0, 1].map((i) => ({
-          id: `spx.${request.detector}.test${i}`,
-          timestamp: `2025-05-0${i + 1}T00:00:00Z`,
-          image_url: `/api/frames/test${i}.png`,
-          detector: request.detector,
-          source: "spherex-irsa",
-          wavelength_um: missingMetadata
-            ? null
-            : min != null && max != null
-              ? min + (max - min) * (i ? 0.75 : 0.25)
-              : i
-                ? 0.95
-                : 0.81,
-          bandwidth_um: missingMetadata ? null : i ? 0.024 : 0.02,
-          wavelength_source: missingMetadata ? null : "wcs-wave",
-          quality: {
-            registration: "Test WCS grid",
-            noise_sigma: 0.5,
-            masked_fraction: 0,
-            calibrated: true,
-          },
-        })),
+        status: "ready",
+        result_url: "/api/observation-sets/spectral-test",
+        cache_hit: true,
       },
     });
   });

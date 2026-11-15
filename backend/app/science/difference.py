@@ -1,4 +1,4 @@
-"""Scientifically validated image differencing and display stretching."""
+"""Numerical preview helpers; these do not validate real-image subtraction."""
 from __future__ import annotations
 
 import io

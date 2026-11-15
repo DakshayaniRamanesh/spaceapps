@@ -54,12 +54,13 @@ def canonical(req: FieldRequest) -> FieldRequest:
         detector=req.detector,
         min_wavelength_um=req.min_wavelength_um,
         max_wavelength_um=req.max_wavelength_um,
+        limit=req.limit, spread=req.spread, start_date=req.start_date, end_date=req.end_date,
     )
 
 
 def field_key(req: FieldRequest) -> str:
     return base64.urlsafe_b64encode(
-        json.dumps(canonical(req).model_dump(exclude_none=True), sort_keys=True, separators=(',', ':')).encode()
+        json.dumps(request_payload(req, geometry_only=True), sort_keys=True, separators=(',', ':')).encode()
     ).decode().rstrip('=')
 
 
@@ -78,6 +79,14 @@ def decode_frame(frame_id: str) -> tuple[FieldRequest, int]:
         return req, i
     except Exception as exc:
         raise ValueError('Unknown frame identifier') from exc
+
+
+def request_payload(req, geometry_only=False):
+    value = canonical(req).model_dump(exclude_none=True)
+    for name in ('limit', 'spread', 'start_date', 'end_date'):
+        if geometry_only or value.get(name) == {'limit': 12, 'spread': False}.get(name):
+            value.pop(name, None)
+    return value
 
 
 def seed_for(value: str) -> int:

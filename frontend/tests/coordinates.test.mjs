@@ -65,6 +65,20 @@ test("default epoch selection keeps shared URLs clean", () => {
   assert.equal(query.get("spread"), null);
 });
 
+test("nullable dates returned in real manifests do not disable valid field sharing", () => {
+  const field = {
+    ...DEFAULT_FIELD,
+    start_date: null,
+    end_date: null,
+    min_wavelength_um: null,
+    max_wavelength_um: null,
+  };
+  assert.equal(validateField(field), undefined);
+  const query = new URLSearchParams(fieldQuery(field));
+  assert.equal(query.has("start"), false);
+  assert.equal(query.has("end"), false);
+});
+
 test("field validation rejects invalid epoch selections and dates", () => {
   for (const limit of [1, 51, 2.5, NaN])
     assert.ok(validateField({ ...DEFAULT_FIELD, limit }));

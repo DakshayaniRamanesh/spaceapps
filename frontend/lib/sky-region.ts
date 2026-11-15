@@ -7,15 +7,23 @@
  * coordinates (u, v in [0, 1], origin top-left of the displayed PNG) therefore
  * refers to the same patch of sky in every epoch and comparison mode.
  *
- * Grid convention (backend/app/science/registration.py::make_target_wcs):
+ * Legacy/synthetic grid convention (science/registration.py::make_target_wcs):
  *   CDELT = [-scale, +scale], CRPIX at the grid centre, no image flip on
  *   PNG encoding — so +u (right) is decreasing RA and +v (down the PNG) is
- *   increasing pixel row, i.e. increasing Dec.
+ *   increasing pixel row, i.e. increasing Dec. Real preview PNGs instead use
+ *   the explicit manifest WCS and a FITS-to-PNG vertical flip (gridToSky below).
  */
 
 export type RegionPoint = { u: number; v: number };
 
-export type SkyGeometry = { ra: number; dec: number; fov_arcmin: number };
+export type SkyGeometry = {
+  ra: number;
+  dec: number;
+  fov_arcmin: number;
+  grid?: Record<string, string | number>;
+  width?: number;
+  height?: number;
+};
 
 export type RegionSummary = {
   vertices: number;
@@ -79,7 +87,10 @@ export function polygonCentroid(points: RegionPoint[]): RegionPoint {
 }
 
 /** Even-odd ray casting test. */
-export function pointInPolygon(pt: RegionPoint, points: RegionPoint[]): boolean {
+export function pointInPolygon(
+  pt: RegionPoint,
+  points: RegionPoint[],
+): boolean {
   let inside = false;
   for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
     const a = points[i];
@@ -116,17 +127,40 @@ export function isUsableRegion(points: RegionPoint[]): boolean {
 export function gridToSky(pt: RegionPoint, geom: SkyGeometry) {
   const fovDeg = geom.fov_arcmin / 60;
   // Intermediate world coordinates (degrees) relative to the tangent point.
-  const xi = -(pt.u - 0.5) * fovDeg * DEG;
-  const eta = (pt.v - 0.5) * fovDeg * DEG;
-  const ra0 = geom.ra * DEG;
-  const dec0 = geom.dec * DEG;
+  let xi = -(pt.u - 0.5) * fovDeg * DEG;
+  let eta = (pt.v - 0.5) * fovDeg * DEG;
+  const grid =
+    geom.grid?.CTYPE1 === "RA---TAN" && geom.grid?.CTYPE2 === "DEC--TAN"
+      ? geom.grid
+      : undefined;
+  if (grid && geom.width && geom.height) {
+    // Real PNGs flip FITS rows. Fractions are relative to image pixel edges.
+    const dx = pt.u * geom.width + 0.5 - Number(grid.CRPIX1);
+    const dy = (1 - pt.v) * geom.height + 0.5 - Number(grid.CRPIX2);
+    const cd11 = Number(
+      grid.CD1_1 ?? Number(grid.CDELT1) * Number(grid.PC1_1 ?? 1),
+    );
+    const cd12 = Number(
+      grid.CD1_2 ?? Number(grid.CDELT1) * Number(grid.PC1_2 ?? 0),
+    );
+    const cd21 = Number(
+      grid.CD2_1 ?? Number(grid.CDELT2) * Number(grid.PC2_1 ?? 0),
+    );
+    const cd22 = Number(
+      grid.CD2_2 ?? Number(grid.CDELT2) * Number(grid.PC2_2 ?? 1),
+    );
+    xi = (cd11 * dx + cd12 * dy) * DEG;
+    eta = (cd21 * dx + cd22 * dy) * DEG;
+  }
+  const ra0 = Number(grid?.CRVAL1 ?? geom.ra) * DEG;
+  const dec0 = Number(grid?.CRVAL2 ?? geom.dec) * DEG;
   const denom = Math.cos(dec0) - eta * Math.sin(dec0);
   let ra = ra0 + Math.atan2(xi, denom);
   const dec = Math.atan2(
     Math.sin(dec0) + eta * Math.cos(dec0),
     Math.hypot(xi, denom),
   );
-  ra = ((ra / DEG) % 360 + 360) % 360;
+  ra = (((ra / DEG) % 360) + 360) % 360;
   return { ra, dec: dec / DEG };
 }
 
@@ -212,10 +246,7 @@ export function angularSeparationArcsec(
     cosD2 = Math.cos(dec2);
   const cosDA = Math.cos(dAlpha),
     sinDA = Math.sin(dAlpha);
-  const y = Math.hypot(
-    cosD2 * sinDA,
-    cosD1 * sinD2 - sinD1 * cosD2 * cosDA,
-  );
+  const y = Math.hypot(cosD2 * sinDA, cosD1 * sinD2 - sinD1 * cosD2 * cosDA);
   const x = sinD1 * sinD2 + cosD1 * cosD2 * cosDA;
   const thetaRad = Math.atan2(y, x);
   return (thetaRad / DEG) * 3600;

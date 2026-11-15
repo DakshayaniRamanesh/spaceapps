@@ -9,6 +9,7 @@ import {
   Frame,
   Detector,
   DEFAULT_FIELD,
+  FEATURED_FIELD,
   EPOCH_LIMITS,
   validateField,
 } from "@/lib/types";
@@ -72,7 +73,9 @@ export default function ObservationControls({
   const epochOptions = [
     ...new Set([
       ...EPOCH_LIMITS,
-      ...(Number.isInteger(selectedLimit) && selectedLimit >= 2 && selectedLimit <= 50
+      ...(Number.isInteger(selectedLimit) &&
+      selectedLimit >= 2 &&
+      selectedLimit <= 50
         ? [selectedLimit]
         : []),
     ]),
@@ -90,7 +93,7 @@ export default function ObservationControls({
       min_wavelength_um: minWave.trim() ? Number(minWave) : undefined,
       max_wavelength_um: maxWave.trim() ? Number(maxWave) : undefined,
     };
-    const err = validateField(f);
+    const err = validateField(f, demoEnabled ? 60 : 30);
     setError(err || "");
     if (!err) onLoad(f);
   }
@@ -202,7 +205,7 @@ export default function ObservationControls({
                 12,
                 24,
                 30,
-                60,
+                ...(demoEnabled ? [60] : []),
                 ...(![2, 6, 12, 24, 30, 60].includes(Number(fov))
                   ? [Number(fov)]
                   : []),
@@ -263,8 +266,8 @@ export default function ObservationControls({
             </div>
             <p className="hint">
               More epochs lengthen the first load; cached frames return
-              instantly. Monthly sampling is a SkyTrace heuristic, not a
-              mission standard.
+              instantly. Monthly sampling is a SkyTrace heuristic, not a mission
+              standard.
             </p>
             <div className="field-heading">
               Detector array<span>02</span>
@@ -279,6 +282,7 @@ export default function ObservationControls({
                     key={d}
                     className={`${isSelected ? "selected" : ""} ${isCurrent ? "current-detector" : ""}`}
                     aria-pressed={isSelected}
+                    aria-label={d}
                     title={
                       isCurrent && !isSelected
                         ? `${d}: Currently displayed (unsubmitted selection is ${detector})`
@@ -297,7 +301,9 @@ export default function ObservationControls({
                     }}
                   >
                     <span>{d}</span>
-                    {isCurrent && <span className="detector-badge">ACTIVE</span>}
+                    {isCurrent && (
+                      <span className="detector-badge">ACTIVE</span>
+                    )}
                   </button>
                 );
               })}
@@ -342,7 +348,7 @@ export default function ObservationControls({
               type="button"
               onClick={() => {
                 setError("");
-                onLoad({ ...DEFAULT_FIELD });
+                onLoad({ ...(demoEnabled ? DEFAULT_FIELD : FEATURED_FIELD) });
               }}
             >
               <RotateCcw size={13} /> Reset field
@@ -356,7 +362,7 @@ export default function ObservationControls({
                   ? "Querying SPHEREx observation records from NASA / IPAC IRSA archive…"
                   : demoEnabled
                     ? "Development mode uses generated starfields, not observations of the selected target."
-                    : "Connected to NASA / IPAC IRSA SPHEREx DR1+QR3 public archive. Observations are queried directly by coordinates and detector.")}
+                    : "Real SPHEREx DR1/QR3 previews. Custom fields use a bounded archive worker; initial searches can take several minutes.")}
             </p>
           </div>
         </div>

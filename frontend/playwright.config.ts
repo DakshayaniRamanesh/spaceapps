@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./e2e",
+  outputDir: process.env.SKYTRACE_TEST_DEMO
+    ? "test-results/demo"
+    : "test-results/real",
   fullyParallel: false,
   timeout: 45000,
   use: { baseURL: "http://127.0.0.1:3000", trace: "retain-on-failure" },
@@ -9,6 +12,7 @@ export default defineConfig({
     url: "http://127.0.0.1:3000",
     reuseExistingServer: false,
     env: {
+      OBSERVATION_SOURCE: process.env.SKYTRACE_TEST_DEMO ? "synthetic" : "irsa",
       NEXT_PUBLIC_ENABLE_SYNTHETIC_DEMO: process.env.SKYTRACE_TEST_DEMO
         ? "true"
         : "false",

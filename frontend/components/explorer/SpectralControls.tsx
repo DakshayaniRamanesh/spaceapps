@@ -140,8 +140,8 @@ export default function SpectralControls({
           <>
             <span>
               λ₀{" "}
-              {activeFrame.wavelength_um != null
-                ? `${activeFrame.wavelength_um.toFixed(4)} µm`
+              {(activeFrame.wavelength_um ?? activeFrame.lambda_um) != null
+                ? `${(activeFrame.wavelength_um ?? activeFrame.lambda_um)!.toFixed(4)} µm`
                 : "unavailable"}
             </span>
             <span>

@@ -6,6 +6,15 @@ test("default explorer never requests synthetic observations and shares field se
   page,
 }) => {
   const observationRequests: string[] = [];
+  await page.route("**/health", (route) =>
+    route.fulfill({
+      json: {
+        status: "ok",
+        source: "synthetic",
+        real_data_enabled: false,
+      },
+    }),
+  );
   page.on("request", (request) => {
     if (request.url().includes("/api/observations"))
       observationRequests.push(request.url());
@@ -15,7 +24,7 @@ test("default explorer never requests synthetic observations and shares field se
     page.getByRole("heading", { name: "OBSERVATORY READY." }),
   ).toBeVisible();
   await expect(
-    page.getByText("Awaiting a validated observation source"),
+    page.getByText("The observation source is unavailable.", { exact: false }),
   ).toBeVisible();
   for (const name of [
     "Play observations",
@@ -36,7 +45,7 @@ test("default explorer never requests synthetic observations and shares field se
   await page.getByRole("button", { name: "Check for observations" }).click();
   await expect(page).toHaveURL(/ra=130&dec=-7.24514722&fov=6&detector=D6/);
   await expect(
-    page.getByText("Awaiting a validated observation source"),
+    page.getByText("The observation source is unavailable.", { exact: false }),
   ).toBeVisible();
   expect(observationRequests).toEqual([]);
   expect(

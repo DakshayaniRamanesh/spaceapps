@@ -88,7 +88,9 @@ test("URL state, invalid input, detector and FOV", async ({ page }) => {
   await page
     .getByRole("button", { name: "Load observations", exact: true })
     .click();
-  await expect(page.getByRole("alert")).toContainText("less than 360");
+  await expect(
+    page.locator('[role="alert"]:not(#__next-route-announcer__)'),
+  ).toContainText("less than 360");
   expect(apiCalls).toBe(0);
   await page.getByLabel("Right ascension").fill("130");
   await page.getByLabel("Field of view").selectOption("24");
@@ -97,7 +99,9 @@ test("URL state, invalid input, detector and FOV", async ({ page }) => {
     .getByRole("button", { name: "Load observations", exact: true })
     .click();
   await expect(page).toHaveURL(/ra=130&dec=-7.245147&fov=24&detector=D3/);
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(
+    page.locator('[role="alert"]:not(#__next-route-announcer__)'),
+  ).toHaveCount(0);
 });
 test("reduced motion and mobile story remain usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });

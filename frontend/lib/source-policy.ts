@@ -11,7 +11,9 @@ export function mayRequestObservations(
   allowDemo: boolean,
 ): boolean {
   return (
-    health.real_data_enabled === true ||
+    (health.status === "ok" &&
+      health.source === "spherex-irsa" &&
+      health.real_data_enabled === true) ||
     (allowDemo && health.source === "synthetic" && health.status === "ok")
   );
 }

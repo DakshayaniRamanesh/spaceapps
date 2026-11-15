@@ -1,0 +1,15 @@
+services:
+  skytrace:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      OBSERVATION_SOURCE: irsa
+      SKYTRACE_DATA_DIR: /data
+    volumes:
+      - observation-cache:/data
+    restart: unless-stopped
+    mem_limit: 2g
+volumes:
+  observation-cache:

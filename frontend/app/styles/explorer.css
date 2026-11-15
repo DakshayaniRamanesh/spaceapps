@@ -40,6 +40,9 @@
   grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
+html:has(.explorer) {
+  scroll-behavior: auto;
+}
 .controls,
 .intelligence {
   background: #0d081a;
@@ -94,7 +97,9 @@
   border: 1px solid rgba(155, 114, 242, 0.2);
   border-radius: 4px;
   font-size: 15px;
-  transition: border-color 0.18s, background 0.18s;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
 }
 .controls input {
   font: 15px var(--mono);
@@ -579,6 +584,141 @@
   position: relative;
   z-index: 1;
 }
+.registered-port {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.registered-image {
+  position: relative;
+  flex: none;
+}
+.catalogue-markers {
+  z-index: 3;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.catalogue-marker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.catalogue-marker span,
+.catalogue-symbol {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #b5a0ff;
+  border-radius: 50%;
+  background: transparent;
+}
+.catalogue-marker.wise span,
+.catalogue-symbol.wise {
+  border-color: #efc681;
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+.catalogue-marker:focus-visible {
+  outline: 2px solid white;
+  border-radius: 3px;
+}
+.catalogue-marker:hover span {
+  background: rgba(255, 255, 255, 0.3);
+}
+.catalogue-panel {
+  padding: 18px 22px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0d081a;
+}
+.catalogue-help {
+  margin-top: 12px;
+}
+.catalogue-help summary {
+  cursor: pointer;
+  color: var(--secondary-text);
+}
+.catalogue-panel h3 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.catalogue-panel h4 {
+  font-size: 15px;
+  margin-top: 12px;
+}
+.catalogue-panel p {
+  margin: 8px 0;
+}
+.catalogue-layers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+.catalogue-layers > div {
+  flex: 1 1 210px;
+}
+.catalogue-layers label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.catalogue-layers input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.catalogue-symbol {
+  flex: none;
+}
+.catalogue-status,
+.catalogue-note {
+  color: var(--secondary-text);
+}
+.catalogue-picker {
+  display: block;
+  margin-top: 12px;
+}
+.catalogue-picker select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 42px;
+  margin-top: 6px;
+  background: #170f27;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+}
+.catalogue-detail {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+.catalogue-detail dt {
+  color: var(--secondary-text);
+  margin-top: 8px;
+}
+.catalogue-detail dd {
+  margin: 0;
+}
 .split .image-port + .image-port {
   border-left: 1px solid rgba(155, 114, 242, 0.2);
 }
@@ -691,6 +831,7 @@
 }
 .viewer-toolbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 14px;
@@ -703,6 +844,8 @@
 }
 .zoom-controls {
   display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
   align-items: center;
   gap: 8px;
 }
@@ -1594,4 +1737,66 @@ details[open] > .controls-body {
   details[open] > .controls-body {
     animation: none;
   }
+}
+.science-passport,
+.science-notice {
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(170, 193, 220, 0.18);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  background: rgba(10, 19, 30, 0.85);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.science-passport p {
+  margin: 0.5rem 0;
+}
+.science-passport .center-warning {
+  border-left: 2px solid #efc681;
+  padding-left: 0.75rem;
+  color: #efc681;
+}
+.science-passport summary {
+  cursor: pointer;
+  padding: 0.5rem 0;
+  color: #efc681;
+}
+.science-passport a,
+.provenance a {
+  color: #b9d9ee;
+  text-decoration: underline;
+}
+.science-passport ul {
+  padding-left: 1.2rem;
+}
+.evidence-checks {
+  display: grid;
+  gap: 0.8rem;
+}
+.evidence-checks li strong,
+.evidence-checks li span {
+  display: block;
+}
+[data-verdict="pass"] {
+  color: #a4d4bf;
+}
+[data-verdict="review"] {
+  color: #efc681;
+}
+[data-verdict="blocked"] {
+  color: #ecaab1;
+}
+.provenance dd,
+.provenance code {
+  overflow-wrap: anywhere;
+  font-size: 0.72rem;
+}
+.about-integration {
+  max-width: 1000px;
+  margin: auto;
+  line-height: 1.8;
+}
+.about-integration p {
+  margin: 1rem 0;
 }
