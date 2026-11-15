@@ -211,6 +211,67 @@
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
 }
+.spectral-controls fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.spectral-controls legend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.spectral-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.spectral-tabs button {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #1d1230;
+  color: var(--secondary-text);
+  padding: 9px 4px;
+  font-size: 12px;
+}
+.spectral-tabs button[aria-pressed="true"] {
+  background: var(--brand);
+  color: white;
+  border-color: var(--accent);
+}
+.spectral-controls fieldset:disabled {
+  opacity: 0.55;
+}
+.spectral-bounds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.spectral-bounds > div {
+  min-width: 0;
+}
+.spectral-bounds label {
+  font-size: 12px;
+}
+.spectral-indicator {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  margin: 0 0 20px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.spectral-indicator span {
+  font-family: var(--mono);
+}
+.spectral-indicator small {
+  color: var(--secondary-text);
+  line-height: 1.5;
+}
 .hint {
   font-size: 13px;
   line-height: 1.6;

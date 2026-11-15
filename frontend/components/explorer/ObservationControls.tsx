@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Crosshair, RotateCcw, ArrowRight } from "lucide-react";
 import presets from "@/lib/presets.json";
+import SpectralControls from "./SpectralControls";
 import {
   detectors,
   Field,
+  Frame,
   Detector,
   DEFAULT_FIELD,
   EPOCH_LIMITS,
@@ -16,12 +18,14 @@ export default function ObservationControls({
   loading,
   demoEnabled = false,
   statusMessage,
+  activeFrame,
 }: {
   field: Field;
   onLoad: (f: Field) => void;
   loading: boolean;
   demoEnabled?: boolean;
   statusMessage?: string;
+  activeFrame?: Frame;
 }) {
   const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -36,6 +40,12 @@ export default function ObservationControls({
     [spread, setSpread] = useState(Boolean(field.spread)),
     [startDate, setStartDate] = useState(field.start_date ?? ""),
     [endDate, setEndDate] = useState(field.end_date ?? ""),
+    [minWave, setMinWave] = useState(
+      field.min_wavelength_um == null ? "" : String(field.min_wavelength_um),
+    ),
+    [maxWave, setMaxWave] = useState(
+      field.max_wavelength_um == null ? "" : String(field.max_wavelength_um),
+    ),
     [error, setError] = useState("");
   useEffect(() => {
     setRa(String(field.ra));
@@ -46,6 +56,12 @@ export default function ObservationControls({
     setSpread(Boolean(field.spread));
     setStartDate(field.start_date ?? "");
     setEndDate(field.end_date ?? "");
+    setMinWave(
+      field.min_wavelength_um == null ? "" : String(field.min_wavelength_um),
+    );
+    setMaxWave(
+      field.max_wavelength_um == null ? "" : String(field.max_wavelength_um),
+    );
   }, [field]);
   const selected = presets.find(
     (p) =>
@@ -71,6 +87,8 @@ export default function ObservationControls({
       spread,
       start_date: startDate || undefined,
       end_date: endDate || undefined,
+      min_wavelength_um: minWave.trim() ? Number(minWave) : undefined,
+      max_wavelength_um: maxWave.trim() ? Number(maxWave) : undefined,
     };
     const err = validateField(f);
     setError(err || "");
@@ -101,6 +119,12 @@ export default function ObservationControls({
                   spread,
                   start_date: startDate || undefined,
                   end_date: endDate || undefined,
+                  min_wavelength_um: minWave.trim()
+                    ? Number(minWave)
+                    : undefined,
+                  max_wavelength_um: maxWave.trim()
+                    ? Number(maxWave)
+                    : undefined,
                 });
               }
             }}
@@ -264,7 +288,13 @@ export default function ObservationControls({
                             ? `${d}: Selected (not yet submitted)`
                             : d
                     }
-                    onClick={() => setDetector(d)}
+                    onClick={() => {
+                      if (d !== detector) {
+                        setMinWave("");
+                        setMaxWave("");
+                      }
+                      setDetector(d);
+                    }}
                   >
                     <span>{d}</span>
                     {isCurrent && <span className="detector-badge">ACTIVE</span>}
@@ -279,6 +309,17 @@ export default function ObservationControls({
                   ? "Simulated array responses. Assigned colors are not visible light."
                   : "Select a SPHEREx detector array (D1–D6) to query observations."}
             </p>
+            <SpectralControls
+              detector={detector}
+              min={minWave}
+              max={maxWave}
+              onChange={(min, max) => {
+                setMinWave(min);
+                setMaxWave(max);
+              }}
+              disabled={demoEnabled}
+              activeFrame={activeFrame}
+            />
             {error && (
               <p className="error" id="field-error" role="alert">
                 {error}

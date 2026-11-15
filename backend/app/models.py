@@ -1,5 +1,5 @@
 from typing import Literal
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 Detector = Literal['D1', 'D2', 'D3', 'D4', 'D5', 'D6']
 
@@ -9,6 +9,15 @@ class FieldRequest(BaseModel):
     dec: float = Field(ge=-90, le=90)
     fov_arcmin: float = Field(default=12, ge=2, le=60)
     detector: Detector = 'D1'
+    min_wavelength_um: float | None = Field(default=None, gt=0)
+    max_wavelength_um: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode='after')
+    def validate_wavelength_window(self):
+        if (self.min_wavelength_um is not None and self.max_wavelength_um is not None
+                and self.min_wavelength_um > self.max_wavelength_um):
+            raise ValueError('min_wavelength_um must not exceed max_wavelength_um')
+        return self
 
 class EpochSelection(BaseModel):
     """How epochs were shortlisted from the archive (reproducibility metadata).
@@ -38,6 +47,8 @@ class Frame(BaseModel):
     product_id: str | None = None
     provenance_url: str | None = None
     wavelength_um: float | None = None
+    bandwidth_um: float | None = None
+    wavelength_source: Literal['wcs-wave'] | None = None
     quality: Quality = Field(default_factory=Quality)
 
 class ObservationSet(BaseModel):
