@@ -39,7 +39,7 @@ export default function ComparisonModes({
             }
             title={
               m.id === "difference" && !allowDifference
-                ? "Scientific subtraction is blocked; inspect comparison evidence."
+                ? "At least two distinct epochs are needed for difference comparison."
                 : undefined
             }
             onClick={() => onMode(m.id)}

@@ -1,6 +1,7 @@
 """Bounded, public IRSA access. Client-supplied URLs are never accepted."""
 import csv
 import io
+import logging
 import time
 from urllib.parse import urlsplit, urlencode
 
@@ -10,6 +11,7 @@ import numpy as np
 from ..models import FieldRequest
 
 COLLECTIONS = ('spherex_dr1', 'spherex_qr3')
+LOG = logging.getLogger(__name__)
 
 
 class ArchiveUnavailable(RuntimeError):
@@ -58,12 +60,19 @@ class ArchiveClient:
                     return b''.join(chunks)
             except (httpx.HTTPError, httpx.StreamError) as exc:
                 if attempt:
-                    raise ArchiveUnavailable('IRSA request failed or timed out; retry later') from exc
+                    LOG.warning('IRSA request failed: %s (%s)', url, exc)
+                    if isinstance(exc, httpx.HTTPStatusError):
+                        message = f'IRSA returned HTTP {exc.response.status_code}'
+                    elif isinstance(exc, httpx.TimeoutException):
+                        message = 'IRSA did not respond before the request timed out'
+                    else:
+                        message = 'The observation service could not connect to IRSA'
+                    raise ArchiveUnavailable(message + '. Please retry later.') from exc
                 time.sleep(min(.5, max(0, self.deadline-time.monotonic())))
         raise ArchiveUnavailable('IRSA unavailable')
 
     def discover(self, req: FieldRequest):
-        found, complete, failures = {}, True, []
+        found, complete, failures, warnings = {}, True, [], []
         for collection in COLLECTIONS:
             try:
                 content = self.read('https://irsa.ipac.caltech.edu/SIA', params={
@@ -103,9 +112,10 @@ class ArchiveClient:
             except (ArchiveUnavailable, BudgetExceeded) as exc:
                 complete = False
                 failures.append(str(exc))
+                warnings.append(f'{collection}: {exc}')
         if not found and failures:
-            raise ArchiveUnavailable('; '.join(failures))
-        return sorted(found.values(), key=lambda r: r['mjd']), complete, failures
+            raise ArchiveUnavailable(' '.join(dict.fromkeys(failures)))
+        return sorted(found.values(), key=lambda r: r['mjd']), complete, warnings
 
     def cutout(self, row, req):
         url = validate_archive_url(row['access_url'])

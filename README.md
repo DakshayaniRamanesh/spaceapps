@@ -4,7 +4,7 @@ SkyTrace is a Next.js + FastAPI tool for inspecting real, dated SPHEREx infrared
 
 **The default Explorer loads two genuine R Draconis field exposures without contacting IRSA.** Custom RA/Dec requests use a bounded archive worker and the same FITS processor. Original FITS cutouts, numeric arrays, masks, checksums and provenance are included for the featured demonstration. All five challenge presets have bundled D3 / 12-arcminute previews: 22 real exposures in total. This establishes image availability, not five validated scientific time-lapses.
 
-**Scientific subtraction is disabled for real observations.** The default R Draconis pair has a masked center and its measured registration residual exceeds the conservative preview threshold; spectral-response equivalence, PSF matching and background validation are also unfinished. Blink and side-by-side are inspection previews. SkyTrace does not claim a discovery, measured proper motion, or calibrated variability detection.
+**Visual Difference preview and scientific subtraction separation:** SkyTrace provides an experimental Visual Difference preview ($B - A$) rendered with calibrated amber (positive) and violet (negative) residuals. Certified scientific subtraction remains restricted; comparison caveats, spectral overlap, and registration assessments are accessible in the details panel and difference view. Blink, split, and difference are inspection previews. SkyTrace does not claim a discovery, measured proper motion, or calibrated variability detection.
 
 ## Run with Docker
 

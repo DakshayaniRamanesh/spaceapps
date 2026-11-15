@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from .models import FieldRequest, Detector, ObservationSet, Job
 from .providers import SyntheticObservationProvider, decode_frame, render_frame, render_difference, difference_arrays
+from .science.difference import render_difference_frame, compute_difference
 from .irsa import IRSAProcessor, ManifestStore
 from .jobs import JobManager, QueueFull
 from .catalogues import Catalogue, Overlay, CatalogueService, CatalogueUnavailable, OverlayUnavailable
@@ -80,15 +81,15 @@ def presets():
 
 
 @app.post('/api/observation-jobs', response_model=Job)
-def submit_job(req: FieldRequest, response: Response, request: Request):
+def submit_job(req: FieldRequest, response: Response, request: Request, refresh: bool = False):
     if source != 'irsa':
         raise HTTPException(409, 'Archive jobs require OBSERVATION_SOURCE=irsa')
     if req.fov_arcmin > 30:
         raise HTTPException(422, 'Real-data requests support fields from 2 to 30 arcminutes.')
     try:
-        if store.cached(req) is None:
+        if refresh or store.cached(req) is None:
             admit_client(request)
-        job = jobs.submit(req)
+        job = jobs.submit(req, refresh=refresh)
         response.status_code = 200 if job.status == 'ready' else 202
         response.headers['Cache-Control'] = 'no-store'
         return job
@@ -223,6 +224,62 @@ def original_cutout(frame_id: str):
 @lru_cache(maxsize=64)
 def difference_bytes(frame_a: str, frame_b: str):
     return render_difference(difference_arrays(provider.array(frame_a), provider.array(frame_b)))
+
+
+@lru_cache(maxsize=64)
+def _difference_preview_bytes(path_a_str: str, path_b_str: str, show_mask: bool) -> bytes:
+    with np.load(path_a_str, allow_pickle=False) as data_a, np.load(path_b_str, allow_pickle=False) as data_b:
+        int_a = data_a['intensity']
+        int_b = data_b['intensity']
+        valid_a = np.isfinite(int_a)
+        valid_b = np.isfinite(int_b)
+        if 'mask' in data_a:
+            valid_a &= ~data_a['mask']
+        if 'mask' in data_b:
+            valid_b &= ~data_b['mask']
+
+    diff, valid_both = compute_difference(int_a, int_b, valid_a, valid_b)
+    flipped_diff = np.flipud(diff)
+    flipped_valid = np.flipud(valid_both)
+    return render_difference_frame(
+        flipped_diff,
+        flipped_valid,
+        is_calibrated=True,
+        show_mask_overlay=show_mask,
+    )
+
+
+@app.get('/api/difference-preview')
+def difference_preview(
+    frame_a: str = Query(max_length=240),
+    frame_b: str = Query(max_length=240),
+    overlay: str | None = Query(default=None),
+):
+    try:
+        if not (frame_a.startswith('irsa-') and frame_b.startswith('irsa-')):
+            raise HTTPException(422, 'Difference preview requires real SPHEREx observation frames.')
+        if frame_a == frame_b:
+            raise HTTPException(422, 'Select two distinct frames to compare.')
+        dataset_a = frame_a.rsplit('-', 1)[0]
+        dataset_b = frame_b.rsplit('-', 1)[0]
+        if dataset_a != dataset_b:
+            raise HTTPException(422, 'Frames must belong to the same observation dataset.')
+
+        path_a = store.frame_path(frame_a, 'npz')
+        path_b = store.frame_path(frame_b, 'npz')
+
+        show_mask = (overlay == 'mask')
+        png_bytes = _difference_preview_bytes(str(path_a), str(path_b), show_mask)
+
+        headers = {
+            'Cache-Control': 'public, max-age=86400',
+            'X-Data-Source': 'spherex-irsa',
+            'X-Difference-Status': 'experimental-preview',
+            'X-Difference-Sign': 'B-minus-A',
+        }
+        return Response(png_bytes, media_type='image/png', headers=headers)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc))
 
 
 @app.get('/api/difference')
